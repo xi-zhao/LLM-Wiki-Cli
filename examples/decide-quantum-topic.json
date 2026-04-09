@@ -1,0 +1,57 @@
+{
+  "ok": true,
+  "command": "decide",
+  "exit_code": 0,
+  "result": {
+    "maintenance": {
+      "checked": true,
+      "scope": "incremental",
+      "verdict": "emerging",
+      "signals": [
+        "emerging_concepts_detected",
+        "local_topic_backlinks_present",
+        "maintenance_suggestions_present",
+        "neighbor_context_loaded",
+        "parsed_topic_linkage_ok",
+        "topic_backlinks_ok"
+      ],
+      "suggestions": [
+        "emerging concepts in changed object: 公开材料中, 后续是否出现更多系统级公开架构与产业案例, 哪些公开进展值得被持续沉淀成时间线和专题综述, 工程架构和商业化信号, 环境耦合",
+        "sorted outputs may be too sparse relative to topic count"
+      ],
+      "warnings": [],
+      "changed_paths": [
+        "topics/quantum-computing-industry.md"
+      ],
+      "touched_types": [
+        "topics"
+      ]
+    },
+    "decision": {
+      "verdict": "emerging",
+      "actions": [
+        "monitor_and_collect_more_evidence"
+      ],
+      "rationale": [
+        "new concepts detected but promotion threshold not met"
+      ],
+      "promotion_targets": [],
+      "steps": [
+        {
+          "action": "monitor_and_collect_more_evidence",
+          "target": null,
+          "args": {},
+          "can_execute": false,
+          "idempotent": true,
+          "retryable": true,
+          "reason": "new concepts detected but promotion threshold not met",
+          "expected_result": "future_evidence_collection"
+        }
+      ]
+    },
+    "decision_source": {
+      "source": "maintenance_path",
+      "maintenance_path": "topics/quantum-computing-industry.md"
+    }
+  }
+}

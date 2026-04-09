@@ -12,6 +12,13 @@ python3 scripts/fokb.py ...
 fokb ...
 ```
 
+## 仓库状态
+
+- 当前版本：`0.1.0a1`
+- 发布定位：public alpha
+- 样例内容：最小公开样例，仅用于演示和验证
+- 许可证状态：见 `LICENSE.md`
+
 ## 这是什么
 
 它的目标不是做人类终端 UI，而是给 agent 一个稳定的控制面，用来：
@@ -73,6 +80,13 @@ fokb synthesize "quantum financing" --mode outline --title "Quantum Financing Ou
 fokb ingest "<url>"
 ```
 
+### 5. 示例与发布记录
+
+- `examples/README.md`
+- `examples/decide-quantum-topic.json`
+- `CHANGELOG.md`
+- `LICENSE.md`
+
 ## 路径约定
 `fokb` 默认把 `scripts/fokb.py` 的上级目录识别为项目根目录。
 
@@ -92,3 +106,8 @@ export FOKB_BASE=/path/to/LLM-Wiki-Cli
 - provenance / history / state
 
 因此，它已经可以作为第一版完整可用的 agent-facing 产品使用。
+
+## 许可证说明
+
+当前仓库已经公开，但许可证文本仍保持保守状态，尚未切换到最终开源授权。
+在正式选定 MIT / Apache-2.0 / 其他许可证之前，请以 `LICENSE.md` 为准。

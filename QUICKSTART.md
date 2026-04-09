@@ -5,7 +5,7 @@
 ## 1. 安装
 
 ```bash
-cd file-organizer
+cd /path/to/LLM-Wiki-Cli
 pip install -e .
 ```
 
@@ -34,6 +34,7 @@ fokb --output pretty status
 
 ```bash
 fokb search "quantum"
+fokb show quantum-computing-industry --scope topics
 fokb query "quantum financing"
 fokb writeback "quantum financing" --title "Quantum Financing Notes"
 fokb synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
@@ -62,7 +63,14 @@ fokb resolve --last
 ## 可选：自定义知识库目录
 
 ```bash
-export FOKB_BASE=/path/to/file-organizer
+export FOKB_BASE=/path/to/LLM-Wiki-Cli
 fokb init
 fokb check
+```
+
+## 9. 查看仓库自带样例
+
+```bash
+cat examples/README.md
+cat examples/decide-quantum-topic.json
 ```
