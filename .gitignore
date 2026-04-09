@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Runtime state
+sorted/last-ingest-payload.json
+sorted/maintenance-history.json
+sorted/system-state.json
+sorted/review-queue.json
+sorted/resolved-review.json
+sorted/wiki-lint-report.json
+sorted/wechat-kb-maintenance-report.json
+sorted/ingest-failures.json
+
+# Local archives and materials
+archive/
+materials/
+temp/
+
+# Local KB content snapshots and generated outputs
+articles/raw/
+articles/parsed/
+articles/briefs/
+sorted/*.md
+!articles/parsed/
+!articles/parsed/2026-03-12_quantum-centric-supercomputing.md
+
+# Optional local environment
+.venv/
+venv/
