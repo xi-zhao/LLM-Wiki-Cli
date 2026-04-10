@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "ingest_wechat_direct_url.py"
+MODULE_PATH = Path(__file__).resolve().parents[1] / 'scripts' / 'ingest_wechat_direct_url.py'
 SPEC = importlib.util.spec_from_file_location("ingest_wechat_direct_url", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader

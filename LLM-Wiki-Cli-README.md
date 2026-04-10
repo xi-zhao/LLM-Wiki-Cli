@@ -2,6 +2,8 @@
 
 LLM-Wiki-Cli 是一个 **面向 agent 的知识库控制 CLI**。
 
+它明确参考了 Andrej Karpathy 提出的 LLM Wiki / markdown-first knowledge workflow 思路，但不是照搬个人 wiki 展示层，而是把这条路线继续产品化成 agent 可调用的控制面。
+
 它不是一个给人类手工点来点去的终端玩具，也不是一组松散脚本的集合。
 它的目标很明确：
 
@@ -12,7 +14,7 @@ LLM-Wiki-Cli 是一个 **面向 agent 的知识库控制 CLI**。
 当前主入口是：
 
 ```bash
-python3 scripts/fokb.py ...
+python3 file-organizer/scripts/fokb.py ...
 ```
 
 安装为本地命令后可直接使用：
@@ -26,7 +28,7 @@ fokb ...
 # 1. 产品定位
 
 LLM-Wiki-Cli 解决的不是“如何写 markdown 文件”这个问题，
-而是“如何让 agent 稳定地维护一个可增长、可检查、可决策、可执行的 markdown 知识库”。
+而是“如何在 Karpathy 那种 markdown-first、可持续维护的 LLM Wiki 思路之上，让 agent 稳定地维护一个可增长、可检查、可决策、可执行的知识库”。
 
 它的核心不是展示，而是控制。
 
@@ -96,6 +98,36 @@ LLM-Wiki-Cli 的产品目标可以概括成四句话：
 - 生成 digest
 - 把候选对象提升为稳定 topic
 
+### digest 自动化规则
+`digest` 是二阶段整理动作，不默认与 `ingest` 绑死。
+
+默认策略：
+- `ingest` / `reingest` 先完成入库、路由、topic 更新和 completion 回执
+- `digest_optional` 只表示“允许继续做摘要收束”，不是“必须立刻做”
+
+建议自动触发条件：
+- `review_required = false`
+- `lifecycle_status = integrated`
+- 存在 `primary_topic`
+- 本次确实更新了 topic
+- `next_actions` 包含 `digest_optional`
+
+CLI 输出里可直接读取：
+- `result.digest_policy.eligible`
+- `result.digest_policy.mode`
+- `result.digest_policy.recommended_action`
+- `result.digest_policy.blocking_reasons`
+
+建议抑制条件：
+- 需要 review
+- 没有命中稳定 topic
+- 只是完成抓取/解析，没有稳定 topic 更新
+
+强制触发方式：
+- `digest <topic>`
+- `ingest --with-digests`
+- `reingest --with-digests`
+
 ## 3.3 对象层查询
 
 - `list`
@@ -117,6 +149,15 @@ LLM-Wiki-Cli 的产品目标可以概括成四句话：
 作用：
 - 基于 query context 写回整理结果
 - 生成结构化 synthesis markdown
+
+## 3.5 Obsidian 收口方向
+当前产品记录格式正在往 Obsidian-native 收：
+- digest 输出优先使用 frontmatter + `[[wikilink]]`
+- topic 主笔记补 `笔记关系` 和 `关联笔记（Obsidian）`
+- parsed/article note 与 brief note 也补 frontmatter、`笔记关系` 与 Obsidian 链接
+- 自动生成 `topics-moc.md` 与 `sources/sources-index.md` 作为导航页
+- digest 生成后会自动刷新这些导航页
+- 同时暂时保留现有 markdown 路径链接和 `关联主题` 字段，避免破坏 maintenance / ingest 兼容链路
 
 ## 3.5 巡检与维护
 
@@ -544,13 +585,13 @@ fokb promote /absolute/path/to/sorted/object.md
 ## 15.1 直接运行
 
 ```bash
-python3 scripts/fokb.py init
-python3 scripts/fokb.py check
+python3 file-organizer/scripts/fokb.py init
+python3 file-organizer/scripts/fokb.py check
 ```
 
 ## 15.2 本地安装
 
-在仓库根目录下：
+在 `file-organizer/` 目录下：
 
 ```bash
 pip install -e .
@@ -571,7 +612,7 @@ fokb stats
 如果要在其他路径运行，可显式设置：
 
 ```bash
-export FOKB_BASE=/path/to/LLM-Wiki-Cli
+export FOKB_BASE=/path/to/file-organizer
 ```
 
 ---
@@ -580,11 +621,11 @@ export FOKB_BASE=/path/to/LLM-Wiki-Cli
 
 更底层的结构化协议定义见：
 
-- `scripts/fokb_protocol.md`
+- `file-organizer/scripts/fokb_protocol.md`
 
 脚本入口索引见：
 
-- `scripts/README.md`
+- `file-organizer/scripts/README.md`
 
 本文档的角色不是替代协议文档，而是：
 

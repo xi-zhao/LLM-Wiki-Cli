@@ -3,6 +3,7 @@
 import argparse
 import importlib.util
 import json
+import os
 import re
 import sys
 from datetime import datetime
@@ -10,8 +11,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-BASE = Path(__file__).resolve().parent.parent
-SCRIPTS_DIR = BASE / "scripts"
+APP_ROOT = Path(__file__).resolve().parent.parent
+BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
+SCRIPTS_DIR = APP_ROOT / "scripts"
 FETCH_SCRIPT = SCRIPTS_DIR / "fetch_web_article.py"
 RAW_DIR = BASE / "articles" / "raw"
 PARSED_DIR = BASE / "articles" / "parsed"
@@ -322,10 +324,30 @@ def write_parsed(
     assets: list[str],
     topics: list[str],
     quotes: list[str],
+    brief_path: Path | None = None,
 ):
-    material_root = f"materials/web/{folder.name}"
+    material_root = f"file-organizer/materials/web/{folder.name}"
+    topic_wikilinks = [f'[[{Path(topic).stem}]]' for topic in topics] if topics else ['[[topics-moc]]']
     note_lines = [
+        '---',
+        'type: article',
+        'source_type: web',
+        f'title: "{title}"',
+        f'file_name: "{path.name}"',
+        'tags:',
+        '  - article',
+        '  - obsidian',
+        '  - source/web',
+        *[f'  - topic/{Path(topic).stem}' for topic in topics],
+        '---',
+        '',
         f"# 标题：{title}",
+        "",
+        "## 笔记关系",
+        "- Source Index: [[sources-index]]",
+        "- Topics MOC: [[topics-moc]]",
+        *( [f'- Brief Note: [[{brief_path.stem}]]'] if brief_path else [] ),
+        *[f'- Topic Note: {link}' for link in topic_wikilinks],
         "",
         "## 元信息",
         "- 来源平台：网页",
@@ -386,16 +408,39 @@ def write_parsed(
         "## 关联主题",
         *([f"- {topic}" for topic in topics] if topics else ["- 待补主题"]),
         "",
+        "## 关联笔记（Obsidian）",
+        *([f"- [[{Path(topic).stem}]]" for topic in topics] if topics else ["- [[topics-moc]]"]),
+        "",
         "## 我的备注",
         "- 这份文章卡由网页直链归档管道自动生成。",
+        "- CLI 的结构化结果给 agent 消费，这份 Markdown 文章卡主要给 Obsidian 查看与组织。",
     ]
     write_note(path, "\n".join(note_lines))
 
 
-def write_brief(path: Path, title: str, summary: str, core_points: list[str], tags: list[str]):
+def write_brief(path: Path, title: str, summary: str, core_points: list[str], tags: list[str], topics: list[str], parsed_path: Path | None = None):
     importance = next((point for point in core_points if point != summary), core_points[0] if core_points else "这篇内容值得后续继续跟进。")
+    topic_wikilinks = [f'[[{Path(topic).stem}]]' for topic in topics] if topics else ['[[topics-moc]]']
     lines = [
+        '---',
+        'type: brief',
+        'source_type: web',
+        f'title: "{title}"',
+        f'file_name: "{path.name}"',
+        'tags:',
+        '  - brief',
+        '  - obsidian',
+        '  - source/web',
+        *[f'  - topic/{Path(topic).stem}' for topic in topics],
+        '---',
+        '',
         f"# Brief｜{title}",
+        "",
+        "## 笔记关系",
+        f"- Article Note: [[{parsed_path.stem if parsed_path else path.stem}]]",
+        "- Source Index: [[sources-index]]",
+        "- Topics MOC: [[topics-moc]]",
+        *[f'- Topic Note: {link}' for link in topic_wikilinks],
         "",
         "## 这篇讲了什么",
         summary,
@@ -406,9 +451,15 @@ def write_brief(path: Path, title: str, summary: str, core_points: list[str], ta
         "## 可复用点",
         *[f"- {point}" for point in core_points[:3]],
         "",
+        "## 关联笔记（Obsidian）",
+        *([f"- [[{Path(topic).stem}]]" for topic in topics] if topics else ["- [[topics-moc]]"]),
+        "",
         "## 应持续跟踪",
         f"- 与 {', '.join(tags[:3])} 相关的后续案例或标准演进",
         "- 这篇网页文章涉及主题的更多一手资料或官方更新",
+        "",
+        "## 我的备注",
+        "- 这份 brief 由归档流程自动生成，主要给 Obsidian 快速浏览。",
     ]
     write_note(path, "\n".join(lines))
 
@@ -477,8 +528,9 @@ def archive_web_materials(url: str, folder: Path) -> dict:
         assets,
         topics,
         quotes,
+        brief_path,
     )
-    write_brief(brief_path, title, summary, core_points, tags)
+    write_brief(brief_path, title, summary, core_points, tags, topics, parsed_path)
 
     status = "briefed"
     source_entry = {

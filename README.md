@@ -1,113 +1,123 @@
 # LLM-Wiki-Cli
 
-LLM-Wiki-Cli 是一个面向 agent 的 markdown 知识库控制 CLI，当前主入口为：
+Agent-facing CLI for maintaining a local Markdown knowledge base.
+
+`fokb` gives agents a stable control surface for ingest, maintenance, decision, and execution, while keeping Markdown notes as the human-readable source of truth.
+
+This project is explicitly inspired by Andrej Karpathy's LLM Wiki / markdown-first knowledge workflow, then pushed further toward agent-facing control, automation, and protocolized outputs.
+
+## Why this exists
+
+Most knowledge tooling optimizes for either:
+- human note-taking, or
+- retrieval over a pile of source files
+
+LLM-Wiki-Cli takes a different path, in the spirit of Karpathy's LLM Wiki idea:
+- raw materials are preserved
+- agents compile them into structured Markdown objects
+- follow-up maintenance happens incrementally
+- every important action returns machine-readable JSON
+
+In short:
+
+**JSON contract for agents, Markdown notes for humans and Obsidian.**
+
+## What it does
+
+- Ingest URLs into a local wiki
+- Maintain parsed articles, briefs, topics, timelines, and digests
+- Return stable JSON envelopes for automation
+- Emit maintenance verdicts after write operations
+- Produce decision plans and optional execution steps
+- Keep an Obsidian-friendly navigation layer alongside the CLI layer
+
+## 30-second example
 
 ```bash
-python3 scripts/fokb.py ...
-```
+pip install -e .
 
-安装后也可直接使用：
-
-```bash
-fokb ...
-```
-
-## 仓库状态
-
-- 当前版本：`0.1.0a1`
-- 发布定位：public alpha
-- 样例内容：最小公开样例，仅用于演示和验证
-- 许可证状态：见 `LICENSE.md`
-
-## 这是什么
-
-它的目标不是做人类终端 UI，而是给 agent 一个稳定的控制面，用来：
-
-- ingest 新材料
-- 查询知识对象
-- 生成整理输出
-- 做增量 maintenance
-- 生成 decision plan
-- 执行动作并记录 provenance
-- 查询 history / state
-
-## 文档分层
-
-### 1. 完整产品说明
-请优先阅读：
-
-- `LLM-Wiki-Cli-README.md`
-
-适合了解：
-- 产品定位
-- 核心能力
-- maintenance / decision / execution / provenance 协议
-- 推荐工作流
-- 稳定字段与已知边界
-
-### 2. 协议文档
-结构化协议定义见：
-
-- `scripts/fokb_protocol.md`
-
-适合对接：
-- agent
-- UI
-- 自动化脚本
-
-### 3. 脚本索引
-脚本入口与分层说明见：
-
-- `scripts/README.md`
-
-### 4. 快速上手
-初始化：
-
-```bash
-fokb init
 fokb check
-```
-
-常用命令：
-
-```bash
 fokb stats
+fokb ingest "https://example.com"
 fokb maintenance --last
-fokb decide --maintenance-path /absolute/path/to/object.md
-fokb decide --maintenance-path /absolute/path/to/object.md --execute
-fokb promote /absolute/path/to/sorted/object.md
-fokb synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
-fokb ingest "<url>"
 ```
 
-### 5. 示例与发布记录
+Example success envelope:
 
-- `examples/README.md`
-- `examples/decide-quantum-topic.json`
-- `CHANGELOG.md`
-- `LICENSE.md`
+```json
+{
+  "ok": true,
+  "command": "digest",
+  "exit_code": 0,
+  "result": {
+    "topic": "agent-knowledge-loops.md",
+    "output": "/abs/path/sorted/agent-knowledge-loops-digest.md",
+    "completion": {
+      "status": "completed",
+      "summary": "digest completed, output written to /abs/path/sorted/agent-knowledge-loops-digest.md",
+      "artifacts": [
+        "/abs/path/sorted/agent-knowledge-loops-digest.md"
+      ]
+    }
+  }
+}
+```
 
-## 路径约定
-`fokb` 默认把 `scripts/fokb.py` 的上级目录识别为项目根目录。
+## Repo shape
 
-如果要在其他位置运行，可设置：
+This public repo is meant to contain:
+- product docs
+- CLI and helper scripts
+- protocol docs
+- tests
+- a small `sample-kb/`
+
+It is **not** meant to be a dump of a private working knowledge base.
+
+Your real KB should normally live in:
+- another repo, or
+- this repo but ignored locally
+
+## Try the sample KB
+
+A minimal public example lives in `sample-kb/`.
 
 ```bash
-export FOKB_BASE=/path/to/LLM-Wiki-Cli
+export FOKB_BASE="$(pwd)/sample-kb"
+
+fokb stats
+fokb show agent-knowledge-loops --scope topics
+fokb show 2026-04-10_agent-knowledge-loops --scope parsed
+fokb digest agent-knowledge-loops.md
 ```
 
-## 当前状态
-当前版本已经具备：
+## Documentation map
 
-- 稳定 envelope
-- maintenance 协议
-- step-based decision contract
-- execution result contract
-- provenance / history / state
+- Product doc: `LLM-Wiki-Cli-README.md`
+- Protocol: `scripts/fokb_protocol.md`
+- Script index: `scripts/README.md`
+- Quickstart: `QUICKSTART.md`
+- Schema: `WIKI_SCHEMA.md`
+- Release hygiene: `RELEASE-CHECKLIST.md`
 
-因此，它已经可以作为第一版完整可用的 agent-facing 产品使用。
+## Core ideas
 
-## 许可证说明
+- Agents should consume stable JSON, not parse prose
+- Markdown should stay readable and editable by humans
+- Maintenance should be incremental, not only full-library rescans
+- Obsidian-facing notes and agent-facing contracts can coexist cleanly
 
-当前仓库已经公开，但许可证文本仍保持保守状态，尚未切换到最终开源授权。
-在正式选定 MIT / Apache-2.0 / 其他许可证之前，请以 `LICENSE.md` 为准。
+## Current status
+
+Alpha, but already usable as an agent-facing control plane.
+
+Implemented areas include:
+- stable JSON envelope
+- maintenance contract
+- decision / execution loop
+- completion contract for write actions
+- Obsidian-friendly topic, digest, article, brief, and navigation outputs
+
+## License
+
+MIT

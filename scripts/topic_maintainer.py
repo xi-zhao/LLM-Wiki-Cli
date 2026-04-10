@@ -2,12 +2,16 @@
 
 import argparse
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent
+APP_ROOT = Path(__file__).resolve().parent.parent
+BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
 TOPICS_DIR = BASE / 'topics'
+SORTED_DIR = BASE / 'sorted'
+MOC_NAME = 'topics-moc.md'
 
 TOPIC_META = {
     'ai-coding-and-autoresearch.md': {
@@ -111,6 +115,99 @@ def append_unique_bullet(section: str, value: str) -> str:
     return section
 
 
+def build_topic_frontmatter(topic_slug: str) -> str:
+    return '\n'.join([
+        '---',
+        'type: topic',
+        f'topic: {topic_slug}',
+        'tags:',
+        '  - topic',
+        '  - obsidian',
+        f'  - topic/{topic_slug}',
+        '---',
+        '',
+    ])
+
+
+def build_note_relations(topic_slug: str, title: str) -> str:
+    return '\n'.join([
+        f'- Topic Note: [[{topic_slug}|{title}]]',
+        f'- Digest Note: [[{topic_slug}-digest]]',
+        '- MOC: [[topics-moc]]',
+    ]) + '\n'
+
+
+def ensure_topic_frontmatter(text: str, topic_slug: str) -> str:
+    if text.lstrip().startswith('---\n'):
+        return text
+    return build_topic_frontmatter(topic_slug) + text.lstrip()
+
+
+def build_obsidian_article_link(parsed_path: Path, parsed_title: str) -> str:
+    return f'[[{parsed_path.stem}|{parsed_title}]]'
+
+
+def list_topic_files() -> list[Path]:
+    if not TOPICS_DIR.exists():
+        return []
+    return sorted(
+        [path for path in TOPICS_DIR.glob('*.md') if path.name not in {'_template.md', MOC_NAME}],
+        key=lambda p: p.name,
+    )
+
+
+def extract_topic_title(topic_text: str, fallback: str) -> str:
+    m = re.search(r'^# Topic: (.+)$', topic_text, re.M)
+    return m.group(1).strip() if m else fallback
+
+
+def build_topics_moc() -> str:
+    lines = [
+        '---',
+        'type: moc',
+        'scope: topics',
+        'tags:',
+        '  - moc',
+        '  - obsidian',
+        '  - topics',
+        '---',
+        '',
+        '# Topics MOC',
+        '',
+        '## 用途',
+        '- 这是 topic / digest / source note 的导航页。',
+        '- 适合在 Obsidian 里作为图谱和双链的总入口。',
+        '',
+        '## Topic Notes',
+    ]
+    topic_files = list_topic_files()
+    if topic_files:
+        for path in topic_files:
+            text = read_text(path)
+            title = extract_topic_title(text, path.stem)
+            lines.append(f'- [[{path.stem}|{title}]]')
+    else:
+        lines.append('- 待补 topic')
+    lines.extend(['', '## Digests'])
+    if topic_files:
+        for path in topic_files:
+            digest_path = SORTED_DIR / f'{path.stem}-digest.md'
+            if digest_path.exists():
+                lines.append(f'- [[{path.stem}-digest]]')
+    else:
+        lines.append('- 待补 digest')
+    lines.extend(['', '## Workflow'])
+    lines.append('- Topic Note -> Digest -> Related Source Notes')
+    lines.append('- 用 `[[wikilink]]` 连接 topic、digest、article notes。')
+    return '\n'.join(lines) + '\n'
+
+
+def write_topics_moc() -> Path:
+    path = TOPICS_DIR / MOC_NAME
+    path.write_text(build_topics_moc(), encoding='utf-8')
+    return path
+
+
 def ensure_topic_file(topic_file: str) -> Path:
     path = TOPICS_DIR / topic_file
     if path.exists():
@@ -119,8 +216,13 @@ def ensure_topic_file(topic_file: str) -> Path:
     title = meta['title'] if meta else topic_file.replace('.md', '')
     definition = meta['definition'] if meta else '待补主题定义'
     questions = meta['questions'] if meta else ['待补问题 1', '待补问题 2', '待补问题 3']
+    topic_slug = path.stem
     content = '\n'.join([
+        build_topic_frontmatter(topic_slug).rstrip(),
         f'# Topic: {title}',
+        '',
+        '## 笔记关系',
+        build_note_relations(topic_slug, title).rstrip(),
         '',
         '## 主题定义',
         f'- {definition}',
@@ -144,11 +246,15 @@ def ensure_topic_file(topic_file: str) -> Path:
         '## 关联文章',
         '- 待补关联文章',
         '',
+        '## 关联笔记（Obsidian）',
+        '- 待补关联笔记',
+        '',
         '## 待跟进',
         '- 待补跟进项',
         '',
     ])
     path.write_text(content, encoding='utf-8')
+    write_topics_moc()
     return path
 
 
@@ -160,6 +266,16 @@ def update_section_block(text: str, heading: str, new_body: str) -> str:
     return text + suffix + f'## {heading}\n' + new_body.rstrip() + '\n\n'
 
 
+def insert_section_after_title(text: str, heading: str, body: str) -> str:
+    if f'## {heading}\n' in text:
+        return text
+    match = re.search(r'(^# Topic: .+$\n)', text, re.M)
+    if not match:
+        return update_section_block(text, heading, body)
+    insertion = f'\n## {heading}\n{body.rstrip()}\n'
+    return text[:match.end()] + insertion + text[match.end():]
+
+
 def maintain_topic(topic_file: str, parsed_file: str) -> dict:
     topic_path = ensure_topic_file(topic_file)
     parsed_path = Path(parsed_file)
@@ -169,9 +285,17 @@ def maintain_topic(topic_file: str, parsed_file: str) -> dict:
     month = datetime.now().strftime('%Y-%m')
     actions = []
 
+    topic_slug = topic_path.stem
+    topic_title = TOPIC_META.get(topic_file, {}).get('title', topic_slug)
+    topic_text = ensure_topic_frontmatter(topic_text, topic_slug)
+    relations_section = build_note_relations(topic_slug, topic_title)
+    topic_text = insert_section_after_title(topic_text, '笔记关系', relations_section)
+    topic_text = update_section_block(topic_text, '笔记关系', relations_section)
+
     core_points = extract_numbered_section(parsed_text, '核心结论')
     facts = extract_bullet_section(parsed_text, '关键事实 / 证据')
     relation_link = f'[{parsed_title}](../articles/parsed/{parsed_path.name})'
+    obsidian_link = build_obsidian_article_link(parsed_path, parsed_title)
     evidence_ref = parsed_path.name
 
     obs_match = re.search(r'^## 新增观察\n(.*?)(?=^## |\Z)', topic_text, re.M | re.S)
@@ -214,6 +338,15 @@ def maintain_topic(topic_file: str, parsed_file: str) -> dict:
         actions.append('append_related_article')
     topic_text = update_section_block(topic_text, '关联文章', related_section)
 
+    obsidian_body = re.search(r'^## 关联笔记（Obsidian）\n(.*?)(?=^## |\Z)', topic_text, re.M | re.S)
+    obsidian_section = obsidian_body.group(1) if obsidian_body else ''
+    obsidian_section = obsidian_section.replace('- 待补关联笔记\n', '')
+    before_obsidian = obsidian_section
+    obsidian_section = append_unique_bullet(obsidian_section, obsidian_link)
+    if obsidian_section != before_obsidian:
+        actions.append('append_obsidian_link')
+    topic_text = update_section_block(topic_text, '关联笔记（Obsidian）', obsidian_section)
+
     stable_body = re.search(r'^## 稳定结论\n(.*?)(?=^## |\Z)', topic_text, re.M | re.S)
     stable_section = stable_body.group(1) if stable_body else ''
     if '待补稳定结论' in stable_section and core_points:
@@ -222,9 +355,11 @@ def maintain_topic(topic_file: str, parsed_file: str) -> dict:
         actions.append('promote_stable_conclusion')
 
     topic_path.write_text(topic_text, encoding='utf-8')
+    moc_path = write_topics_moc()
     return {
         'topic': topic_file,
         'topic_path': str(topic_path),
+        'moc_path': str(moc_path),
         'status': 'updated' if actions else 'no_change',
         'actions': actions or ['no_change'],
     }

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent
+APP_ROOT = Path(__file__).resolve().parent.parent
+BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
 TOPICS = BASE / 'topics'
 TIMELINES = BASE / 'timelines'
 PARSED = BASE / 'articles' / 'parsed'
@@ -29,11 +31,11 @@ summary['parsed_files'] = len([p for p in PARSED.glob('*.md') if not p.name.star
 summary['sorted_files'] = len([p for p in SORTED.glob('*.md') if not p.name.startswith('_')]) if SORTED.exists() else 0
 
 if not summary['has_schema']:
-    summary['issues'].append('missing WIKI_SCHEMA.md')
+    summary['issues'].append('missing file-organizer/WIKI_SCHEMA.md')
 if not summary['has_index']:
-    summary['issues'].append('missing index.md')
+    summary['issues'].append('missing file-organizer/index.md')
 if not SOURCES.exists():
-    summary['issues'].append('missing sources/index.md')
+    summary['issues'].append('missing file-organizer/sources/index.md')
 
 # check parsed backlinks to topic files
 known_topics = {p.name for p in TOPICS.glob('*.md') if not p.name.startswith('_')}

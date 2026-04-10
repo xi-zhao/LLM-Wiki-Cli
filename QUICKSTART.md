@@ -5,9 +5,19 @@
 ## 1. 安装
 
 ```bash
-cd /path/to/LLM-Wiki-Cli
 pip install -e .
 ```
+
+## 1.5 先试公开 sample-kb（推荐）
+
+```bash
+export FOKB_BASE="$(pwd)/sample-kb"
+fokb stats
+fokb show agent-knowledge-loops --scope topics
+fokb digest agent-knowledge-loops.md
+```
+
+如果你只是先想看 repo 长什么样，这一步最省事。
 
 ## 2. 初始化
 
@@ -34,7 +44,6 @@ fokb --output pretty status
 
 ```bash
 fokb search "quantum"
-fokb show quantum-computing-industry --scope topics
 fokb query "quantum financing"
 fokb writeback "quantum financing" --title "Quantum Financing Notes"
 fokb synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
@@ -63,14 +72,9 @@ fokb resolve --last
 ## 可选：自定义知识库目录
 
 ```bash
-export FOKB_BASE=/path/to/LLM-Wiki-Cli
+export FOKB_BASE=/path/to/your-kb
 fokb init
 fokb check
 ```
 
-## 9. 查看仓库自带样例
-
-```bash
-cat examples/README.md
-cat examples/decide-quantum-topic.json
-```
+公开仓库建议保留 `sample-kb/` 这种 curated example，把真实 working KB 放到另一个目录或私有仓库里。

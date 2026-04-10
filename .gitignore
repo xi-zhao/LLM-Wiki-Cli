@@ -6,28 +6,39 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Local temp and scratch
+temp/
+*.tmp
+
 # Runtime state
 sorted/last-ingest-payload.json
 sorted/maintenance-history.json
 sorted/system-state.json
 sorted/review-queue.json
 sorted/resolved-review.json
-sorted/wiki-lint-report.json
-sorted/wechat-kb-maintenance-report.json
-sorted/ingest-failures.json
+sorted/*-report.json
 
 # Local archives and materials
 archive/
 materials/
-temp/
 
 # Local KB content snapshots and generated outputs
-articles/raw/
-articles/parsed/
-articles/briefs/
+articles/raw/*
+articles/parsed/*
+!articles/parsed/_template.md
+articles/briefs/*
+inbox/*
 sorted/*.md
-!articles/parsed/
-!articles/parsed/2026-03-12_quantum-centric-supercomputing.md
+sources/index.md
+sources/sources-index.md
+topics/*.md
+!topics/_template.md
+timelines/*.md
+!timelines/_template.md
+
+# Keep the curated public example KB
+!sample-kb/
+sample-kb/sorted/*.json
 
 # Optional local environment
 .venv/

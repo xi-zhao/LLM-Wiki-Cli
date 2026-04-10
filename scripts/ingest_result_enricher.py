@@ -2,9 +2,11 @@
 
 import argparse
 import json
+import os
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent
+APP_ROOT = Path(__file__).resolve().parent.parent
+BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
 SORTED = BASE / 'sorted'
 REVIEW_QUEUE = SORTED / 'review-queue.json'
 INGEST_FAILURES = SORTED / 'ingest-failures.json'

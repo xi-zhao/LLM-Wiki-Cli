@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,7 +14,19 @@ SPEC.loader.exec_module(MODULE)
 
 class FokbTests(unittest.TestCase):
     def test_discover_base(self):
-        self.assertEqual(MODULE.BASE, MODULE_PATH.parent.parent)
+        self.assertTrue(str(MODULE.BASE).endswith('file-organizer'))
+
+    def test_discover_base_from_env(self):
+        original = os.environ.get('FOKB_BASE')
+        try:
+            os.environ['FOKB_BASE'] = '/tmp/fokb-sample'
+            self.assertEqual(MODULE.discover_base(), Path('/tmp/fokb-sample').resolve())
+            self.assertTrue(str(MODULE.SCRIPTS).endswith('file-organizer/scripts'))
+        finally:
+            if original is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original
 
     def test_build_parser_ingest(self):
         parser = MODULE.build_parser()
@@ -291,6 +304,8 @@ class FokbTests(unittest.TestCase):
                 MODULE.BASE = original_base
         self.assertTrue(result['created'])
         self.assertIn('来源候选', created)
+        self.assertIn('type: topic', created)
+        self.assertIn('## 笔记关系', created)
 
     def test_execute_decision_plan(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -327,6 +342,12 @@ class FokbTests(unittest.TestCase):
         ]})
         self.assertEqual(result['executed'][0]['status'], 'skipped_non_executable')
         self.assertEqual(result['executed'][0]['reason'], 'step_marked_non_executable')
+
+    def test_attach_completion(self):
+        payload, _ = MODULE.envelope_ok('synthesize', {'output_path': '/tmp/out.md'})
+        payload = MODULE.attach_completion(payload)
+        self.assertIn('completion', payload['result'])
+        self.assertEqual(payload['result']['completion']['status'], 'completed')
 
     def test_record_maintenance_with_provenance(self):
         original = MODULE.read_json(MODULE.MAINTENANCE_HISTORY, [])
@@ -446,6 +467,119 @@ class FokbTests(unittest.TestCase):
         self.assertFalse(payload['ok'])
         self.assertEqual(payload['error']['code'], 'review_item_not_found')
         self.assertEqual(code, 2)
+
+    def test_build_completion_for_ingest(self):
+        completion = MODULE.build_completion('ingest', {
+            'title': 'Sample',
+            'files': {'raw': '/tmp/raw.md'},
+            'next_actions': ['digest_optional'],
+            'digest_policy': {'eligible': True},
+        })
+        self.assertEqual(completion['status'], 'completed')
+        self.assertIn('/tmp/raw.md', completion['artifacts'])
+        self.assertIn('digest_optional', completion['next_actions'])
+
+    def test_build_completion_for_ingest_suppresses_digest_when_manual_only(self):
+        completion = MODULE.build_completion('ingest', {
+            'title': 'Sample',
+            'files': {'raw': '/tmp/raw.md'},
+            'next_actions': ['digest_optional', 'review_required'],
+            'digest_policy': {'eligible': False},
+        })
+        self.assertNotIn('digest_optional', completion['next_actions'])
+        self.assertIn('review_required', completion['next_actions'])
+
+    def test_build_digest_policy_auto_eligible(self):
+        digest_policy = MODULE.build_digest_policy({
+            'quality': {'review_required': False},
+            'lifecycle_status': 'integrated',
+            'routing': {'primary_topic': 'ai-coding-and-autoresearch.md'},
+            'updated_topics': [{'topic': 'ai-coding-and-autoresearch.md'}],
+            'next_actions': ['digest_optional'],
+        })
+        self.assertTrue(digest_policy['eligible'])
+        self.assertEqual(digest_policy['mode'], 'auto_eligible')
+        self.assertEqual(digest_policy['recommended_action'], 'digest_optional')
+
+    def test_build_digest_policy_manual_only(self):
+        digest_policy = MODULE.build_digest_policy({
+            'quality': {'review_required': True},
+            'lifecycle_status': 'briefed',
+            'routing': {'primary_topic': None},
+            'updated_topics': [],
+            'next_actions': [],
+        })
+        self.assertFalse(digest_policy['eligible'])
+        self.assertEqual(digest_policy['mode'], 'manual_only')
+        self.assertIn('review_required', digest_policy['blocking_reasons'])
+
+    def test_attach_digest_policy(self):
+        payload, _ = MODULE.envelope_ok('ingest', {
+            'quality': {'review_required': False},
+            'lifecycle_status': 'integrated',
+            'routing': {'primary_topic': 'ai-coding-and-autoresearch.md'},
+            'updated_topics': [{'topic': 'ai-coding-and-autoresearch.md'}],
+            'next_actions': ['digest_optional'],
+        })
+        payload = MODULE.attach_digest_policy(payload)
+        self.assertIn('digest_policy', payload['result'])
+        self.assertTrue(payload['result']['digest_policy']['eligible'])
+
+    def test_build_completion_for_digest(self):
+        completion = MODULE.build_completion('digest', {'output': '/tmp/topic-digest.md'})
+        self.assertEqual(completion['status'], 'completed')
+        self.assertIn('/tmp/topic-digest.md', completion['artifacts'])
+
+    def test_build_completion_for_resolve(self):
+        completion = MODULE.build_completion('resolve', {'url': 'https://example.com'})
+        self.assertEqual(completion['status'], 'completed')
+        self.assertIn('resolve completed', completion['summary'])
+
+    def test_cmd_resolve_returns_envelope(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_base = MODULE.BASE
+            original_review_queue = MODULE.REVIEW_QUEUE
+            original_resolved_review = MODULE.RESOLVED_REVIEW
+            original_system_state = MODULE.SYSTEM_STATE
+            original_maintenance_history = MODULE.MAINTENANCE_HISTORY
+            original_last_payload = MODULE.LAST_PAYLOAD
+            original_lint_report = MODULE.LINT_REPORT
+            original_sorted = MODULE.SORTED
+            original_scripts = MODULE.SCRIPTS
+            try:
+                base = Path(tmpdir)
+                MODULE.BASE = base
+                MODULE.SORTED = base / 'sorted'
+                MODULE.SCRIPTS = base / 'scripts'
+                MODULE.REVIEW_QUEUE = MODULE.SORTED / 'review-queue.json'
+                MODULE.RESOLVED_REVIEW = MODULE.SORTED / 'resolved-review.json'
+                MODULE.SYSTEM_STATE = MODULE.SORTED / 'system-state.json'
+                MODULE.MAINTENANCE_HISTORY = MODULE.SORTED / 'maintenance-history.json'
+                MODULE.LAST_PAYLOAD = MODULE.SORTED / 'last-ingest-payload.json'
+                MODULE.LINT_REPORT = MODULE.SORTED / 'wiki-lint-report.json'
+                MODULE.ensure_layout()
+                MODULE.write_json(MODULE.REVIEW_QUEUE, [{
+                    'url': 'https://example.com/review-item',
+                    'status': 'pending',
+                }])
+                class Args:
+                    url = None
+                    last = True
+                    reason = None
+                payload, exit_code = MODULE.cmd_resolve(Args())
+            finally:
+                MODULE.BASE = original_base
+                MODULE.REVIEW_QUEUE = original_review_queue
+                MODULE.RESOLVED_REVIEW = original_resolved_review
+                MODULE.SYSTEM_STATE = original_system_state
+                MODULE.MAINTENANCE_HISTORY = original_maintenance_history
+                MODULE.LAST_PAYLOAD = original_last_payload
+                MODULE.LINT_REPORT = original_lint_report
+                MODULE.SORTED = original_sorted
+                MODULE.SCRIPTS = original_scripts
+        self.assertTrue(payload['ok'])
+        self.assertEqual(exit_code, 0)
+        self.assertIn('completion', payload['result'])
 
 
 if __name__ == '__main__':

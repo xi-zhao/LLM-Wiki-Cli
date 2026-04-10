@@ -2,13 +2,15 @@
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
-BASE = Path(__file__).resolve().parent.parent
-SCRIPTS = BASE / 'scripts'
+APP_ROOT = Path(__file__).resolve().parent.parent
+BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
+SCRIPTS = APP_ROOT / 'scripts'
 WECHAT_SCRIPT = SCRIPTS / 'ingest_wechat_direct_url.py'
 WEB_SCRIPT = SCRIPTS / 'ingest_web_direct_url.py'
 SORTED = BASE / 'sorted'

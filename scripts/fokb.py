@@ -16,15 +16,20 @@ SEARCH_DIRS = [
 ]
 
 
+def discover_app_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
 def discover_base() -> Path:
     env_base = os.environ.get('FOKB_BASE')
     if env_base:
         return Path(env_base).expanduser().resolve()
-    return Path(__file__).resolve().parent.parent
+    return discover_app_root()
 
 
+APP_ROOT = discover_app_root()
 BASE = discover_base()
-SCRIPTS = BASE / 'scripts'
+SCRIPTS = APP_ROOT / 'scripts'
 SORTED = BASE / 'sorted'
 INGEST = SCRIPTS / 'ingest_any_url.py'
 LINT = SCRIPTS / 'wiki_lint.py'
@@ -113,6 +118,98 @@ def envelope_error(command: str, code: str, message: str, exit_code: int, retrya
             'details': details or {},
         },
     }, exit_code
+
+
+def build_completion(command: str, result: dict) -> dict:
+    artifacts = []
+    next_actions = []
+    summary = f'{command} completed'
+
+    if command in {'writeback', 'synthesize'} and result.get('output_path'):
+        artifacts.append(result['output_path'])
+        summary = f'{command} completed, output written to {result["output_path"]}'
+    elif command == 'promote':
+        promotion = result.get('promotion', {}) if isinstance(result.get('promotion'), dict) else {}
+        if promotion.get('path'):
+            artifacts.append(promotion['path'])
+        summary = f'promote completed, target {promotion.get("reason", "processed")}'
+    elif command == 'decide' and isinstance(result.get('execution'), dict):
+        for item in result['execution'].get('executed', []):
+            item_result = item.get('result', {})
+            if isinstance(item_result, dict) and item_result.get('path'):
+                artifacts.append(item_result['path'])
+        summary = f'decide completed with {result["execution"].get("count", 0)} execution step(s)'
+    elif command == 'digest' and result.get('output'):
+        artifacts.append(result['output'])
+        summary = f'digest completed, output written to {result["output"]}'
+    elif command in {'ingest', 'reingest'}:
+        files = result.get('files', {}) if isinstance(result.get('files'), dict) else {}
+        artifacts.extend([path for path in files.values() if isinstance(path, str)])
+        next_actions = result.get('next_actions', []) if isinstance(result.get('next_actions'), list) else []
+        digest_policy = result.get('digest_policy', {}) if isinstance(result.get('digest_policy'), dict) else {}
+        next_actions = [action for action in next_actions if action != 'digest_optional']
+        if digest_policy.get('eligible'):
+            next_actions.append('digest_optional')
+        summary = f'{command} completed for {result.get("title") or result.get("url") or "input"}'
+    elif command == 'resolve':
+        summary = 'resolve completed, review item removed from queue'
+
+    return {
+        'status': 'completed',
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': next_actions,
+        'user_message': summary,
+    }
+
+
+def build_digest_policy(result: dict) -> dict:
+    quality = result.get('quality', {}) if isinstance(result.get('quality'), dict) else {}
+    routing = result.get('routing', {}) if isinstance(result.get('routing'), dict) else {}
+    updated_topics = result.get('updated_topics', []) if isinstance(result.get('updated_topics'), list) else []
+    next_actions = result.get('next_actions', []) if isinstance(result.get('next_actions'), list) else []
+
+    blocking_reasons = []
+    if quality.get('review_required') is True:
+        blocking_reasons.append('review_required')
+    if result.get('lifecycle_status') != 'integrated':
+        blocking_reasons.append('lifecycle_not_integrated')
+    if not routing.get('primary_topic'):
+        blocking_reasons.append('primary_topic_missing')
+    if not updated_topics:
+        blocking_reasons.append('no_topic_updates')
+    if 'digest_optional' not in next_actions:
+        blocking_reasons.append('digest_optional_not_advertised')
+
+    eligible = not blocking_reasons
+    return {
+        'eligible': eligible,
+        'mode': 'auto_eligible' if eligible else 'manual_only',
+        'primary_topic': routing.get('primary_topic'),
+        'recommended_action': 'digest_optional' if eligible else 'skip_auto_digest',
+        'reason': 'eligible_for_auto_digest' if eligible else 'auto_digest_blocked',
+        'blocking_reasons': blocking_reasons,
+    }
+
+
+def attach_completion(payload: dict) -> dict:
+    if not payload.get('ok'):
+        return payload
+    result = payload.get('result')
+    if isinstance(result, dict):
+        result['completion'] = build_completion(payload.get('command', 'unknown'), result)
+    return payload
+
+
+def attach_digest_policy(payload: dict) -> dict:
+    if not payload.get('ok'):
+        return payload
+    if payload.get('command') not in {'ingest', 'reingest'}:
+        return payload
+    result = payload.get('result')
+    if isinstance(result, dict):
+        result['digest_policy'] = build_digest_policy(result)
+    return payload
 
 
 def render_pretty(payload: dict) -> str:
@@ -853,6 +950,8 @@ def cmd_ingest(args):
         if isinstance(files, dict):
             changed_paths.extend(str(v) for v in files.values())
     payload = attach_maintenance(payload, changed_paths)
+    payload = attach_digest_policy(payload)
+    payload = attach_completion(payload)
     build_system_state()
     return payload, exit_code
 
@@ -945,7 +1044,12 @@ def cmd_digest(args):
     if proc.returncode != 0:
         return envelope_error('digest', 'digest_failed', proc.stderr.strip() or proc.stdout.strip() or 'digest failed', EXIT_EXEC_ERROR, True)
     result = {'topic': args.topic, 'output': (proc.stdout or '').strip().splitlines()[-1] if (proc.stdout or '').strip() else None}
-    return envelope_ok('digest', result)
+    payload, exit_code = envelope_ok('digest', result)
+    if result.get('output'):
+        payload = attach_maintenance(payload, [result['output']])
+    payload = attach_completion(payload)
+    build_system_state()
+    return payload, exit_code
 
 
 def cmd_status(args):
@@ -1013,6 +1117,8 @@ def cmd_reingest(args):
         remove_review_item(target['url'])
         append_resolved_review(target, 'reingest_ok')
     payload = attach_maintenance(payload, changed_paths)
+    payload = attach_digest_policy(payload)
+    payload = attach_completion(payload)
     build_system_state()
     return payload, exit_code
 
@@ -1029,14 +1135,15 @@ def cmd_resolve(args):
         return envelope_error('resolve', 'review_item_not_found', 'review item not found', EXIT_NOT_FOUND, False)
     removed = remove_review_item(target['url'])
     append_resolved_review(target, args.reason or 'resolved')
-    payload = envelope_ok('resolve', {
+    payload, exit_code = envelope_ok('resolve', {
         'url': target['url'],
         'removed_from_review_queue': removed,
         'resolution': args.reason or 'resolved',
     })
     payload = attach_maintenance(payload, [target['url']])
+    payload = attach_completion(payload)
     build_system_state()
-    return payload
+    return payload, exit_code
 
 
 def resolve_show_target(target: str, scope: str | None = None) -> tuple[str | None, Path | None]:
@@ -1233,6 +1340,7 @@ def cmd_writeback(args):
         'mode': 'context',
     })
     payload = attach_maintenance(payload, [str(output_path)])
+    payload = attach_completion(payload)
     return payload, exit_code
 
 
@@ -1252,6 +1360,7 @@ def cmd_synthesize(args):
         'slug': slug,
     })
     payload = attach_maintenance(payload, [str(output_path)])
+    payload = attach_completion(payload)
     return payload, exit_code
 
 
@@ -1366,7 +1475,21 @@ def promote_target_to_topic(path: Path) -> dict:
         }
     topic_path.write_text(
         '\n'.join([
+            '---',
+            'type: topic',
+            f'topic: {topic_slug}',
+            'tags:',
+            '  - topic',
+            '  - obsidian',
+            f'  - topic/{topic_slug}',
+            '---',
+            '',
             f'# Topic: {title}',
+            '',
+            '## 笔记关系',
+            f'- Topic Note: [[{topic_slug}|{title}]]',
+            f'- Digest Note: [[{topic_slug}-digest]]',
+            '- MOC: [[topics-moc]]',
             '',
             '## 来源候选',
             f'- [{path.stem}](../sorted/{path.name})',
@@ -1376,6 +1499,9 @@ def promote_target_to_topic(path: Path) -> dict:
             '',
             '## 关联文章',
             '- 暂无 parsed 回链，后续补齐。',
+            '',
+            '## 关联笔记（Obsidian）',
+            '- 待补关联笔记。',
             '',
             '## 待跟进',
             '- 根据后续 ingest / parsed / timeline 信号继续完善。',
@@ -1402,6 +1528,7 @@ def cmd_promote(args):
         'promotion': result,
     })
     payload = attach_maintenance(payload, [str(target_path), result['path']])
+    payload = attach_completion(payload)
     build_system_state()
     return payload, exit_code
 
@@ -1524,9 +1651,12 @@ def cmd_decide(args):
             'execution': execution,
             'decision_source': decision_source,
         })
+        payload = attach_completion(payload)
         build_system_state()
         return payload, exit_code
-    return envelope_ok('decide', result)
+    payload, exit_code = envelope_ok('decide', result)
+    payload = attach_completion(payload)
+    return payload, exit_code
 
 
 def cmd_stats(args):

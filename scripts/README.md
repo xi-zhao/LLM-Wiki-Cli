@@ -10,39 +10,39 @@
 推荐优先使用：
 
 ```bash
-python3 scripts/fokb.py init
-python3 scripts/fokb.py check
-python3 scripts/fokb.py stats
-python3 scripts/fokb.py maintenance --last
-python3 scripts/fokb.py decide --last
-python3 scripts/fokb.py decide --last --execute
-python3 scripts/fokb.py promote sorted/sample-summary.md
-python3 scripts/fokb.py lint --deep
-python3 scripts/fokb.py list topics
-python3 scripts/fokb.py search "quantum"
-python3 scripts/fokb.py show quantum-computing-industry --scope topics
-python3 scripts/fokb.py query "quantum financing"
-python3 scripts/fokb.py writeback "quantum financing" --title "Quantum Financing Notes"
-python3 scripts/fokb.py synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
-python3 scripts/fokb.py ingest "<url>"
-python3 scripts/fokb.py lint
-python3 scripts/fokb.py status
-python3 scripts/fokb.py review
-python3 scripts/fokb.py review --summary
-python3 scripts/fokb.py review --count
-python3 scripts/fokb.py review --urls-only
-python3 scripts/fokb.py reingest --last
-python3 scripts/fokb.py resolve --last
-python3 scripts/fokb.py --output pretty status
-python3 scripts/fokb.py --output quiet lint
-python3 scripts/fokb.py state
+python3 file-organizer/scripts/fokb.py init
+python3 file-organizer/scripts/fokb.py check
+python3 file-organizer/scripts/fokb.py stats
+python3 file-organizer/scripts/fokb.py maintenance --last
+python3 file-organizer/scripts/fokb.py decide --last
+python3 file-organizer/scripts/fokb.py decide --last --execute
+python3 file-organizer/scripts/fokb.py promote file-organizer/sorted/wechat-agent-summary.md
+python3 file-organizer/scripts/fokb.py lint --deep
+python3 file-organizer/scripts/fokb.py list topics
+python3 file-organizer/scripts/fokb.py search "quantum"
+python3 file-organizer/scripts/fokb.py show quantum-computing-industry --scope topics
+python3 file-organizer/scripts/fokb.py query "quantum financing"
+python3 file-organizer/scripts/fokb.py writeback "quantum financing" --title "Quantum Financing Notes"
+python3 file-organizer/scripts/fokb.py synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
+python3 file-organizer/scripts/fokb.py ingest "<url>"
+python3 file-organizer/scripts/fokb.py lint
+python3 file-organizer/scripts/fokb.py status
+python3 file-organizer/scripts/fokb.py review
+python3 file-organizer/scripts/fokb.py review --summary
+python3 file-organizer/scripts/fokb.py review --count
+python3 file-organizer/scripts/fokb.py review --urls-only
+python3 file-organizer/scripts/fokb.py reingest --last
+python3 file-organizer/scripts/fokb.py resolve --last
+python3 file-organizer/scripts/fokb.py --output pretty status
+python3 file-organizer/scripts/fokb.py --output quiet lint
+python3 file-organizer/scripts/fokb.py state
 ```
 
 说明：
 - `fokb` = File Organizer Knowledge Base
 - 目标不是给人做 UI，而是给 agent 一个稳定 CLI 外壳
 - 后续新能力优先挂到 `fokb.py` 子命令上，而不是继续散落成更多入口
-- 协议说明见：`scripts/fokb_protocol.md`
+- 协议说明见：`file-organizer/scripts/fokb_protocol.md`
 - 对 agent / UI 而言，优先消费结构化字段，而不是依赖 pretty 输出文案
 - `decide` 现已输出 `steps[]`，agent 应优先消费 step contract，而不是自行拼装 actions + targets
 - `decide --execute` 产生的 action provenance 也会继续进入 maintenance/history
@@ -57,10 +57,15 @@ python3 scripts/fokb.py state
 - 自动跑结果增强与质量评估
 - 可选生成 digest
 
+digest 规则：
+- 默认不把 digest 当成 ingest 的硬绑定步骤
+- 当结果已 `integrated`、`review_required = false`、存在 `primary_topic` 且 `next_actions` 包含 `digest_optional` 时，可由上层 agent 自动跟进 digest
+- 若需要强制执行，可显式使用 `--with-digests`
+
 推荐优先使用：
 
 ```bash
-python3 scripts/ingest_any_url.py "<url>"
+python3 file-organizer/scripts/ingest_any_url.py "<url>"
 ```
 
 ### 2. `wiki_lint.py`
@@ -100,11 +105,31 @@ python3 scripts/ingest_any_url.py "<url>"
 ### 6. `topic_maintainer.py`
 在 ingest 后自动维护 topic 文件。
 
+当前 topic 默认往 Obsidian-friendly 结构收：
+- YAML frontmatter
+- `## 笔记关系`
+- `## 关联笔记（Obsidian）`
+- 自动维护 `topics-moc.md`
+- 保留原有 `关联文章` markdown 路径，兼顾现有维护协议
+
 ### 7. `source_index_manager.py`
 统一维护 `sources/index.md` 的状态与统计。
 
 ### 8. `generate_topic_digest.py`
 从 topic 生成 digest 输出。
+
+当前 digest 默认按 Obsidian-friendly Markdown 产出：
+- YAML frontmatter
+- `[[wikilink]]` 关联 topic / article
+- 更适合放进图谱、双链和 MOC 工作流
+- 生成后会自动刷新 `topics-moc.md` 与 `sources/sources-index.md`
+
+当前 parsed/article note 也开始往 Obsidian-friendly 收：
+- YAML frontmatter
+- `## 笔记关系`
+- `## 关联笔记（Obsidian）`
+- brief note 也补 frontmatter 和导航关系
+- 同时保留 `## 关联主题` 原字段，兼顾现有 lint / maintenance 协议
 
 ---
 

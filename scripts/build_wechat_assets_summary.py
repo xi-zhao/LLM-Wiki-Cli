@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent / 'materials' / 'wechat'
-
+APP_ROOT = Path(__file__).resolve().parent.parent
+KB_BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
+BASE = KB_BASE / 'materials' / 'wechat'
 
 def classify(name: str):
     lower = name.lower()
@@ -13,7 +15,6 @@ def classify(name: str):
     if any(k in lower for k in ['chart', 'table', 'fig', 'flow', 'arch', 'framework']):
         return 'body-core'
     return 'unknown'
-
 
 def resolve_target(folder_arg: str) -> Path:
     candidate = Path(folder_arg).expanduser()

@@ -1,10 +1,24 @@
 # Topic Card Template
 
 ```markdown
-# Topic: 
+---
+type: topic
+topic: <topic-slug>
+tags:
+  - topic
+  - obsidian
+  - topic/<topic-slug>
+---
+
+# Topic: <title>
+
+## 笔记关系
+- Topic Note: [[<topic-slug>|<title>]]
+- Digest Note: [[<topic-slug>-digest]]
+- MOC: [[topics-moc]]
 
 ## 主题定义
--
+- 
 
 ## 当前核心问题
 - 
@@ -28,7 +42,10 @@
 - 可做分享：
 
 ## 关联文章
-- 
+- [文章标题](../articles/parsed/example.md)
+
+## 关联笔记（Obsidian）
+- [[example|文章标题]]
 
 ## 待跟进
 - 

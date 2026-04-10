@@ -368,6 +368,55 @@
 - `side_effects`
   - 简短副作用标签数组
 
+### completion schema v1
+- `status`
+- `summary`
+- `artifacts`
+- `next_actions`
+- `user_message`
+
+推荐在聊天场景、agent 回执和 UI 完成提示中优先消费 `result.completion`，而不是每次由上层自行拼装完成提醒。
+
+### digest policy schema v1
+- `eligible`
+- `mode`
+- `primary_topic`
+- `recommended_action`
+- `reason`
+- `blocking_reasons`
+
+仅在 `ingest` / `reingest` 成功结果中出现，路径为 `result.digest_policy`。
+
+### digest trigger rule v1
+`digest` 视为二阶段收束动作，不默认等同于 `ingest` 主流程。
+
+#### 显式触发
+以下情况可以直接运行 digest：
+- 用户或上层 agent 明确要求生成 digest
+- 调用 `digest <topic>`
+- 调用 `ingest --with-digests` 或 `reingest --with-digests`
+
+#### 自动触发资格
+在没有显式要求时，只有同时满足以下条件，agent 才应自动跟进 `digest_optional`：
+- `result.quality.review_required == false`
+- `result.lifecycle_status == "integrated"`
+- `result.routing.primary_topic` 存在
+- `result.updated_topics` 非空
+- `result.next_actions` 包含 `digest_optional`
+
+#### 自动触发抑制条件
+满足以下任一条件时，不应自动 digest：
+- `result.quality.review_required == true`
+- `result.routing.primary_topic` 缺失
+- `result.lifecycle_status != "integrated"`
+- 本次只完成抓取/解析，但没有稳定 topic 更新
+
+#### agent 默认策略
+- 主流程先完成 `ingest` / `reingest`，优先交付入库结果与 completion
+- 遇到 `digest_optional` 时，把它视为“可跟进动作”，而不是“必须立即执行”
+- 只有在满足自动触发资格，且调用方希望做二阶段收束时，才继续跑 digest
+- `result.completion.next_actions` 会按 `result.digest_policy` 收口：只有 `eligible == true` 时才保留 `digest_optional`
+
 ### action registry v1
 - `no_immediate_action`
 - `monitor_and_collect_more_evidence`
@@ -405,6 +454,7 @@
 - `decide --last`
 - `decision.actions`
 - `decision.promotion_targets`
+- `result.digest_policy`
 
 #### 控制面板 / 后台巡检
 优先读取：

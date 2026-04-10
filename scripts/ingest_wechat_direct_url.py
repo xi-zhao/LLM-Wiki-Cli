@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -9,8 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-BASE = Path(__file__).resolve().parent.parent
-SCRIPTS_DIR = BASE / 'scripts'
+APP_ROOT = Path(__file__).resolve().parent.parent
+BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
+SCRIPTS_DIR = APP_ROOT / 'scripts'
 FETCH_SCRIPT = SCRIPTS_DIR / 'fetch_wechat_article.py'
 NORMALIZE_SCRIPT = SCRIPTS_DIR / 'normalize_wechat_materials.py'
 SUMMARY_SCRIPT = SCRIPTS_DIR / 'build_wechat_assets_summary.py'
@@ -19,6 +21,7 @@ PARSED_DIR = BASE / 'articles' / 'parsed'
 BRIEF_DIR = BASE / 'articles' / 'briefs'
 SOURCES_DIR = BASE / 'sources'
 SOURCES_INDEX = SOURCES_DIR / 'index.md'
+OBSIDIAN_SOURCES_INDEX = SOURCES_DIR / 'sources-index.md'
 DEFAULT_MATERIALS_DIR = BASE / 'materials' / 'wechat'
 BACKUP_ROOT = BASE / 'archive' / 'ingest-backups'
 
@@ -561,10 +564,28 @@ def write_parsed(
     topics: list[str],
     quotes: list[str],
 ):
-    material_root = f'materials/wechat/{folder.name}'
+    material_root = f'file-organizer/materials/wechat/{folder.name}'
     recommendation_lines = assets or ['待补素材推荐']
+    topic_wikilinks = [f'[[{Path(topic).stem}]]' for topic in topics] if topics else ['[[topics-moc]]']
     note_lines = [
+        '---',
+        'type: article',
+        'source_type: wechat',
+        f'title: "{title}"',
+        f'file_name: "{path.name}"',
+        'tags:',
+        '  - article',
+        '  - obsidian',
+        '  - source/wechat',
+        *[f'  - topic/{Path(topic).stem}' for topic in topics],
+        '---',
+        '',
         f'# 标题：{title}',
+        '',
+        '## 笔记关系',
+        '- Source Index: [[sources-index]]',
+        '- Topics MOC: [[topics-moc]]',
+        *[f'- Topic Note: {link}' for link in topic_wikilinks],
         '',
         '## 元信息',
         '- 来源平台：微信公众号',
@@ -624,16 +645,39 @@ def write_parsed(
         '## 关联主题',
         *([f'- {topic}' for topic in topics] if topics else ['- 待补主题']),
         '',
+        '## 关联笔记（Obsidian）',
+        *([f'- [[{Path(topic).stem}]]' for topic in topics] if topics else ['- [[topics-moc]]']),
+        '',
         '## 我的备注',
         '- 这份文章卡由直链归档管道自动生成，适合作为后续人工精修的起点。',
+        '- CLI 的结构化结果给 agent 消费，这份 Markdown 文章卡主要给 Obsidian 查看与组织。',
     ]
     write_note(path, '\n'.join(note_lines))
 
 
-def write_brief(path: Path, title: str, summary: str, core_points: list[str], tags: list[str]):
+def write_brief(path: Path, title: str, summary: str, core_points: list[str], tags: list[str], topics: list[str]):
     importance = next((point for point in core_points if point != summary), core_points[0] if core_points else '这篇内容值得后续继续跟进。')
+    topic_wikilinks = [f'[[{Path(topic).stem}]]' for topic in topics] if topics else ['[[topics-moc]]']
     lines = [
+        '---',
+        'type: brief',
+        'source_type: wechat',
+        f'title: "{title}"',
+        f'file_name: "{path.name}"',
+        'tags:',
+        '  - brief',
+        '  - obsidian',
+        '  - source/wechat',
+        *[f'  - topic/{Path(topic).stem}' for topic in topics],
+        '---',
+        '',
         f'# Brief｜{title}',
+        '',
+        '## 笔记关系',
+        f'- Article Note: [[{path.stem}]]',
+        '- Source Index: [[sources-index]]',
+        '- Topics MOC: [[topics-moc]]',
+        *[f'- Topic Note: {link}' for link in topic_wikilinks],
         '',
         '## 这篇讲了什么',
         summary,
@@ -644,9 +688,15 @@ def write_brief(path: Path, title: str, summary: str, core_points: list[str], ta
         '## 可复用点',
         *[f'- {point}' for point in core_points[:3]],
         '',
+        '## 关联笔记（Obsidian）',
+        *([f'- [[{Path(topic).stem}]]' for topic in topics] if topics else ['- [[topics-moc]]']),
+        '',
         '## 应持续跟踪',
         f'- 与 {", ".join(tags[:3])} 相关的后续案例或标准演进',
         '- 这套方法在更多真实项目里的复用效果',
+        '',
+        '## 我的备注',
+        '- 这份 brief 由归档流程自动生成，主要给 Obsidian 快速浏览。',
     ]
     write_note(path, '\n'.join(lines))
 
@@ -676,6 +726,55 @@ def parse_source_rows(text: str) -> list[dict]:
             'status': cells[11],
         })
     return rows
+
+
+def infer_note_title(path: Path) -> str:
+    text = read_text(path)
+    for line in text.splitlines():
+        if line.startswith('# 标题：'):
+            return line.replace('# 标题：', '', 1).strip()
+    return path.stem
+
+
+def build_obsidian_sources_index(rows: list[dict]) -> str:
+    lines = [
+        '---',
+        'type: source-index',
+        'scope: sources',
+        'tags:',
+        '  - sources',
+        '  - obsidian',
+        '  - moc',
+        '---',
+        '',
+        '# Sources Index',
+        '',
+        '## 用途',
+        '- 这是 article/source notes 的导航页。',
+        '- CLI 的结构化结果给 agent，本页主要给 Obsidian 查看与组织。',
+        '',
+        '## 最新来源',
+    ]
+    parsed_notes = sorted([p for p in PARSED_DIR.glob('*.md') if p.is_file() and not p.name.startswith('_')], key=lambda p: p.name, reverse=True)
+    if parsed_notes:
+        for path in parsed_notes[:20]:
+            lines.append(f'- [[{path.stem}|{infer_note_title(path)}]]')
+    else:
+        lines.append('- 待补 source note')
+    lines.extend(['', '## 相关主题'])
+    topic_refs = []
+    for row in rows:
+        topics = [item.strip() for item in row.get('topics', '').split(',') if item.strip() and item.strip() != '-']
+        for topic in topics:
+            stem = Path(topic).stem
+            if stem not in topic_refs:
+                topic_refs.append(stem)
+    if topic_refs:
+        for stem in sorted(topic_refs):
+            lines.append(f'- [[{stem}]]')
+    else:
+        lines.append('- [[topics-moc]]')
+    return '\n'.join(lines) + '\n'
 
 
 def update_source_index(entry: dict):
@@ -721,6 +820,7 @@ def update_source_index(entry: dict):
         f'- integrated: {stats["integrated"]}',
     ])
     write_note(SOURCES_INDEX, '\n'.join(lines))
+    write_note(OBSIDIAN_SOURCES_INDEX, build_obsidian_sources_index(rows))
 
 
 def archive_materials(url: str, folder: Path) -> dict:
@@ -790,7 +890,7 @@ def archive_materials(url: str, folder: Path) -> dict:
         topics,
         quotes,
     )
-    write_brief(brief_path, title, summary, core_points, tags)
+    write_brief(brief_path, title, summary, core_points, tags, topics)
 
     status = 'briefed'
     followup_needed = 'yes' if status != 'integrated' else 'no'

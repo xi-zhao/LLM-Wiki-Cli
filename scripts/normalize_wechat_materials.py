@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-import argparse
-import hashlib
-import json
-import re
+import argparse, hashlib, json, os, re
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent / 'materials' / 'wechat'
+APP_ROOT = Path(__file__).resolve().parent.parent
+KB_BASE = Path(os.environ.get('FOKB_BASE', str(APP_ROOT))).expanduser().resolve()
+BASE = KB_BASE / 'materials' / 'wechat'
 BAD_SUFFIX_RE = re.compile(r'(\\x22|\")+$')
 
 
 def clean_ext(name: str) -> str:
-    return BAD_SUFFIX_RE.sub('', name)
+    name = BAD_SUFFIX_RE.sub('', name)
+    return name
 
 
 def sha256(path: Path) -> str:
@@ -116,7 +116,6 @@ def main():
 
     for folder in iter_targets(args.folder):
         normalize_folder(folder)
-
 
 if __name__ == '__main__':
     main()

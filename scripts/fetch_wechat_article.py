@@ -5,7 +5,6 @@ from pathlib import Path
 FIELD_RE = re.compile(r"(nick_name|title|create_time|link|source_url|cdn_url|content_noencode): JsDecode\('((?:\\.|[^'])*)'\)")
 GLOBAL_IMG_RE = re.compile(r'https?://mmbiz\.qpic\.cn/[^\'"\s)]+')
 ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
-DEFAULT_BASE_DIR = Path(__file__).resolve().parent.parent / 'materials' / 'wechat'
 
 
 def decode_jsdecode(s: str) -> str:
@@ -81,7 +80,8 @@ def ext_from_url(url: str) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('url')
-    ap.add_argument('--base-dir', default=str(DEFAULT_BASE_DIR))
+    default_base_dir = Path(os.environ.get('FOKB_BASE', str(Path(__file__).resolve().parent.parent))).expanduser().resolve() / 'materials' / 'wechat'
+    ap.add_argument('--base-dir', default=str(default_base_dir))
     args = ap.parse_args()
 
     raw_html = fetch_html(args.url)

@@ -1,6 +1,6 @@
 # Chat Trigger Rules
 
-这个文件用于把当前仓库的聊天触发行为写死，减少每次临场判断。
+这个文件用于把 `file-organizer/` 的聊天触发行为写死，减少每次临场判断。
 
 ## 目标
 
@@ -22,13 +22,13 @@
 ## 默认执行命令
 
 ```bash
-python3 scripts/ingest_any_url.py "<url>"
+python3 file-organizer/scripts/ingest_any_url.py "<url>"
 ```
 
 如果用户同时表达“顺手出个综述 / digest / 摘要”，则可用：
 
 ```bash
-python3 scripts/ingest_any_url.py "<url>" --with-digests
+python3 file-organizer/scripts/ingest_any_url.py "<url>" --with-digests
 ```
 
 ## 决策规则
@@ -47,4 +47,4 @@ python3 scripts/ingest_any_url.py "<url>" --with-digests
 
 ## 一句话原则
 
-对这套仓库来说，“链接 + 记录类动词” 就等于 “执行统一 ingest”。
+对 file-organizer 来说，“链接 + 记录类动词” 就等于 “执行统一 ingest”。
