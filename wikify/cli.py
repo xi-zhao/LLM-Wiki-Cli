@@ -1,7 +1,9 @@
 import argparse
 import os
 
-from wikify.envelope import envelope_error, print_output
+from wikify.config import discover_base
+from wikify.envelope import envelope_error, envelope_ok, print_output
+from wikify.graph.builder import build_graph_artifacts
 
 
 def _sync_legacy_env():
@@ -17,15 +19,30 @@ def _legacy_fokb():
     return fokb
 
 
-def cmd_graph_unimplemented(args):
-    del args
-    return envelope_error(
-        'graph',
-        'graph_build_failed',
-        'wikify graph is not implemented yet',
-        1,
-        retryable=False,
-    )
+def cmd_graph(args):
+    try:
+        result = build_graph_artifacts(
+            discover_base(),
+            scope=args.scope,
+            include_html=not args.no_html,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'graph',
+            'graph_build_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'graph completed, artifacts written to graph directory',
+        'artifacts': artifacts,
+        'next_actions': [],
+        'user_message': 'graph completed',
+    }
+    return envelope_ok('graph', result)
 
 
 def _subparsers_action(parser: argparse.ArgumentParser):
@@ -45,7 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_graph = sub.add_parser('graph', help='Build graph artifacts from compiled Markdown wiki files')
         p_graph.add_argument('--scope', choices=['all', 'topics', 'timelines', 'briefs', 'parsed', 'sorted', 'sources'], default='all')
         p_graph.add_argument('--no-html', action='store_true')
-        p_graph.set_defaults(func=cmd_graph_unimplemented)
+        p_graph.set_defaults(func=cmd_graph)
 
     return parser
 
