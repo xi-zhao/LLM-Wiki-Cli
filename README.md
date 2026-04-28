@@ -134,6 +134,7 @@ wikify rollback --application-path sorted/graph-patch-applications/<application-
 wikify rollback --application-path sorted/graph-patch-applications/<application-id>.json
 wikify run-task --id agent-task-1 --dry-run
 wikify run-task --id agent-task-1
+wikify run-task --id agent-task-1 --agent-command "python3 agent.py" --producer-timeout 120
 wikify tasks --id agent-task-1 --mark-proposed --proposal-path sorted/graph-patch-proposals/agent-task-1.json
 wikify tasks --id agent-task-1 --start
 wikify tasks --id agent-task-1 --mark-done
@@ -153,11 +154,13 @@ Patch proposals are purpose-aware when the wiki root contains `purpose.md` or `w
 
 `wikify apply` consumes a proposal plus an agent-generated patch bundle. V1.2 supports deterministic `replace_text` operations only: each source text must match exactly once, each path must stay inside the proposal `write_scope`, and `--dry-run` writes nothing. A real apply writes `sorted/graph-patch-applications/<application-id>.json` with before/after hashes. `wikify rollback` restores from that application record only when the current file hash still matches the recorded post-apply hash.
 
-`wikify run-task` is the low-interruption workflow runner. It creates or reuses a proposal, looks for `sorted/graph-patch-bundles/<task-id>.json`, applies it when present, and marks the task done after a successful apply. If the patch bundle is missing, it now writes `sorted/graph-patch-bundle-requests/<task-id>.json`, returns `waiting_for_patch_bundle`, and exposes both `artifacts.patch_bundle_request` and `summary.suggested_bundle_path`. An external agent can consume that request through `wikify produce-bundle`, then call `wikify run-task --id <task-id>` again. It does not ask the user or invent content.
+`wikify run-task` is the low-interruption workflow runner. It creates or reuses a proposal, looks for `sorted/graph-patch-bundles/<task-id>.json`, applies it when present, and marks the task done after a successful apply. If the patch bundle is missing, it writes `sorted/graph-patch-bundle-requests/<task-id>.json`, returns `waiting_for_patch_bundle`, and exposes both `artifacts.patch_bundle_request` and `summary.suggested_bundle_path`. An external agent can consume that request through `wikify produce-bundle`, then call `wikify run-task --id <task-id>` again.
+
+For one-command automation, `wikify run-task --id <task-id> --agent-command "<command>"` writes the request, invokes that explicit external command through the same producer contract, applies the preflighted bundle, and marks the task done. `--dry-run --agent-command` does not execute the command or write artifacts, and existing bundle files are applied without executing the command.
 
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
-Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `produce-bundle` only invokes the explicit command supplied by the caller and preflights its bundle output. `wikify apply` is the explicit content mutation path, and it only applies deterministic patch bundle operations supplied by a downstream agent.
+Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `run-task --agent-command` and `produce-bundle` only invoke the explicit command supplied by the caller and preflight its bundle output. `wikify apply` remains the deterministic content mutation path.
 
 ## Documentation map
 

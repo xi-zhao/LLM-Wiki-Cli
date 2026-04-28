@@ -168,6 +168,8 @@
 - `run-task --id <id>`
 - `run-task --id <id> --dry-run`
 - `run-task --id <id> --bundle-path <path>`
+- `run-task --id <id> --agent-command <command>`
+- `run-task --id <id> --agent-command <command> --producer-timeout <seconds>`
 
 ### 巡检层
 - `lint`
@@ -904,6 +906,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - `run-task --id agent-task-1 --dry-run`
 - `run-task --id agent-task-1`
 - `run-task --id agent-task-1 --bundle-path sorted/graph-patch-bundles/custom.json`
+- `run-task --id agent-task-1 --agent-command "python3 agent.py" --producer-timeout 120`
 - `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py"`
 - `run-task --id agent-task-1`
 
@@ -916,10 +919,12 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - bundle 缺失时写入 `sorted/graph-patch-bundle-requests/<task-id>.json`
 - bundle 缺失时返回 `waiting_for_patch_bundle` 和 `next_actions: ["generate_patch_bundle"]`
 - 上层 agent 可调用 `produce-bundle` 执行显式外部 command 生成 bundle，再重试 `run-task`
+- 如果调用方提供 `--agent-command`，bundle 缺失时 runner 会调用 producer 生成并 preflight bundle，然后继续 apply 和 mark-done
+- 如果 bundle 已存在，即使提供 `--agent-command` 也不会执行 producer command
 - bundle 存在时通过 deterministic `apply` 合约应用
 - apply 成功后通过 lifecycle 标记 task 为 `done`
 
-`run-task --dry-run` 不写 proposal，不写 bundle request，不写 lifecycle event，不改正文，不写 application record。
+`run-task --dry-run` 不写 proposal，不写 bundle request，不写 lifecycle event，不改正文，不写 application record。`run-task --dry-run --agent-command <command>` 也不执行 command，不写 patch bundle。
 
 返回 schema:
 
@@ -965,10 +970,11 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - 找不到 task id 时返回 `agent_task_not_found`，exit code 为 `2`
 - proposal 阶段错误沿用 `proposal_*` code，exit code 为 `2`
 - bundle request 阶段错误沿用 `bundle_request_*` code，exit code 为 `2`，`details.phase` 为 `bundle_request`
+- producer 阶段错误沿用 `bundle_producer_*` code，exit code 为 `2`，`details.phase` 为 `bundle_producer`
 - apply 阶段错误沿用 `patch_*` code，exit code 为 `2`
 - lifecycle 阶段错误沿用 `invalid_agent_task_transition` 等 code，exit code 为 `2`
 
-安全规则：`run-task` 只编排现有 audited primitives。它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批；缺 bundle 是正常等待状态，应交给上层 agent 或 `produce-bundle` 继续。
+安全规则：`run-task` 只编排现有 audited primitives。默认情况下它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批。只有调用方显式传入 `--agent-command` 时，它才会执行外部 producer command；provider、模型、密钥、retry 均不由 Wikify 隐式决定。
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。
