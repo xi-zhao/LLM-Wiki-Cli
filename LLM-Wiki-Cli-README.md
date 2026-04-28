@@ -1,6 +1,6 @@
-# LLM-Wiki-Cli
+# Wikify
 
-LLM-Wiki-Cli 是一个 **面向 agent 的知识库控制 CLI**。
+Wikify 是一个 **面向 agent 的 Markdown 知识库控制 CLI**。
 
 它明确参考了 Andrej Karpathy 提出的 LLM Wiki / markdown-first knowledge workflow 思路，但不是照搬个人 wiki 展示层，而是把这条路线继续产品化成 agent 可调用的控制面。
 
@@ -14,23 +14,25 @@ LLM-Wiki-Cli 是一个 **面向 agent 的知识库控制 CLI**。
 当前主入口是：
 
 ```bash
-python3 file-organizer/scripts/fokb.py ...
+wikify ...
 ```
 
-安装为本地命令后可直接使用：
+兼容入口仍然保留：
 
 ```bash
 fokb ...
 ```
 
+`fokb` 是旧名兼容别名，新文档和新自动化应优先使用 `wikify`。
+
 ---
 
 # 1. 产品定位
 
-LLM-Wiki-Cli 解决的不是“如何写 markdown 文件”这个问题，
+Wikify 解决的不是“如何写 markdown 文件”这个问题，
 而是“如何在 Karpathy 那种 markdown-first、可持续维护的 LLM Wiki 思路之上，让 agent 稳定地维护一个可增长、可检查、可决策、可执行的知识库”。
 
-它的核心不是展示，而是控制。
+它的核心不是展示，而是控制；Graphify 融合后的新增重点是结构理解。
 
 ## 适用场景
 
@@ -41,10 +43,11 @@ LLM-Wiki-Cli 解决的不是“如何写 markdown 文件”这个问题，
 - agent 需要根据增量变更做维护判断，而不是每次全库重扫
 - agent 需要根据维护结论自动给出下一步动作建议，必要时执行动作
 - agent / UI / 自动化脚本需要消费稳定 JSON，而不是依赖自然语言 stdout
+- agent 需要读取 `graph.json` / `GRAPH_REPORT.md` 来理解 wiki 的中心节点、社区、孤立对象和断链
 
 ## 不是什么
 
-LLM-Wiki-Cli 不是：
+Wikify 不是：
 
 - 面向普通终端用户的交互式 UI
 - 只会 ingest 的单用途脚本
@@ -55,16 +58,18 @@ LLM-Wiki-Cli 不是：
 
 # 2. 产品目标
 
-LLM-Wiki-Cli 的产品目标可以概括成四句话：
+Wikify 的产品目标可以概括成五句话：
 
 1. **统一入口**
-   - 所有 agent-facing 能力优先挂到 `fokb.py` 子命令
+   - 所有 agent-facing 能力优先挂到 `wikify` 子命令
 2. **结构化输出**
    - 所有结果都走稳定 envelope
 3. **增量维护**
    - 维护逻辑围绕 changed object，而不是只靠全量 lint
 4. **控制闭环**
    - 写入 -> maintenance -> decision -> execution -> history/state
+5. **结构理解**
+   - Markdown wiki -> graph index -> analytics -> report/html/json
 
 ---
 
@@ -171,11 +176,31 @@ CLI 输出里可直接读取：
 - 查询 maintenance history
 - 根据 maintenance verdict 产出下一步 decision plan
 
+## 3.6 图谱结构层
+
+- `graph`
+
+作用：
+- 从已编译的 Markdown wiki 中重建本地图谱
+- 提取 `[[wikilink]]`、Markdown 链接和 topic/article/source 结构关系
+- 输出 `graph/graph.json`、`graph/GRAPH_REPORT.md` 和可选 `graph/graph.html`
+- 帮 agent 发现中心节点、社区、孤立对象、断链和下一步维护问题
+
+默认命令：
+
+```bash
+wikify graph
+wikify graph --no-html
+wikify graph --scope topics
+```
+
+`graph` 在 V1 中是 read-mostly 命令：只写 `graph/` 目录，不修改 topic、parsed、review queue 或 maintenance history。
+
 ---
 
 # 4. 知识库对象模型
 
-LLM-Wiki-Cli 默认面向如下目录结构工作：
+Wikify 默认面向如下目录结构工作：
 
 - `articles/raw` 原文留底
 - `articles/parsed` 结构化文章卡
@@ -250,7 +275,7 @@ maintenance / decision / execution 的很多推理都围绕这些对象类型展
 
 # 6. Maintenance 协议
 
-`maintenance` 是 LLM-Wiki-Cli 的核心协议层之一。
+`maintenance` 是 Wikify 的核心协议层之一。
 
 它不是附属字段，而是：
 
@@ -308,13 +333,13 @@ maintenance / decision / execution 的很多推理都围绕这些对象类型展
 优先使用：
 
 ```bash
-fokb decide --maintenance-path <path>
+wikify decide --maintenance-path <path>
 ```
 
 兼容模式：
 
 ```bash
-fokb decide --last
+wikify decide --last
 ```
 
 原因是：
@@ -382,7 +407,7 @@ fokb decide --last
 当使用：
 
 ```bash
-fokb decide --maintenance-path <path> --execute
+wikify decide --maintenance-path <path> --execute
 ```
 
 系统会直接消费 decision steps，并返回统一 execution result。
@@ -419,7 +444,7 @@ fokb decide --maintenance-path <path> --execute
 
 # 9. Provenance / History / State
 
-为了让 workflow 可审计、可回放，LLM-Wiki-Cli 把执行来源正式写入 history/state。
+为了让 workflow 可审计、可回放，Wikify 把执行来源正式写入 history/state。
 
 ## 9.1 maintenance history entry schema
 
@@ -468,33 +493,33 @@ provenance 用来回答：
 ## 10.1 查询上下文并生成整理结果
 
 ```bash
-fokb query "quantum financing"
-fokb synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
+wikify query "quantum financing"
+wikify synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
 ```
 
 ## 10.2 生成 decision plan
 
 ```bash
-fokb decide --maintenance-path /absolute/path/to/sorted/object.md
+wikify decide --maintenance-path /absolute/path/to/sorted/object.md
 ```
 
 ## 10.3 直接执行 decision
 
 ```bash
-fokb decide --maintenance-path /absolute/path/to/sorted/object.md --execute
+wikify decide --maintenance-path /absolute/path/to/sorted/object.md --execute
 ```
 
 ## 10.4 查询执行后的维护记录
 
 ```bash
-fokb maintenance --last
-fokb state
+wikify maintenance --last
+wikify state
 ```
 
 ## 10.5 手动 promote
 
 ```bash
-fokb promote /absolute/path/to/sorted/object.md
+wikify promote /absolute/path/to/sorted/object.md
 ```
 
 ---
@@ -550,7 +575,7 @@ fokb promote /absolute/path/to/sorted/object.md
 
 当前版本已经具备以下产品级特征：
 
-- 单一主入口 `fokb.py`
+- 单一主入口 `wikify`
 - 稳定 envelope
 - 增量 maintenance 协议
 - step-based decision contract
@@ -585,8 +610,8 @@ fokb promote /absolute/path/to/sorted/object.md
 ## 15.1 直接运行
 
 ```bash
-python3 file-organizer/scripts/fokb.py init
-python3 file-organizer/scripts/fokb.py check
+wikify init
+wikify check
 ```
 
 ## 15.2 本地安装
@@ -600,19 +625,19 @@ pip install -e .
 安装后：
 
 ```bash
-fokb init
-fokb check
-fokb stats
+wikify init
+wikify check
+wikify stats
 ```
 
 ## 15.3 路径约定
 
-默认情况下，`fokb` 会把 `scripts/fokb.py` 的上级目录识别为项目根目录。
+默认情况下，`wikify` 会把项目包所在目录识别为知识库根目录。
 
 如果要在其他路径运行，可显式设置：
 
 ```bash
-export FOKB_BASE=/path/to/file-organizer
+export WIKIFY_BASE=/path/to/file-organizer
 ```
 
 ---
@@ -629,7 +654,7 @@ export FOKB_BASE=/path/to/file-organizer
 
 本文档的角色不是替代协议文档，而是：
 
-## **把 LLM-Wiki-Cli 作为产品讲清楚**
+## **把 Wikify 作为产品讲清楚**
 
 也就是说明：
 - 它是什么
@@ -642,6 +667,6 @@ export FOKB_BASE=/path/to/file-organizer
 
 # 17. 一句话总结
 
-LLM-Wiki-Cli 是一个把 **markdown wiki、增量知识维护、decision plan、动作执行和状态审计** 串成统一控制回路的 agent-facing CLI。
+Wikify 是一个把 **markdown wiki、增量知识维护、decision plan、动作执行和状态审计** 串成统一控制回路的 agent-facing CLI。
 
 如果你要的是“让 agent 真正能稳定维护知识库”的产品，而不是“又一个脚本”，它就是这条线上的正确收口。

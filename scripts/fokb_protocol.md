@@ -1,7 +1,9 @@
-# fokb Protocol v1
+# Wikify Protocol v1
 
-`fokb` 是面向 agent 的知识库控制 CLI。
-本文件定义它的稳定调用协议，重点不是“人类命令手册”，而是让 agent、UI 和脚本稳定消费 `fokb` 的结构化输出。
+`wikify` 是面向 agent 的知识库控制 CLI。
+本文件定义它的稳定调用协议，重点不是“人类命令手册”，而是让 agent、UI 和脚本稳定消费 `wikify` 的结构化输出。
+
+`fokb` 是旧入口兼容别名，协议语义与 `wikify` 相同。新自动化应优先调用 `wikify`。
 
 ## 1. 输出 envelope
 
@@ -107,13 +109,18 @@
 - `writeback`
 - `synthesize`
 
+### 结构图谱层
+- `graph`
+- `graph --no-html`
+- `graph --scope <scope>`
+
 ### 巡检层
 - `lint`
 - `lint --deep`
 
 ## 5. Maintenance schema v1
 
-`maintenance` 是 `fokb` 当前最重要的增量知识维护协议层。
+`maintenance` 是 `wikify` 当前最重要的增量知识维护协议层之一。`graph` 是结构理解协议层，负责把已编译 Markdown wiki 转成可审计图谱产物。
 
 它既会作为：
 - 写操作结果中的 `result.maintenance`

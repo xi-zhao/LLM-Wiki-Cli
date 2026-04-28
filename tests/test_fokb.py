@@ -14,14 +14,14 @@ SPEC.loader.exec_module(MODULE)
 
 class FokbTests(unittest.TestCase):
     def test_discover_base(self):
-        self.assertTrue(str(MODULE.BASE).endswith('file-organizer'))
+        self.assertEqual(MODULE.BASE, Path(__file__).resolve().parents[1])
 
     def test_discover_base_from_env(self):
         original = os.environ.get('FOKB_BASE')
         try:
             os.environ['FOKB_BASE'] = '/tmp/fokb-sample'
             self.assertEqual(MODULE.discover_base(), Path('/tmp/fokb-sample').resolve())
-            self.assertTrue(str(MODULE.SCRIPTS).endswith('file-organizer/scripts'))
+            self.assertEqual(MODULE.SCRIPTS, Path(__file__).resolve().parents[1] / 'scripts')
         finally:
             if original is None:
                 os.environ.pop('FOKB_BASE', None)
@@ -159,9 +159,14 @@ class FokbTests(unittest.TestCase):
         self.assertIn('## Source Objects', markdown)
 
     def test_resolve_show_target(self):
-        source_type, path = MODULE.resolve_show_target('quantum-computing-industry', 'topics')
-        self.assertEqual(source_type, 'topics')
-        self.assertTrue(str(path).endswith('quantum-computing-industry.md'))
+        original_base = MODULE.BASE
+        try:
+            MODULE.BASE = Path(__file__).resolve().parents[1] / 'sample-kb'
+            source_type, path = MODULE.resolve_show_target('agent-knowledge-loops', 'topics')
+            self.assertEqual(source_type, 'topics')
+            self.assertTrue(str(path).endswith('agent-knowledge-loops.md'))
+        finally:
+            MODULE.BASE = original_base
 
     def test_build_list_entries(self):
         entries = MODULE.build_list_entries('topics', limit=2)

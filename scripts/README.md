@@ -4,48 +4,52 @@
 
 ## 一、最常用入口
 
-### 0. `fokb.py`
+### 0. `wikify`
 面向 agent 的统一 CLI 入口。
 
 推荐优先使用：
 
 ```bash
-python3 file-organizer/scripts/fokb.py init
-python3 file-organizer/scripts/fokb.py check
-python3 file-organizer/scripts/fokb.py stats
-python3 file-organizer/scripts/fokb.py maintenance --last
-python3 file-organizer/scripts/fokb.py decide --last
-python3 file-organizer/scripts/fokb.py decide --last --execute
-python3 file-organizer/scripts/fokb.py promote file-organizer/sorted/wechat-agent-summary.md
-python3 file-organizer/scripts/fokb.py lint --deep
-python3 file-organizer/scripts/fokb.py list topics
-python3 file-organizer/scripts/fokb.py search "quantum"
-python3 file-organizer/scripts/fokb.py show quantum-computing-industry --scope topics
-python3 file-organizer/scripts/fokb.py query "quantum financing"
-python3 file-organizer/scripts/fokb.py writeback "quantum financing" --title "Quantum Financing Notes"
-python3 file-organizer/scripts/fokb.py synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
-python3 file-organizer/scripts/fokb.py ingest "<url>"
-python3 file-organizer/scripts/fokb.py lint
-python3 file-organizer/scripts/fokb.py status
-python3 file-organizer/scripts/fokb.py review
-python3 file-organizer/scripts/fokb.py review --summary
-python3 file-organizer/scripts/fokb.py review --count
-python3 file-organizer/scripts/fokb.py review --urls-only
-python3 file-organizer/scripts/fokb.py reingest --last
-python3 file-organizer/scripts/fokb.py resolve --last
-python3 file-organizer/scripts/fokb.py --output pretty status
-python3 file-organizer/scripts/fokb.py --output quiet lint
-python3 file-organizer/scripts/fokb.py state
+wikify init
+wikify check
+wikify stats
+wikify maintenance --last
+wikify decide --last
+wikify decide --last --execute
+wikify promote file-organizer/sorted/wechat-agent-summary.md
+wikify lint --deep
+wikify list topics
+wikify search "quantum"
+wikify show quantum-computing-industry --scope topics
+wikify query "quantum financing"
+wikify writeback "quantum financing" --title "Quantum Financing Notes"
+wikify synthesize "quantum financing" --mode outline --title "Quantum Financing Outline"
+wikify ingest "<url>"
+wikify graph
+wikify graph --no-html
+wikify lint
+wikify status
+wikify review
+wikify review --summary
+wikify review --count
+wikify review --urls-only
+wikify reingest --last
+wikify resolve --last
+wikify --output pretty status
+wikify --output quiet lint
+wikify state
 ```
 
 说明：
-- `fokb` = File Organizer Knowledge Base
+- `wikify` 是新的公开命令名
+- `fokb` = File Organizer Knowledge Base，是旧入口兼容别名
 - 目标不是给人做 UI，而是给 agent 一个稳定 CLI 外壳
-- 后续新能力优先挂到 `fokb.py` 子命令上，而不是继续散落成更多入口
+- 后续新能力优先挂到 `wikify` 子命令上，而不是继续散落成更多入口
 - 协议说明见：`file-organizer/scripts/fokb_protocol.md`
 - 对 agent / UI 而言，优先消费结构化字段，而不是依赖 pretty 输出文案
 - `decide` 现已输出 `steps[]`，agent 应优先消费 step contract，而不是自行拼装 actions + targets
 - `decide --execute` 产生的 action provenance 也会继续进入 maintenance/history
+- `graph` 会生成 `graph/graph.json`、`graph/GRAPH_REPORT.md` 和可选 `graph/graph.html`
 
 ### 1. `ingest_any_url.py`
 统一入库入口。

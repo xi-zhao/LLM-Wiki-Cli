@@ -1,10 +1,12 @@
-# LLM-Wiki-Cli
+# Wikify
 
 Agent-facing CLI for maintaining a local Markdown knowledge base.
 
-`fokb` gives agents a stable control surface for ingest, maintenance, decision, and execution, while keeping Markdown notes as the human-readable source of truth.
+`wikify` gives agents a stable control surface for ingest, maintenance, decision, execution, and graph understanding, while keeping Markdown notes as the human-readable source of truth.
 
 This project is explicitly inspired by Andrej Karpathy's LLM Wiki / markdown-first knowledge workflow, then pushed further toward agent-facing control, automation, and protocolized outputs.
+
+`fokb` remains available as a compatibility alias for older scripts.
 
 ## Why this exists
 
@@ -12,7 +14,7 @@ Most knowledge tooling optimizes for either:
 - human note-taking, or
 - retrieval over a pile of source files
 
-LLM-Wiki-Cli takes a different path, in the spirit of Karpathy's LLM Wiki idea:
+Wikify takes a different path, in the spirit of Karpathy's LLM Wiki idea:
 - raw materials are preserved
 - agents compile them into structured Markdown objects
 - follow-up maintenance happens incrementally
@@ -30,16 +32,18 @@ In short:
 - Emit maintenance verdicts after write operations
 - Produce decision plans and optional execution steps
 - Keep an Obsidian-friendly navigation layer alongside the CLI layer
+- Build graph artifacts that explain wiki structure, central nodes, communities, and broken links
 
 ## 30-second example
 
 ```bash
 pip install -e .
 
-fokb check
-fokb stats
-fokb ingest "https://example.com"
-fokb maintenance --last
+wikify check
+wikify stats
+wikify ingest "https://example.com"
+wikify maintenance --last
+wikify graph
 ```
 
 Example success envelope:
@@ -83,13 +87,19 @@ Your real KB should normally live in:
 A minimal public example lives in `sample-kb/`.
 
 ```bash
-export FOKB_BASE="$(pwd)/sample-kb"
+export WIKIFY_BASE="$(pwd)/sample-kb"
 
-fokb stats
-fokb show agent-knowledge-loops --scope topics
-fokb show 2026-04-10_agent-knowledge-loops --scope parsed
-fokb digest agent-knowledge-loops.md
+wikify stats
+wikify show agent-knowledge-loops --scope topics
+wikify show 2026-04-10_agent-knowledge-loops --scope parsed
+wikify digest agent-knowledge-loops.md
+wikify graph --no-html
 ```
+
+`wikify graph` writes:
+- `graph/graph.json` for agents and automation
+- `graph/GRAPH_REPORT.md` for human-readable structure review
+- `graph/graph.html` unless `--no-html` is passed
 
 ## Documentation map
 
@@ -106,6 +116,7 @@ fokb digest agent-knowledge-loops.md
 - Markdown should stay readable and editable by humans
 - Maintenance should be incremental, not only full-library rescans
 - Obsidian-facing notes and agent-facing contracts can coexist cleanly
+- Graph understanding should be derived from explicit wiki structure with provenance-rich edges
 
 ## Current status
 
@@ -117,6 +128,7 @@ Implemented areas include:
 - decision / execution loop
 - completion contract for write actions
 - Obsidian-friendly topic, digest, article, brief, and navigation outputs
+- local graph artifact generation with JSON, Markdown report, and optional HTML
 
 ## License
 

@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fokb"
+name = "wikify"
 version = "0.1.0a1"
-description = "Agent-facing CLI for maintaining a local Markdown knowledge base"
+description = "Agent-facing CLI for maintaining and graphing a local Markdown knowledge base"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -18,4 +18,4 @@ wikify = "wikify.cli:main"
 fokb = "scripts.fokb:main"
 
 [tool.setuptools]
-packages = ["wikify", "wikify.graph"]
+packages = ["wikify", "wikify.graph", "scripts"]
