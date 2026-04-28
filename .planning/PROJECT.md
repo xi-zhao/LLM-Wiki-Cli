@@ -29,7 +29,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify run-task` automatically prepares a patch bundle request when no bundle exists.
 - [x] `wikify produce-bundle` invokes an explicit external agent command to produce and preflight a patch bundle.
 - [x] `wikify run-task --agent-command <command>` can complete request, external bundle production, apply, and lifecycle in one explicit automation flow.
-- [ ] `wikify run-tasks` can process a bounded batch of selected agent tasks with explicit producer automation and structured per-task results.
+- [x] `wikify run-tasks` can process a bounded batch of selected agent tasks with explicit producer automation and structured per-task results.
 
 ### Out of Scope
 
@@ -76,7 +76,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Let runner prepare bundle requests | The main workflow should create the agent handoff artifact automatically when it reaches `waiting_for_patch_bundle` | ✓ Good |
 | Add external agent adapter before provider SDKs | A command adapter lets users bring Codex/Claude/other agents explicitly while Wikify keeps audit and validation boundaries | ✓ Good |
 | Let run-task compose producer automation only when explicitly commanded | One-command automation should reduce orchestration without hiding provider execution or changing safety boundaries | ✓ Good |
-| Batch automation must be bounded and sequential first | Limit and stop-on-error defaults reduce blast radius before any concurrent or provider-backed execution exists | ✓ Active |
+| Batch automation must be bounded and sequential first | Limit and stop-on-error defaults reduce blast radius before any concurrent or provider-backed execution exists | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 during Phase 13 planning*
+*Last updated: 2026-04-28 after Phase 13 completion*
