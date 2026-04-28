@@ -135,6 +135,8 @@ wikify tasks --id agent-task-1 --mark-done
 
 `wikify propose` turns one queued graph agent task into `sorted/graph-patch-proposals/<task-id>.json`. It validates every proposed path against the task `write_scope`. `--dry-run` returns the proposal JSON without writing the artifact.
 
+Patch proposals are purpose-aware when the wiki root contains `purpose.md` or `wikify-purpose.md`. The proposal includes `purpose_context` and `rationale` so downstream agents can explain why the repair matters. Missing purpose context is explicit and non-blocking; it never expands `write_scope` or weakens path validation.
+
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
 V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps, agent tasks, and scoped patch proposals; only deterministic maintenance bookkeeping can be marked executed.
@@ -156,6 +158,7 @@ V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not e
 - Obsidian-facing notes and agent-facing contracts can coexist cleanly
 - Graph understanding should be derived from explicit wiki structure with provenance-rich edges
 - Graph relevance should explain priority with source overlap, common neighbors, and type affinity, not silently trigger writes
+- Purpose-aware proposals should explain alignment when `purpose.md` or `wikify-purpose.md` exists, without changing safety rules
 
 ## Current status
 
@@ -167,6 +170,7 @@ Implemented areas include:
 - decision / execution loop
 - autonomous graph maintenance loop
 - scoped patch proposal generation from graph agent tasks
+- purpose-aware patch proposal rationale
 - completion contract for write actions
 - Obsidian-friendly topic, digest, article, brief, and navigation outputs
 - local graph artifact generation with JSON, Markdown report, and optional HTML

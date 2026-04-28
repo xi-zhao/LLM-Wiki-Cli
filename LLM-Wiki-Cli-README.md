@@ -268,6 +268,7 @@ wikify tasks --refresh --id agent-task-1
 - 读取一个已有 graph agent task
 - 校验 task 的 `write_scope`
 - 生成受限的 patch proposal artifact
+- 读取 wiki 根目录下可选的 `purpose.md` / `wikify-purpose.md`，把目标上下文写进 proposal
 - 让后续 agent 审核 proposal，而不是直接让 `maintain` 或 `tasks` 改正文
 
 默认命令：
@@ -282,9 +283,11 @@ wikify propose --task-id agent-task-1 --dry-run
 
 `propose` 默认写 proposal artifact；`--dry-run` 只返回 proposal JSON，不写文件。
 
-proposal 会包含 task id、source finding、action、target、write scope、planned edits、acceptance checks、risk 和 preflight。所有 planned edit 的 path 必须落在 task `write_scope` 内，否则返回 `proposal_out_of_scope`。
+proposal 会包含 task id、source finding、action、target、write scope、planned edits、acceptance checks、`purpose_context`、`rationale`、risk 和 preflight。所有 planned edit 的 path 必须落在 task `write_scope` 内，否则返回 `proposal_out_of_scope`。
 
-V1 安全规则：`propose` 不应用 patch，不修改 topic、parsed、sorted 等正文页面，也不改变 task status。它只把“这个 agent task 可以怎样被处理”转成可审计 JSON，给后续生命周期和 apply phase 使用。
+如果根目录存在 `purpose.md`，`propose` 会优先读取它；否则读取 `wikify-purpose.md`。目的文件存在时，`purpose_context.present = true`，proposal 的 `rationale.purpose_alignment` 会说明当前 task 如何贴合该目的。目的文件缺失时，`purpose_context.present = false`，这是明确的非阻塞状态，proposal 仍按 graph task evidence 生成。
+
+V1 安全规则：`propose` 不应用 patch，不修改 topic、parsed、sorted 等正文页面，也不改变 task status。目的上下文只丰富解释，不扩大 `write_scope`，不绕过 path validation。它只把“这个 agent task 可以怎样被处理、为什么值得处理”转成可审计 JSON，给后续生命周期和 apply phase 使用。
 
 ## 3.10 Agent Task Lifecycle
 

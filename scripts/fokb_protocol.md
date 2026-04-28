@@ -512,12 +512,19 @@ Relevance is advisory. It may appear on `graph.analytics.relevance`, `sorted/gra
 - 读取 `sorted/graph-agent-tasks.json`
 - 选择一个 task id
 - 校验 task `write_scope`
+- 读取 wiki 根目录下可选的 `purpose.md` / `wikify-purpose.md`
 - 返回 `wikify.patch-proposal.v1`
 - 默认写入 `sorted/graph-patch-proposals/<task-id>.json`
 - 不修改 task status
 - 不修改 topic、parsed、sorted 等正文页面
 
 `--dry-run` 只返回 proposal JSON，不写 proposal artifact。
+
+Purpose-aware 行为：
+- `purpose.md` 优先于 `wikify-purpose.md`
+- 找到目的文件时，proposal 包含 `purpose_context.present = true` 和目的摘要
+- 找不到目的文件时，proposal 包含 `purpose_context.present = false`，这是非阻塞状态
+- `rationale` 只解释 task 与目的/证据的关系，不扩大 `write_scope`，不绕过 path validation
 
 `graph-patch-proposals/<task-id>.json` schema:
 
@@ -540,6 +547,22 @@ Relevance is advisory. It may appear on `graph.analytics.relevance`, `sorted/gra
     }
   ],
   "acceptance_checks": [],
+  "purpose_context": {
+    "schema_version": "wikify.purpose-context.v1",
+    "present": true,
+    "path": "/abs/kb/purpose.md",
+    "relative_path": "purpose.md",
+    "title": "Agent Knowledge Memory",
+    "excerpt": "Goal: keep graph maintenance auditable.",
+    "goal_lines": ["Goal: keep graph maintenance auditable."],
+    "question_lines": []
+  },
+  "rationale": {
+    "purpose_aware": true,
+    "task_reason": "queue_link_repair for topics/a.md is derived from topics/a.md.",
+    "purpose_alignment": "Aligns with Agent Knowledge Memory: Goal: keep graph maintenance auditable.",
+    "safety": "Purpose context does not expand write scope or bypass path validation."
+  },
   "risk": "medium",
   "preflight": {
     "write_scope_valid": true,
@@ -554,6 +577,8 @@ Relevance is advisory. It may appear on `graph.analytics.relevance`, `sorted/gra
 - 找不到指定 task id 时返回 `agent_task_not_found`，exit code 为 `2`
 - task 缺少 write scope 时返回 `proposal_write_scope_missing`，exit code 为 `2`
 - planned edit path 超出 write scope 时返回 `proposal_out_of_scope`，exit code 为 `2`
+
+目的文件缺失不是错误，不影响 exit code。调用方应读取 `purpose_context.present` 和 `rationale.purpose_aware`，而不是把目的缺失当作失败。
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。

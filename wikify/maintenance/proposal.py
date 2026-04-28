@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+from wikify.maintenance.purpose import load_purpose_context
 from wikify.maintenance.task_reader import load_task_queue, select_tasks
 
 
@@ -85,6 +86,36 @@ def _risk_for_task(task: dict) -> str:
     return 'low'
 
 
+def _task_reason(task: dict) -> str:
+    action = task.get('action') or 'propose graph repair'
+    target = task.get('target') or 'wiki graph'
+    evidence = task.get('evidence') or {}
+    source = evidence.get('source') or task.get('source_finding_id') or 'graph task evidence'
+    return f'{action} for {target} is derived from {source}.'
+
+
+def _rationale_for_task(task: dict, purpose_context: dict) -> dict:
+    if purpose_context.get('present'):
+        title = purpose_context.get('title') or purpose_context.get('relative_path') or 'declared purpose'
+        excerpt = purpose_context.get('excerpt') or 'Declared purpose context is available.'
+        return {
+            'purpose_aware': True,
+            'task_reason': _task_reason(task),
+            'purpose_alignment': f'Aligns with {title}: {excerpt}',
+            'safety': 'Purpose context does not expand write scope or bypass path validation.',
+        }
+
+    return {
+        'purpose_aware': False,
+        'task_reason': _task_reason(task),
+        'purpose_alignment': (
+            'No purpose.md or wikify-purpose.md found; purpose context is non-blocking '
+            'and the proposal remains task-evidence driven.'
+        ),
+        'safety': 'Missing purpose context is non-blocking and does not alter write-scope validation.',
+    }
+
+
 def build_patch_proposal(base: Path | str, task_id: str) -> dict:
     queue = load_task_queue(base)
     selected = select_tasks(queue, task_id=task_id)
@@ -92,6 +123,7 @@ def build_patch_proposal(base: Path | str, task_id: str) -> dict:
     write_scope = _normalize_write_scope(task)
     path = _planned_path(task, write_scope)
     _validate_paths([path], write_scope)
+    purpose_context = load_purpose_context(base)
 
     planned_edit = {
         'operation': 'propose_content_patch',
@@ -113,6 +145,8 @@ def build_patch_proposal(base: Path | str, task_id: str) -> dict:
         'write_scope': write_scope,
         'planned_edits': [planned_edit],
         'acceptance_checks': list(task.get('acceptance_checks') or []),
+        'purpose_context': purpose_context,
+        'rationale': _rationale_for_task(task, purpose_context),
         'risk': _risk_for_task(task),
         'preflight': {
             'write_scope_valid': True,
