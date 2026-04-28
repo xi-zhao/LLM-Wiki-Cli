@@ -4,6 +4,12 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.maintenance.proposal import (
+    ProposalError,
+    build_patch_proposal,
+    proposal_path,
+    write_patch_proposal,
+)
 from wikify.maintenance.task_reader import (
     TaskNotFound,
     TaskQueueNotFound,
@@ -161,6 +167,76 @@ def cmd_tasks(args):
     return envelope_ok('tasks', result)
 
 
+def cmd_propose(args):
+    base = discover_base()
+    try:
+        proposal = build_patch_proposal(base, args.task_id)
+        expected_path = proposal_path(base, args.task_id)
+        written_path = None
+        if not args.dry_run:
+            written_path = write_patch_proposal(base, proposal)
+    except TaskQueueNotFound as exc:
+        return envelope_error(
+            'propose',
+            'agent_task_queue_missing',
+            'agent task queue not found; run wikify maintain first',
+            2,
+            retryable=False,
+            details={'path': str(exc.path)},
+        )
+    except TaskNotFound as exc:
+        return envelope_error(
+            'propose',
+            'agent_task_not_found',
+            'agent task not found',
+            2,
+            retryable=False,
+            details={'id': exc.task_id},
+        )
+    except ProposalError as exc:
+        return envelope_error(
+            'propose',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'propose',
+            'patch_proposal_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifact_path = str(expected_path)
+    result = {
+        'base': str(base),
+        'dry_run': args.dry_run,
+        'artifact_path': artifact_path,
+        'artifacts': {
+            'patch_proposal': str(written_path) if written_path else None,
+        },
+        'summary': {
+            'task_id': proposal.get('task_id'),
+            'planned_edit_count': len(proposal.get('planned_edits', [])),
+            'written': written_path is not None,
+            'risk': proposal.get('risk'),
+        },
+        'proposal': proposal,
+        'completion': {
+            'status': 'completed',
+            'summary': 'patch proposal generated',
+            'artifacts': [str(written_path)] if written_path else [],
+            'next_actions': [],
+            'user_message': 'patch proposal generated',
+        },
+    }
+    return envelope_ok('propose', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -195,6 +271,12 @@ def build_parser() -> argparse.ArgumentParser:
         p_tasks.add_argument('--refresh', action='store_true')
         p_tasks.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default='balanced')
         p_tasks.set_defaults(func=cmd_tasks)
+
+    if 'propose' not in sub.choices:
+        p_propose = sub.add_parser('propose', help='Generate a scoped patch proposal from one graph agent task')
+        p_propose.add_argument('--task-id', required=True)
+        p_propose.add_argument('--dry-run', action='store_true')
+        p_propose.set_defaults(func=cmd_propose)
 
     return parser
 

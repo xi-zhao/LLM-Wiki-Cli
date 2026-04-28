@@ -120,13 +120,17 @@ wikify maintain --policy aggressive
 wikify tasks
 wikify tasks --status queued --limit 5
 wikify tasks --refresh --id agent-task-1
+wikify propose --task-id agent-task-1
+wikify propose --task-id agent-task-1 --dry-run
 ```
 
 `graph-agent-tasks.json` is the handoff artifact for later agents. Each queued task carries the source finding, action, target, evidence, write scope, agent instructions, acceptance checks, and `requires_user: false`.
 
 `wikify tasks` is the read API for that handoff artifact. By default it only reads `sorted/graph-agent-tasks.json`; `--refresh` explicitly runs `wikify maintain` first. If the artifact is missing, the command returns `agent_task_queue_missing`.
 
-V1 safety rule: `wikify maintain` does not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps and agent tasks; only deterministic maintenance bookkeeping can be marked executed.
+`wikify propose` turns one queued graph agent task into `sorted/graph-patch-proposals/<task-id>.json`. It validates every proposed path against the task `write_scope`. `--dry-run` returns the proposal JSON without writing the artifact.
+
+V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps, agent tasks, and scoped patch proposals; only deterministic maintenance bookkeeping can be marked executed.
 
 ## Documentation map
 
@@ -154,6 +158,7 @@ Implemented areas include:
 - maintenance contract
 - decision / execution loop
 - autonomous graph maintenance loop
+- scoped patch proposal generation from graph agent tasks
 - completion contract for write actions
 - Obsidian-friendly topic, digest, article, brief, and navigation outputs
 - local graph artifact generation with JSON, Markdown report, and optional HTML

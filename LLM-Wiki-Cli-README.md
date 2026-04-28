@@ -256,6 +256,32 @@ wikify tasks --refresh --id agent-task-1
 
 缺少 `sorted/graph-agent-tasks.json` 时，返回 `agent_task_queue_missing`。V1 中 `tasks` 默认只读，不修改正文页面，也不改变 task status；状态流转和 patch 应用属于后续 phase。
 
+## 3.9 Scoped Patch Proposal
+
+- `propose`
+
+作用：
+- 读取一个已有 graph agent task
+- 校验 task 的 `write_scope`
+- 生成受限的 patch proposal artifact
+- 让后续 agent 审核 proposal，而不是直接让 `maintain` 或 `tasks` 改正文
+
+默认命令：
+
+```bash
+wikify propose --task-id agent-task-1
+wikify propose --task-id agent-task-1 --dry-run
+```
+
+输出产物：
+- `sorted/graph-patch-proposals/<task-id>.json`
+
+`propose` 默认写 proposal artifact；`--dry-run` 只返回 proposal JSON，不写文件。
+
+proposal 会包含 task id、source finding、action、target、write scope、planned edits、acceptance checks、risk 和 preflight。所有 planned edit 的 path 必须落在 task `write_scope` 内，否则返回 `proposal_out_of_scope`。
+
+V1 安全规则：`propose` 不应用 patch，不修改 topic、parsed、sorted 等正文页面，也不改变 task status。它只把“这个 agent task 可以怎样被处理”转成可审计 JSON，给后续生命周期和 apply phase 使用。
+
 ---
 
 # 4. 知识库对象模型
