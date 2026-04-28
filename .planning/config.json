@@ -1,0 +1,20 @@
+{
+  "mode": "yolo",
+  "granularity": "coarse",
+  "parallelization": false,
+  "commit_docs": true,
+  "model_profile": "inherit",
+  "workflow": {
+    "research": false,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": false,
+    "auto_advance": true,
+    "text_mode": true
+  },
+  "runtime": "codex",
+  "notes": [
+    "Initialized manually because gsd-sdk was not available in PATH.",
+    "Follow GSD phase/plan/state structure while executing inline in Codex."
+  ]
+}
