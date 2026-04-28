@@ -207,6 +207,7 @@ wikify graph --scope topics
 - 基于 `graph.analytics` 生成断链、孤立对象、中心节点、成熟社区和薄图谱 findings
 - 根据 `--policy conservative|balanced|aggressive` 生成维护计划
 - 把可安全执行的确定性动作标记为 executed，把语义修复和生成内容动作交给 agent 队列
+- 把 queued plan step 转成 `graph-agent-tasks.json`，让后续 agent 可直接消费
 - 写入可审计产物，供后续 agent 自动审核
 
 默认命令：
@@ -224,11 +225,14 @@ wikify maintain --policy aggressive
 - `graph/GRAPH_REPORT.md`
 - `sorted/graph-findings.json`
 - `sorted/graph-maintenance-plan.json`
+- `sorted/graph-agent-tasks.json`
 - `sorted/graph-maintenance-history.json`
 
 `--dry-run` 只写 graph 产物，不写 `sorted/` 下的维护审核产物。
 
-V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面；断链修复、孤立对象挂接、digest 刷新和 community synthesis 都只进入 plan，由后续 agent 审核或执行。
+`graph-agent-tasks.json` 是后续 agent 的任务包，而不是人类 checklist。每条任务包含 source finding、action、priority、target、evidence、write scope、agent instructions、acceptance checks、`requires_user: false` 和 `status: queued`。
+
+V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面，也不在 CLI 内隐藏调用 LLM；断链修复、孤立对象挂接、digest 刷新和 community synthesis 都只进入 plan 和 agent task queue，由后续 agent 审核或执行。
 
 ---
 

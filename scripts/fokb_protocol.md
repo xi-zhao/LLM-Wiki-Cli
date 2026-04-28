@@ -326,9 +326,10 @@
 - 重建 `graph/graph.json` 和 `graph/GRAPH_REPORT.md`
 - 生成 `sorted/graph-findings.json`
 - 生成 `sorted/graph-maintenance-plan.json`
+- 生成 `sorted/graph-agent-tasks.json`
 - 追加 `sorted/graph-maintenance-history.json`
 
-`--dry-run` 只写 graph 产物，不写 `sorted/` 下的 findings、plan 或 history。
+`--dry-run` 只写 graph 产物，不写 `sorted/` 下的 findings、plan、agent tasks 或 history。返回结果中仍可包含 task queue preview，供调用方预览后续 agent 工作。
 
 策略：
 - `conservative`
@@ -338,13 +339,43 @@
 - `aggressive`
   - 为后续更主动 agent 提供策略位，V1 仍不直接改正文页
 
-V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面。断链修复、孤立对象挂接、digest refresh 和 community synthesis 都进入 queued plan step；只有确定性维护记录可标记为 executed。
+`graph-agent-tasks.json` schema:
+
+```json
+{
+  "schema_version": "wikify.graph-agent-tasks.v1",
+  "summary": {
+    "task_count": 1,
+    "by_action": {
+      "queue_link_repair": 1
+    }
+  },
+  "tasks": [
+    {
+      "id": "agent-task-1",
+      "source_finding_id": "broken-link:topics/a.md:7:Missing",
+      "action": "queue_link_repair",
+      "priority": "high",
+      "target": "topics/a.md",
+      "evidence": {},
+      "write_scope": ["topics/a.md"],
+      "agent_instructions": [],
+      "acceptance_checks": [],
+      "requires_user": false,
+      "status": "queued"
+    }
+  ]
+}
+```
+
+V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面，也不在 CLI 内隐藏调用 LLM。断链修复、孤立对象挂接、digest refresh 和 community synthesis 都进入 queued plan step 和 agent task queue；只有确定性维护记录可标记为 executed。
 
 返回 `result.summary` 至少包含：
 - `finding_count`
 - `planned_count`
 - `executed_count`
 - `queued_count`
+- `task_count`
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。

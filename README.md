@@ -107,6 +107,7 @@ wikify maintain
 - rebuilds graph artifacts without HTML
 - writes `sorted/graph-findings.json`
 - writes `sorted/graph-maintenance-plan.json`
+- writes `sorted/graph-agent-tasks.json` for downstream agents
 - appends `sorted/graph-maintenance-history.json`
 
 Useful modes:
@@ -118,7 +119,9 @@ wikify maintain --policy balanced
 wikify maintain --policy aggressive
 ```
 
-V1 safety rule: `wikify maintain` does not edit content pages. Semantic repairs and generated-content work are queued as plan steps for an agent review pass; only deterministic maintenance bookkeeping can be marked executed.
+`graph-agent-tasks.json` is the handoff artifact for later agents. Each queued task carries the source finding, action, target, evidence, write scope, agent instructions, acceptance checks, and `requires_user: false`.
+
+V1 safety rule: `wikify maintain` does not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps and agent tasks; only deterministic maintenance bookkeeping can be marked executed.
 
 ## Documentation map
 
