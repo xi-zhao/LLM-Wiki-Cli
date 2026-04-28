@@ -109,6 +109,16 @@
 - [x] **EBP-06**: Command failures, timeouts, missing requests, invalid output, and patch preflight failures return structured errors.
 - [x] **EBP-07**: Docs define the external command contract and make clear that provider/key/retry semantics stay outside hidden CLI defaults.
 
+### Run Task Producer Automation
+
+- [ ] **RTP-01**: `wikify run-task --id <id> --agent-command <command>` invokes the explicit producer when no patch bundle exists.
+- [ ] **RTP-02**: A non-dry-run command can complete proposal, lifecycle proposed state, bundle request, bundle production, deterministic apply, and mark-done in one flow.
+- [ ] **RTP-03**: Existing patch bundles are applied without executing the producer command.
+- [ ] **RTP-04**: `run-task --dry-run --agent-command <command>` does not execute the command and writes no proposal, request, lifecycle event, bundle, content, or application record.
+- [ ] **RTP-05**: Producer failures inside `run-task` return structured errors with `details.phase = "bundle_producer"` and preserve already-auditable intermediate artifacts.
+- [ ] **RTP-06**: The CLI exposes producer timeout control without introducing hidden provider/key/retry defaults.
+- [ ] **RTP-07**: Docs describe the one-command automation flow and its explicit external-command safety boundary.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -191,6 +201,13 @@
 | EBP-05 | Phase 11 | Complete |
 | EBP-06 | Phase 11 | Complete |
 | EBP-07 | Phase 11 | Complete |
+| RTP-01 | Phase 12 | Planned |
+| RTP-02 | Phase 12 | Planned |
+| RTP-03 | Phase 12 | Planned |
+| RTP-04 | Phase 12 | Planned |
+| RTP-05 | Phase 12 | Planned |
+| RTP-06 | Phase 12 | Planned |
+| RTP-07 | Phase 12 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -200,9 +217,10 @@
 - v2 bundle request requirements: 6 total
 - v2 handoff requirements: 5 total
 - v2 producer requirements: 7 total
-- Mapped to phases: 62
+- v2 run-task producer automation requirements: 7 total
+- Mapped to phases: 69
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 11 completion*
+*Last updated: 2026-04-28 during Phase 12 planning*

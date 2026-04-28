@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 11 complete: explicit external agent command adapter for patch bundle production.
+**Current focus:** Phase 12 planning: run-task inline producer automation.
 
 ## Current Position
 
-Phase: 11 of 11 (External Patch Bundle Producer)
+Phase: 12 of 12 (Run Task Inline Producer Automation)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 11 external patch bundle producer.
+Status: Planning
+Last activity: 2026-04-28 - Added Phase 12 run-task inline producer automation.
 
-Progress: ██████████ 100%
+Progress: █████████░ 92%
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: ██████████ 100%
 | 9. Patch Bundle Request Contract | 1/1 | 1 session | 1 session |
 | 10. Runner Bundle Request Handoff | 1/1 | 1 session | 1 session |
 | 11. External Patch Bundle Producer | 1/1 | 1 session | 1 session |
+| 12. Run Task Inline Producer Automation | 0/1 | In progress | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 07-01, 08-01, 09-01, 10-01, 11-01
@@ -83,10 +84,11 @@ Recent decisions affecting current work:
 - [Planning]: Use an explicit external command adapter before any provider-specific SDK integration.
 - [Phase 11]: `produce-bundle` uses an explicit external command adapter, not hidden provider execution.
 - [Phase 11]: Produced bundles are preflighted before success and do not mutate content.
+- [Planning]: `run-task --agent-command` should compose producer automation only when the command is explicit.
 
 ### Pending Todos
 
-- None.
+- Execute Phase 12: Build run-task inline producer automation.
 
 ### Blockers/Concerns
 
@@ -101,6 +103,7 @@ Recent decisions affecting current work:
 - Phase 10 added: Runner Bundle Request Handoff.
 - Phase 11 added: External Patch Bundle Producer.
 - Phase 11 completed: External Patch Bundle Producer.
+- Phase 12 added: Run Task Inline Producer Automation.
 
 ## Deferred Items
 
@@ -113,5 +116,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 11 complete.
+Stopped at: Phase 12 planning.
 Resume file: None

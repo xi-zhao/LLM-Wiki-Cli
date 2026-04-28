@@ -23,6 +23,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
 - [x] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
 - [x] **Phase 11: External Patch Bundle Producer** - Invoke explicit external agent commands to produce and preflight patch bundles from request artifacts.
+- [ ] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
 
 ## Phase Details
 
@@ -213,6 +214,24 @@ Plans:
 Plans:
 - [x] 11-01: Build external patch bundle producer
 
+### Phase 12: Run Task Inline Producer Automation
+**Goal**: `wikify run-task --id <id> --agent-command <command>` composes proposal, bundle request, explicit external bundle production, deterministic apply, and lifecycle completion in one command.
+**Depends on**: Phase 11
+**Requirements**: RTP-01, RTP-02, RTP-03, RTP-04, RTP-05, RTP-06, RTP-07
+**Why after Phase 11**: The producer contract is now explicit and preflighted. The runner can safely compose it when the caller provides a command, reducing external orchestration without adding hidden provider defaults.
+**Success Criteria** (what must be TRUE):
+  1. Missing bundle plus `--agent-command` produces a bundle and continues to apply in the same run.
+  2. Existing bundle flow still applies without executing the producer command.
+  3. Dry-run with `--agent-command` reports the would-produce step without executing or writing.
+  4. Producer errors surface through `run-task` with `phase: bundle_producer`.
+  5. No hidden provider/key/retry behavior is introduced.
+  6. Docs describe one-command automation and the explicit command boundary.
+  7. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 12-01: Build run-task inline producer automation
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -228,3 +247,4 @@ Plans:
 | 9. Patch Bundle Request Contract | 1/1 | Complete | 2026-04-28 |
 | 10. Runner Bundle Request Handoff | 1/1 | Complete | 2026-04-28 |
 | 11. External Patch Bundle Producer | 1/1 | Complete | 2026-04-28 |
+| 12. Run Task Inline Producer Automation | 0/1 | Planned | |
