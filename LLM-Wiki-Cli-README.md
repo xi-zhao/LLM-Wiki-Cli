@@ -169,11 +169,13 @@ CLI 输出里可直接读取：
 - `lint`
 - `lint --deep`
 - `maintenance`
+- `maintain`
 - `decide`
 
 作用：
 - 基础巡检和全库深巡检
 - 查询 maintenance history
+- 基于 graph 自动生成 findings、plan 和 history，不打断用户
 - 根据 maintenance verdict 产出下一步 decision plan
 
 ## 3.6 图谱结构层
@@ -195,6 +197,38 @@ wikify graph --scope topics
 ```
 
 `graph` 在 V1 中是 read-mostly 命令：只写 `graph/` 目录，不修改 topic、parsed、review queue 或 maintenance history。
+
+## 3.7 自动图谱维护层
+
+- `maintain`
+
+作用：
+- 自动执行 `graph --no-html`
+- 基于 `graph.analytics` 生成断链、孤立对象、中心节点、成熟社区和薄图谱 findings
+- 根据 `--policy conservative|balanced|aggressive` 生成维护计划
+- 把可安全执行的确定性动作标记为 executed，把语义修复和生成内容动作交给 agent 队列
+- 写入可审计产物，供后续 agent 自动审核
+
+默认命令：
+
+```bash
+wikify maintain
+wikify maintain --dry-run
+wikify maintain --policy conservative
+wikify maintain --policy balanced
+wikify maintain --policy aggressive
+```
+
+输出产物：
+- `graph/graph.json`
+- `graph/GRAPH_REPORT.md`
+- `sorted/graph-findings.json`
+- `sorted/graph-maintenance-plan.json`
+- `sorted/graph-maintenance-history.json`
+
+`--dry-run` 只写 graph 产物，不写 `sorted/` 下的维护审核产物。
+
+V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面；断链修复、孤立对象挂接、digest 刷新和 community synthesis 都只进入 plan，由后续 agent 审核或执行。
 
 ---
 

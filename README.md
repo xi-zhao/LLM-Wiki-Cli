@@ -44,6 +44,7 @@ wikify stats
 wikify ingest "https://example.com"
 wikify maintenance --last
 wikify graph
+wikify maintain --dry-run
 ```
 
 Example success envelope:
@@ -94,12 +95,30 @@ wikify show agent-knowledge-loops --scope topics
 wikify show 2026-04-10_agent-knowledge-loops --scope parsed
 wikify digest agent-knowledge-loops.md
 wikify graph --no-html
+wikify maintain
 ```
 
 `wikify graph` writes:
 - `graph/graph.json` for agents and automation
 - `graph/GRAPH_REPORT.md` for human-readable structure review
 - `graph/graph.html` unless `--no-html` is passed
+
+`wikify maintain` runs the autonomous graph maintenance loop:
+- rebuilds graph artifacts without HTML
+- writes `sorted/graph-findings.json`
+- writes `sorted/graph-maintenance-plan.json`
+- appends `sorted/graph-maintenance-history.json`
+
+Useful modes:
+
+```bash
+wikify maintain --dry-run
+wikify maintain --policy conservative
+wikify maintain --policy balanced
+wikify maintain --policy aggressive
+```
+
+V1 safety rule: `wikify maintain` does not edit content pages. Semantic repairs and generated-content work are queued as plan steps for an agent review pass; only deterministic maintenance bookkeeping can be marked executed.
 
 ## Documentation map
 
@@ -126,6 +145,7 @@ Implemented areas include:
 - stable JSON envelope
 - maintenance contract
 - decision / execution loop
+- autonomous graph maintenance loop
 - completion contract for write actions
 - Obsidian-friendly topic, digest, article, brief, and navigation outputs
 - local graph artifact generation with JSON, Markdown report, and optional HTML

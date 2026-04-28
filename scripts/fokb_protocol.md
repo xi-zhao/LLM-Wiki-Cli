@@ -64,6 +64,7 @@
 - `internal_error`
 - `environment_check_failed`
 - `object_not_found`
+- `graph_maintenance_failed`
 
 ### review / reingest / resolve
 - `review_item_not_found`
@@ -90,6 +91,7 @@
 - `stats`
 - `state`
 - `maintenance`
+- `maintain`
 - `decide`
 
 ### 对象层
@@ -113,6 +115,9 @@
 - `graph`
 - `graph --no-html`
 - `graph --scope <scope>`
+- `maintain`
+- `maintain --dry-run`
+- `maintain --policy <policy>`
 
 ### 巡检层
 - `lint`
@@ -120,7 +125,7 @@
 
 ## 5. Maintenance schema v1
 
-`maintenance` 是 `wikify` 当前最重要的增量知识维护协议层之一。`graph` 是结构理解协议层，负责把已编译 Markdown wiki 转成可审计图谱产物。
+`maintenance` 是 `wikify` 当前最重要的增量知识维护协议层之一。`graph` 是结构理解协议层，负责把已编译 Markdown wiki 转成可审计图谱产物。`maintain` 是自动图谱维护入口，负责把 graph analytics 转成 findings、plan、execution classification 和 append-only history。
 
 它既会作为：
 - 写操作结果中的 `result.maintenance`
@@ -306,6 +311,40 @@
 
 读取时会自动做 history normalization，尽量把旧记录补齐到当前 schema。
 旧记录中的 `meta` 会被 lazy normalize 到 `provenance`，新记录应稳定写入 `provenance`。
+
+### `maintain`
+推荐用作自动化图谱维护入口。
+
+常用：
+- `maintain`
+- `maintain --dry-run`
+- `maintain --policy conservative`
+- `maintain --policy balanced`
+- `maintain --policy aggressive`
+
+执行流程：
+- 重建 `graph/graph.json` 和 `graph/GRAPH_REPORT.md`
+- 生成 `sorted/graph-findings.json`
+- 生成 `sorted/graph-maintenance-plan.json`
+- 追加 `sorted/graph-maintenance-history.json`
+
+`--dry-run` 只写 graph 产物，不写 `sorted/` 下的 findings、plan 或 history。
+
+策略：
+- `conservative`
+  - 只允许最低风险维护计划进入执行分类
+- `balanced`
+  - 默认策略，适合常规 agent 自动巡检
+- `aggressive`
+  - 为后续更主动 agent 提供策略位，V1 仍不直接改正文页
+
+V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面。断链修复、孤立对象挂接、digest refresh 和 community synthesis 都进入 queued plan step；只有确定性维护记录可标记为 executed。
+
+返回 `result.summary` 至少包含：
+- `finding_count`
+- `planned_count`
+- `executed_count`
+- `queued_count`
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。
