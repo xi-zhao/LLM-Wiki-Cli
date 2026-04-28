@@ -22,6 +22,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
 - [x] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
 - [x] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
+- [ ] **Phase 11: External Patch Bundle Producer** - Invoke explicit external agent commands to produce and preflight patch bundles from request artifacts.
 
 ## Phase Details
 
@@ -193,6 +194,25 @@ Plans:
 Plans:
 - [x] 10-01: Build runner bundle request handoff
 
+### Phase 11: External Patch Bundle Producer
+**Goal**: `wikify produce-bundle --request-path <path> --agent-command <command>` invokes an explicit external agent command, writes the resulting patch bundle, and validates it with deterministic preflight.
+**Depends on**: Phase 10
+**Requirements**: EBP-01, EBP-02, EBP-03, EBP-04, EBP-05, EBP-06, EBP-07
+**Why after Phase 10**: The runner now creates request artifacts automatically. This phase adds the explicit bridge from request artifact to generated bundle without hard-coding any provider.
+**Success Criteria** (what must be TRUE):
+  1. A command can produce a bundle from a request via stdin/stdout/env contract.
+  2. The produced bundle is written to `suggested_bundle_path`.
+  3. A command that writes the bundle file itself is accepted.
+  4. Produced bundles pass deterministic apply preflight before success.
+  5. Dry-run reports the invocation contract without executing the command.
+  6. Structured errors cover missing request, failed command, timeout, invalid output, and invalid bundle.
+  7. Docs describe the external command contract and explicit-provider boundary.
+  8. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 11-01: Build external patch bundle producer
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -207,3 +227,4 @@ Plans:
 | 8. Agent Task Workflow Runner | 1/1 | Complete | 2026-04-28 |
 | 9. Patch Bundle Request Contract | 1/1 | Complete | 2026-04-28 |
 | 10. Runner Bundle Request Handoff | 1/1 | Complete | 2026-04-28 |
+| 11. External Patch Bundle Producer | 0/1 | Planned | |

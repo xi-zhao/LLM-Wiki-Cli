@@ -99,6 +99,16 @@
 - [x] **HND-04**: Bundle request generation errors inside `run-task` are structured with `details.phase = "bundle_request"` and preserve already-auditable intermediate state.
 - [x] **HND-05**: Docs explain that normal automation can call `run-task` first; a separate `bundle-request` command remains available for explicit handoff refreshes.
 
+### External Patch Bundle Producer
+
+- [ ] **EBP-01**: `wikify produce-bundle --request-path <path> --agent-command <command>` invokes an explicit external command to generate a patch bundle.
+- [ ] **EBP-02**: The producer passes the request JSON on stdin and exposes request/bundle paths through environment variables.
+- [ ] **EBP-03**: The producer writes valid stdout JSON to the request's `suggested_bundle_path`, or accepts a command-written bundle at that path.
+- [ ] **EBP-04**: Produced bundles are validated with the deterministic apply preflight before returning success.
+- [ ] **EBP-05**: `produce-bundle --dry-run` does not execute the external command and writes no bundle.
+- [ ] **EBP-06**: Command failures, timeouts, missing requests, invalid output, and patch preflight failures return structured errors.
+- [ ] **EBP-07**: Docs define the external command contract and make clear that provider/key/retry semantics stay outside hidden CLI defaults.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -174,6 +184,13 @@
 | HND-03 | Phase 10 | Complete |
 | HND-04 | Phase 10 | Complete |
 | HND-05 | Phase 10 | Complete |
+| EBP-01 | Phase 11 | Planned |
+| EBP-02 | Phase 11 | Planned |
+| EBP-03 | Phase 11 | Planned |
+| EBP-04 | Phase 11 | Planned |
+| EBP-05 | Phase 11 | Planned |
+| EBP-06 | Phase 11 | Planned |
+| EBP-07 | Phase 11 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -182,9 +199,10 @@
 - v2 runner requirements: 7 total
 - v2 bundle request requirements: 6 total
 - v2 handoff requirements: 5 total
-- Mapped to phases: 55
+- v2 producer requirements: 7 total
+- Mapped to phases: 62
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 10 completion*
+*Last updated: 2026-04-28 during Phase 11 planning*
