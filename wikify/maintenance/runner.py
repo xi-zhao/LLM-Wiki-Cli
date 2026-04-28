@@ -1,0 +1,98 @@
+from datetime import datetime, timezone
+from pathlib import Path
+
+from wikify.graph.builder import build_graph_artifacts
+from wikify.maintenance.executor import apply_plan
+from wikify.maintenance.findings import build_findings, summarize_findings
+from wikify.maintenance.history import append_run, write_json
+from wikify.maintenance.planner import build_plan
+
+
+FINDINGS_SCHEMA_VERSION = 'wikify.graph-findings.v1'
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+
+
+def _next_commands(dry_run: bool) -> list[str]:
+    if dry_run:
+        return ['wikify maintain', 'wikify graph --no-html']
+    return ['wikify maintain --dry-run', 'wikify graph --no-html']
+
+
+def _build_findings_document(graph: dict, findings: list[dict], summary: dict) -> dict:
+    return {
+        'schema_version': FINDINGS_SCHEMA_VERSION,
+        'generated_at': _utc_now(),
+        'graph_schema_version': graph.get('schema_version'),
+        'base': graph.get('base'),
+        'summary': summary,
+        'findings': findings,
+    }
+
+
+def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = False) -> dict:
+    root = Path(base).expanduser().resolve()
+    graph_result = build_graph_artifacts(root, include_html=False)
+    graph = graph_result['graph']
+    findings = build_findings(graph)
+    findings_summary = summarize_findings(findings)
+    findings_document = _build_findings_document(graph, findings, findings_summary)
+    plan = build_plan(findings, policy=policy)
+    execution = apply_plan(plan, dry_run=dry_run)
+
+    sorted_dir = root / 'sorted'
+    findings_path = sorted_dir / 'graph-findings.json'
+    plan_path = sorted_dir / 'graph-maintenance-plan.json'
+    history_path = sorted_dir / 'graph-maintenance-history.json'
+    artifacts = {
+        'graph_json': graph_result['artifacts']['json'],
+        'graph_report': graph_result['artifacts']['report'],
+        'graph_html': graph_result['artifacts']['html'],
+        'findings': None if dry_run else str(findings_path),
+        'plan': None if dry_run else str(plan_path),
+        'history': None if dry_run else str(history_path),
+    }
+
+    plan_summary = plan.get('summary', {})
+    execution_summary = execution.get('summary', {})
+    summary = {
+        'finding_count': findings_summary.get('finding_count', 0),
+        'planned_count': plan_summary.get('planned_count', 0),
+        'executed_count': execution_summary.get('executed_count', 0),
+        'queued_count': execution_summary.get('queued_count', 0),
+        'dry_run_count': execution_summary.get('dry_run_count', 0),
+        'skipped_count': execution_summary.get('skipped_count', 0),
+    }
+    generated_at = _utc_now()
+    run_record = {
+        'generated_at': generated_at,
+        'policy': policy,
+        'dry_run': dry_run,
+        'summary': summary,
+        'artifacts': artifacts,
+    }
+
+    if not dry_run:
+        write_json(findings_path, findings_document)
+        write_json(plan_path, plan)
+        append_run(root, run_record, dry_run=False)
+
+    return {
+        'generated_at': generated_at,
+        'base': str(root),
+        'policy': policy,
+        'dry_run': dry_run,
+        'artifacts': artifacts,
+        'graph': graph_result['summary'],
+        'findings': findings_document,
+        'plan': plan,
+        'execution': execution,
+        'summary': summary,
+        'next_commands': _next_commands(dry_run),
+        'completion': {
+            'ok': True,
+            'message': 'maintenance dry run complete' if dry_run else 'maintenance artifacts written',
+        },
+    }
