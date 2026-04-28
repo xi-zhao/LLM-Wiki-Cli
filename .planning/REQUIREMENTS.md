@@ -26,20 +26,56 @@
 - [x] **TSK-04**: Missing task queue files return a structured non-retryable `agent_task_queue_missing` error.
 - [x] **TSK-05**: Task reading does not edit content pages or mutate task status in V1.
 
+## v1.1 Requirements
+
+### Scoped Patch Proposal
+
+- [ ] **PRP-01**: `wikify propose --task-id <id>` reads one existing graph agent task and returns a stable JSON envelope.
+- [ ] **PRP-02**: Proposals are written to `sorted/graph-patch-proposals/<task-id>.json` unless `--dry-run` is used.
+- [ ] **PRP-03**: Every proposed file path is validated against the selected task `write_scope`.
+- [ ] **PRP-04**: Proposal generation never applies patches, rewrites content pages, or mutates task status.
+- [ ] **PRP-05**: Missing task, missing write scope, invalid write path, and missing queue cases return structured errors with exit code 2.
+- [ ] **PRP-06**: Proposal artifacts include evidence, planned edits, acceptance checks, risk level, and a preflight summary.
+
+### Agent Task Lifecycle
+
+- [ ] **LIF-01**: Task state supports explicit transitions among queued, proposed, in_progress, done, failed, blocked, and rejected.
+- [ ] **LIF-02**: Lifecycle commands support retry, cancel, restore, and mark-done semantics without content edits.
+- [ ] **LIF-03**: Every task state transition appends an event to an audit artifact.
+- [ ] **LIF-04**: Invalid transitions return structured non-retryable errors.
+- [ ] **LIF-05**: Existing read-only `wikify tasks` behavior remains backward compatible.
+
+### Graph Relevance Scoring
+
+- [ ] **REL-01**: Graph analysis computes explainable relevance signals for direct links, source overlap, common neighbors, and type affinity.
+- [ ] **REL-02**: Relevance scores are attached to findings and agent tasks with signal-level evidence.
+- [ ] **REL-03**: Relevance scores prioritize and explain suggestions but do not trigger automatic writes.
+- [ ] **REL-04**: Low-confidence relevance results are informational and do not generate high-priority tasks.
+
+### Purpose-Aware Proposals
+
+- [ ] **PUR-01**: Wikify supports an optional purpose artifact, such as `purpose.md` or `wikify-purpose.md`, for project direction.
+- [ ] **PUR-02**: Proposal generation can include purpose evidence when the artifact exists.
+- [ ] **PUR-03**: Missing purpose context is non-blocking and explicitly reported in proposal metadata.
+- [ ] **PUR-04**: Purpose context influences proposal rationale, not path safety rules.
+
 ## v2 Requirements
 
 ### Agent Consumer
 
-- **AGT-01**: A future command can consume `graph-agent-tasks.json` and propose patches.
-- **AGT-02**: A future command can apply deterministic, preflighted repairs under explicit policy.
+- **AGT-01**: A future command can consume proposal artifacts and apply deterministic, preflighted repairs under explicit policy.
+- **AGT-02**: A future command can run provider-backed semantic generation with explicit provider/key/retry semantics.
+- **AGT-03**: A future command can roll back applied repairs from recorded patch artifacts.
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
 | Built-in LLM execution | Provider configuration and rollback policy need a separate design phase. |
-| Automatic semantic edits | Link repair and synthesis require judgment that V1 should hand to a review agent. |
+| Automatic semantic edits | Link repair and synthesis require judgment that V1/V1.1 should hand to a proposal agent. |
 | Interactive prompts | The user asked for low-interruption automation. |
+| GPL code reuse from `nashsu/llm_wiki` | Wikify can borrow ideas but must not copy GPLv3 implementation into an MIT project. |
+| Desktop UI parity | Wikify is CLI-first and agent-facing. |
 
 ## Traceability
 
@@ -57,12 +93,32 @@
 | TSK-03 | Phase 2 | Complete |
 | TSK-04 | Phase 2 | Complete |
 | TSK-05 | Phase 2 | Complete |
+| PRP-01 | Phase 3 | Planned |
+| PRP-02 | Phase 3 | Planned |
+| PRP-03 | Phase 3 | Planned |
+| PRP-04 | Phase 3 | Planned |
+| PRP-05 | Phase 3 | Planned |
+| PRP-06 | Phase 3 | Planned |
+| LIF-01 | Phase 4 | Planned |
+| LIF-02 | Phase 4 | Planned |
+| LIF-03 | Phase 4 | Planned |
+| LIF-04 | Phase 4 | Planned |
+| LIF-05 | Phase 4 | Planned |
+| REL-01 | Phase 5 | Planned |
+| REL-02 | Phase 5 | Planned |
+| REL-03 | Phase 5 | Planned |
+| REL-04 | Phase 5 | Planned |
+| PUR-01 | Phase 6 | Planned |
+| PUR-02 | Phase 6 | Planned |
+| PUR-03 | Phase 6 | Planned |
+| PUR-04 | Phase 6 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 12
+- v1.1 requirements: 19 total
+- Mapped to phases: 31
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 2 completion*
+*Last updated: 2026-04-28 after llm_wiki reference planning*
