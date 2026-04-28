@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 6 planning: purpose-aware proposals.
+**Current focus:** Phase 6 execution: purpose-aware proposals.
 
 ## Current Position
 
 Phase: 6 of 6 (Purpose-Aware Proposals)
-Plan: 0 of 0 in current phase
-Status: Phase 5 complete; Phase 6 ready to plan
-Last activity: 2026-04-28 - Implemented graph relevance scoring, documented protocol, and verified 143 unit tests plus graph/maintain smoke.
+Plan: 1 of 1 in current phase
+Status: Planned and ready to execute
+Last activity: 2026-04-28 - Planned Phase 6 purpose-aware proposals.
 
 Progress: ████████░░ 83%
 
@@ -32,7 +32,7 @@ Progress: ████████░░ 83%
 | 3. Scoped Patch Proposal | 1/1 | 1 session | 1 session |
 | 4. Agent Task Lifecycle | 1/1 | 1 session | 1 session |
 | 5. Graph Relevance Scoring | 1/1 | 1 session | 1 session |
-| 6. Purpose-Aware Proposals | 0/0 | Not started | - |
+| 6. Purpose-Aware Proposals | 0/1 | Not started | - |
 
 **Recent Trend:**
 - Last 5 plans: 01-01, 02-01, 03-01, 04-01, 05-01
@@ -65,7 +65,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 6: purpose-aware proposal context.
+- Execute Phase 6 plan: purpose-aware proposal context.
 
 ### Blockers/Concerns
 
@@ -83,5 +83,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 5 complete and verified; Phase 6 ready to plan.
+Stopped at: Phase 6 planned and ready to execute.
 Resume file: None

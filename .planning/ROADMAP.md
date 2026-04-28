@@ -111,7 +111,10 @@ Plans:
   2. Missing purpose context is reported but non-blocking.
   3. Proposal rationale includes purpose evidence when present.
   4. Purpose context never weakens path/write safety rules.
-**Plans**: Ready to plan.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 06-01: Build purpose-aware patch proposals
 
 ## Progress
 
@@ -122,4 +125,4 @@ Plans:
 | 3. Scoped Patch Proposal | 1/1 | Complete | 2026-04-28 |
 | 4. Agent Task Lifecycle | 1/1 | Complete | 2026-04-28 |
 | 5. Graph Relevance Scoring | 1/1 | Complete | 2026-04-28 |
-| 6. Purpose-Aware Proposals | 0/0 | Ready to plan | - |
+| 6. Purpose-Aware Proposals | 0/1 | Ready to execute | - |
