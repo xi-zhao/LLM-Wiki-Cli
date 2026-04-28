@@ -4,6 +4,7 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.maintenance.runner import run_maintenance
 
 
 def _sync_legacy_env():
@@ -45,6 +46,32 @@ def cmd_graph(args):
     return envelope_ok('graph', result)
 
 
+def cmd_maintain(args):
+    try:
+        result = run_maintenance(
+            discover_base(),
+            policy=args.policy,
+            dry_run=args.dry_run,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'maintain',
+            'graph_maintenance_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'maintenance completed, graph audit artifacts generated',
+        'artifacts': artifacts,
+        'next_actions': result.get('next_commands', []),
+        'user_message': 'maintenance completed',
+    }
+    return envelope_ok('maintain', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -63,6 +90,12 @@ def build_parser() -> argparse.ArgumentParser:
         p_graph.add_argument('--scope', choices=['all', 'topics', 'timelines', 'briefs', 'parsed', 'sorted', 'sources'], default='all')
         p_graph.add_argument('--no-html', action='store_true')
         p_graph.set_defaults(func=cmd_graph)
+
+    if 'maintain' not in sub.choices:
+        p_maintain = sub.add_parser('maintain', help='Run autonomous graph maintenance audit')
+        p_maintain.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default='balanced')
+        p_maintain.add_argument('--dry-run', action='store_true')
+        p_maintain.set_defaults(func=cmd_maintain)
 
     return parser
 
