@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, and explicit agent command profiles.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, and an explicit default-profile shorthand.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -27,6 +27,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 13: Batch Task Automation** - Process bounded batches of graph agent tasks through the audited task runner with structured per-task results.
 - [x] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
 - [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
+- [ ] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
 
 ## Phase Details
 
@@ -291,6 +292,24 @@ Plans:
 Plans:
 - [x] 15-01: Build explicit agent command profiles
 
+### Phase 16: Explicit Default Agent Profile
+**Goal**: `wikify agent-profile --set-default <name>` designates a default profile, and automation commands can use it by passing `--agent-profile` without a value.
+**Depends on**: Phase 15
+**Requirements**: DFP-01, DFP-02, DFP-03, DFP-04, DFP-05, DFP-06, DFP-07
+**Why after Phase 15**: Profiles exist, but repeated `--agent-profile default` is still noisy. Default shorthand reduces friction while preserving explicit execution intent.
+**Success Criteria** (what must be TRUE):
+  1. Profile config stores an optional default profile name.
+  2. `agent-profile` can set, show, and clear the default.
+  3. Removing a defaulted profile clears the default reference.
+  4. Automation commands parse `--agent-profile` with no value as the default-profile sentinel.
+  5. Missing defaults return structured errors before producer execution.
+  6. No command executes an external agent just because a default exists; `--agent-command` or `--agent-profile` is still required.
+  7. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 16-01: Build explicit default profile shorthand
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -310,3 +329,4 @@ Plans:
 | 13. Batch Task Automation | 1/1 | Complete | 2026-04-28 |
 | 14. Maintenance Run Automation | 1/1 | Complete | 2026-04-28 |
 | 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |
+| 16. Explicit Default Agent Profile | 0/1 | Planned | - |

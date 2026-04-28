@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 15 complete: agent profile configuration.
+**Current focus:** Phase 16 planned: explicit default agent profile.
 
 ## Current Position
 
-Phase: 15 of 15 (Agent Profile Configuration)
+Phase: 16 of 16 (Explicit Default Agent Profile)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 15 agent profile configuration.
+Status: Planned
+Last activity: 2026-04-29 - Planned Phase 16 explicit default agent profile.
 
-Progress: ██████████ 100%
+Progress: █████████░ 94%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: ██████████ 100%
 | 13. Batch Task Automation | 1/1 | 1 session | 1 session |
 | 14. Maintenance Run Automation | 1/1 | 1 session | 1 session |
 | 15. Agent Profile Configuration | 1/1 | 1 session | 1 session |
+| 16. Explicit Default Agent Profile | 0/1 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: 11-01, 12-01, 13-01, 14-01, 15-01
@@ -99,6 +100,7 @@ Recent decisions affecting current work:
 - [Planning]: Agent profile configuration should reduce repeated command entry without hiding provider behavior.
 - [Phase 15]: `agent-profile` stores visible project-level external command aliases in `wikify-agent-profiles.json`.
 - [Phase 15]: `--agent-profile` is explicit and mutually exclusive with `--agent-command`.
+- [Planning]: Default agent profiles must remain explicit shorthand; a default alone must not trigger external execution.
 
 ### Pending Todos
 
@@ -125,6 +127,7 @@ Recent decisions affecting current work:
 - Phase 14 completed: Maintenance Run Automation.
 - Phase 15 added: Agent Profile Configuration.
 - Phase 15 completed: Agent Profile Configuration.
+- Phase 16 added: Explicit Default Agent Profile.
 
 ## Deferred Items
 

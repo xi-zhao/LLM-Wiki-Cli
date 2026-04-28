@@ -151,6 +151,16 @@
 - [x] **AGP-07**: Missing profile/config cases return structured errors without executing producer commands.
 - [x] **AGP-08**: Docs describe the profile artifact, command usage, and explicit external-agent safety boundary.
 
+### Explicit Default Agent Profile
+
+- [ ] **DFP-01**: Profile config stores an optional `default_profile` field.
+- [ ] **DFP-02**: `wikify agent-profile --set-default <name>` validates and persists an existing profile as default.
+- [ ] **DFP-03**: `wikify agent-profile --show-default` and `--clear-default` return stable JSON envelopes.
+- [ ] **DFP-04**: Unsetting the current default profile clears `default_profile`.
+- [ ] **DFP-05**: Automation commands parse bare `--agent-profile` as the explicit default-profile shorthand.
+- [ ] **DFP-06**: Missing default profile cases return structured errors without executing producer commands.
+- [ ] **DFP-07**: Docs clarify that default profiles do not trigger external execution unless `--agent-profile` is explicitly present.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -263,6 +273,13 @@
 | AGP-06 | Phase 15 | Complete |
 | AGP-07 | Phase 15 | Complete |
 | AGP-08 | Phase 15 | Complete |
+| DFP-01 | Phase 16 | Planned |
+| DFP-02 | Phase 16 | Planned |
+| DFP-03 | Phase 16 | Planned |
+| DFP-04 | Phase 16 | Planned |
+| DFP-05 | Phase 16 | Planned |
+| DFP-06 | Phase 16 | Planned |
+| DFP-07 | Phase 16 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -276,9 +293,10 @@
 - v2 batch automation requirements: 8 total
 - v2 maintenance run automation requirements: 7 total
 - v2 agent profile requirements: 8 total
-- Mapped to phases: 92
+- v2 default profile requirements: 7 total
+- Mapped to phases: 99
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 15 completion*
+*Last updated: 2026-04-29 after Phase 16 planning*
