@@ -25,6 +25,7 @@ from wikify.maintenance.task_reader import (
     task_queue_path,
 )
 from wikify.maintenance.runner import run_maintenance
+from wikify.maintenance.task_runner import TaskRunError, run_agent_task
 
 
 def _sync_legacy_env():
@@ -371,6 +372,44 @@ def cmd_rollback(args):
     return envelope_ok('rollback', result)
 
 
+def cmd_run_task(args):
+    base = discover_base()
+    try:
+        result = run_agent_task(
+            base,
+            args.id,
+            bundle_path=args.bundle_path,
+            dry_run=args.dry_run,
+        )
+    except TaskRunError as exc:
+        return envelope_error(
+            'run-task',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'run-task',
+            'agent_task_run_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'agent task workflow advanced',
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'agent task workflow advanced',
+    }
+    return envelope_ok('run-task', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -434,6 +473,13 @@ def build_parser() -> argparse.ArgumentParser:
         p_rollback.add_argument('--application-path', required=True)
         p_rollback.add_argument('--dry-run', action='store_true')
         p_rollback.set_defaults(func=cmd_rollback)
+
+    if 'run-task' not in sub.choices:
+        p_run_task = sub.add_parser('run-task', help='Advance one graph agent task through proposal, apply, and lifecycle')
+        p_run_task.add_argument('--id', required=True)
+        p_run_task.add_argument('--bundle-path')
+        p_run_task.add_argument('--dry-run', action='store_true')
+        p_run_task.set_defaults(func=cmd_run_task)
 
     return parser
 

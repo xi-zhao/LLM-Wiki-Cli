@@ -56,6 +56,32 @@ class WikifyCliTests(unittest.TestCase):
         bundle_path.write_text(json.dumps(bundle), encoding='utf-8')
         return proposal_path, bundle_path, target
 
+    def _write_run_task_queue(self, kb: Path):
+        queue = {
+            'schema_version': 'wikify.graph-agent-tasks.v1',
+            'summary': {'task_count': 1},
+            'tasks': [
+                {
+                    'id': 'agent-task-1',
+                    'source_finding_id': 'broken-link:topics/a.md:1:Missing',
+                    'source_step_id': 'step-1',
+                    'action': 'queue_link_repair',
+                    'priority': 'high',
+                    'target': 'topics/a.md',
+                    'evidence': {'source': 'topics/a.md', 'line': 1, 'target': 'Missing'},
+                    'write_scope': ['topics/a.md'],
+                    'agent_instructions': ['repair link'],
+                    'acceptance_checks': ['link resolves'],
+                    'requires_user': False,
+                    'status': 'queued',
+                }
+            ],
+        }
+        path = kb / 'sorted' / 'graph-agent-tasks.json'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(queue), encoding='utf-8')
+        return path
+
     def test_discover_base_prefers_wikify_base(self):
         original_wikify = os.environ.get('WIKIFY_BASE')
         original_fokb = os.environ.get('FOKB_BASE')
@@ -164,6 +190,23 @@ class WikifyCliTests(unittest.TestCase):
         self.assertTrue(apply_args.dry_run)
         self.assertEqual(rollback_args.command, 'rollback')
         self.assertTrue(rollback_args.dry_run)
+
+    def test_build_parser_accepts_run_task_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'run-task',
+            '--id',
+            'agent-task-1',
+            '--bundle-path',
+            'sorted/graph-patch-bundles/agent-task-1.json',
+            '--dry-run',
+        ])
+
+        self.assertEqual(args.command, 'run-task')
+        self.assertEqual(args.id, 'agent-task-1')
+        self.assertTrue(args.dry_run)
 
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')
@@ -621,6 +664,102 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'apply')
                 self.assertEqual(payload['error']['code'], 'patch_preflight_failed')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_run_task_command_waits_for_missing_bundle(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                self._write_run_task_queue(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'run-task', '--id', 'agent-task-1'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'run-task')
+                self.assertEqual(payload['result']['schema_version'], 'wikify.agent-task-run.v1')
+                self.assertEqual(payload['result']['status'], 'waiting_for_patch_bundle')
+                self.assertIn('generate_patch_bundle', payload['result']['next_actions'])
+                self.assertEqual(queue['tasks'][0]['status'], 'proposed')
+                self.assertTrue((kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json').exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_run_task_command_with_bundle_applies_and_marks_done(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                self._write_run_task_queue(kb)
+                _, _, target = self._write_apply_fixture(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'run-task', '--id', 'agent-task-1'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                self.assertEqual(payload['result']['status'], 'completed')
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+                self.assertEqual(queue['tasks'][0]['status'], 'done')
+                self.assertTrue(Path(payload['result']['artifacts']['application']).exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_run_task_command_errors_are_structured(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.environ['WIKIFY_BASE'] = tmpdir
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'run-task', '--id', 'agent-task-1'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'run-task')
+                self.assertEqual(payload['error']['code'], 'agent_task_queue_missing')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
