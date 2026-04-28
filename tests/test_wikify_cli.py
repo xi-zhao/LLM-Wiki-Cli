@@ -10,6 +10,52 @@ from pathlib import Path
 
 
 class WikifyCliTests(unittest.TestCase):
+    def _write_apply_fixture(self, kb: Path):
+        (kb / 'topics').mkdir(parents=True)
+        target = kb / 'topics' / 'a.md'
+        target.write_text('See [[Missing]].\n', encoding='utf-8')
+        proposal = {
+            'schema_version': 'wikify.patch-proposal.v1',
+            'task_id': 'agent-task-1',
+            'source_finding_id': 'broken-link:topics/a.md:7:Missing',
+            'action': 'queue_link_repair',
+            'target': 'topics/a.md',
+            'write_scope': ['topics/a.md'],
+            'planned_edits': [
+                {
+                    'operation': 'propose_content_patch',
+                    'path': 'topics/a.md',
+                    'action': 'queue_link_repair',
+                    'instructions': ['repair link'],
+                    'evidence': {},
+                    'status': 'planned',
+                }
+            ],
+            'acceptance_checks': ['link resolves'],
+            'risk': 'medium',
+            'preflight': {'write_scope_valid': True},
+        }
+        proposal_path = kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json'
+        proposal_path.parent.mkdir(parents=True)
+        proposal_path.write_text(json.dumps(proposal), encoding='utf-8')
+        bundle = {
+            'schema_version': 'wikify.patch-bundle.v1',
+            'proposal_task_id': 'agent-task-1',
+            'proposal_path': 'sorted/graph-patch-proposals/agent-task-1.json',
+            'operations': [
+                {
+                    'operation': 'replace_text',
+                    'path': 'topics/a.md',
+                    'find': '[[Missing]]',
+                    'replace': '[[Existing]]',
+                }
+            ],
+        }
+        bundle_path = kb / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'
+        bundle_path.parent.mkdir(parents=True)
+        bundle_path.write_text(json.dumps(bundle), encoding='utf-8')
+        return proposal_path, bundle_path, target
+
     def test_discover_base_prefers_wikify_base(self):
         original_wikify = os.environ.get('WIKIFY_BASE')
         original_fokb = os.environ.get('FOKB_BASE')
@@ -94,6 +140,30 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.command, 'propose')
         self.assertEqual(args.task_id, 'agent-task-1')
         self.assertTrue(args.dry_run)
+
+    def test_build_parser_accepts_apply_and_rollback_commands(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        apply_args = parser.parse_args([
+            'apply',
+            '--proposal-path',
+            'sorted/graph-patch-proposals/agent-task-1.json',
+            '--bundle-path',
+            'sorted/graph-patch-bundles/agent-task-1.json',
+            '--dry-run',
+        ])
+        rollback_args = parser.parse_args([
+            'rollback',
+            '--application-path',
+            'sorted/graph-patch-applications/app.json',
+            '--dry-run',
+        ])
+
+        self.assertEqual(apply_args.command, 'apply')
+        self.assertTrue(apply_args.dry_run)
+        self.assertEqual(rollback_args.command, 'rollback')
+        self.assertTrue(rollback_args.dry_run)
 
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')
@@ -401,6 +471,156 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['error']['code'], 'proposal_out_of_scope')
                 self.assertEqual(payload['error']['details']['path'], 'topics/other.md')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_apply_command_dry_run_does_not_write_content_or_record(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                proposal_path, bundle_path, target = self._write_apply_fixture(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'apply',
+                        '--proposal-path',
+                        str(proposal_path),
+                        '--bundle-path',
+                        str(bundle_path),
+                        '--dry-run',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'apply')
+                self.assertTrue(payload['result']['dry_run'])
+                self.assertTrue(payload['result']['ready'])
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
+                self.assertFalse((kb / 'sorted' / 'graph-patch-applications').exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_apply_and_rollback_commands_change_and_restore_content(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                proposal_path, bundle_path, target = self._write_apply_fixture(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'apply',
+                        '--proposal-path',
+                        str(proposal_path),
+                        '--bundle-path',
+                        str(bundle_path),
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                apply_payload = json.loads(stdout.getvalue())
+                application_path = apply_payload['result']['artifacts']['application']
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'rollback',
+                        '--application-path',
+                        application_path,
+                        '--dry-run',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                dry_run_payload = json.loads(stdout.getvalue())
+                self.assertTrue(dry_run_payload['result']['dry_run'])
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'rollback',
+                        '--application-path',
+                        application_path,
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                rollback_payload = json.loads(stdout.getvalue())
+                self.assertEqual(rollback_payload['command'], 'rollback')
+                self.assertEqual(rollback_payload['result']['status'], 'rolled_back')
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_apply_command_patch_errors_are_structured(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                proposal_path, bundle_path, target = self._write_apply_fixture(kb)
+                target.write_text('[[Missing]] and [[Missing]].\n', encoding='utf-8')
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'apply',
+                        '--proposal-path',
+                        str(proposal_path),
+                        '--bundle-path',
+                        str(bundle_path),
+                    ])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'apply')
+                self.assertEqual(payload['error']['code'], 'patch_preflight_failed')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

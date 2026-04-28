@@ -4,6 +4,12 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.maintenance.patch_apply import (
+    PatchApplyError,
+    apply_patch_bundle,
+    preflight_patch_bundle,
+    rollback_application,
+)
 from wikify.maintenance.proposal import (
     ProposalError,
     build_patch_proposal,
@@ -293,6 +299,78 @@ def cmd_propose(args):
     return envelope_ok('propose', result)
 
 
+def cmd_apply(args):
+    base = discover_base()
+    try:
+        if args.dry_run:
+            result = preflight_patch_bundle(base, args.proposal_path, args.bundle_path)
+            result['dry_run'] = True
+            result['artifacts'] = {'application': None}
+        else:
+            result = apply_patch_bundle(base, args.proposal_path, args.bundle_path)
+            result['dry_run'] = False
+    except PatchApplyError as exc:
+        return envelope_error(
+            'apply',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'apply',
+            'patch_apply_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'patch apply preflight completed' if args.dry_run else 'patch applied',
+        'artifacts': artifacts,
+        'next_actions': [],
+        'user_message': 'patch apply preflight completed' if args.dry_run else 'patch applied',
+    }
+    return envelope_ok('apply', result)
+
+
+def cmd_rollback(args):
+    base = discover_base()
+    try:
+        result = rollback_application(base, args.application_path, dry_run=args.dry_run)
+    except PatchApplyError as exc:
+        return envelope_error(
+            'rollback',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'rollback',
+            'patch_rollback_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'patch rollback preflight completed' if args.dry_run else 'patch rolled back',
+        'artifacts': artifacts,
+        'next_actions': [],
+        'user_message': 'patch rollback preflight completed' if args.dry_run else 'patch rolled back',
+    }
+    return envelope_ok('rollback', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -343,6 +421,19 @@ def build_parser() -> argparse.ArgumentParser:
         p_propose.add_argument('--task-id', required=True)
         p_propose.add_argument('--dry-run', action='store_true')
         p_propose.set_defaults(func=cmd_propose)
+
+    if 'apply' not in sub.choices:
+        p_apply = sub.add_parser('apply', help='Validate and apply an agent-generated patch bundle')
+        p_apply.add_argument('--proposal-path', required=True)
+        p_apply.add_argument('--bundle-path', required=True)
+        p_apply.add_argument('--dry-run', action='store_true')
+        p_apply.set_defaults(func=cmd_apply)
+
+    if 'rollback' not in sub.choices:
+        p_rollback = sub.add_parser('rollback', help='Rollback a recorded patch application')
+        p_rollback.add_argument('--application-path', required=True)
+        p_rollback.add_argument('--dry-run', action='store_true')
+        p_rollback.set_defaults(func=cmd_rollback)
 
     return parser
 
