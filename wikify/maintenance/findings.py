@@ -1,0 +1,128 @@
+from collections import Counter
+
+
+def _finding(
+    finding_id: str,
+    finding_type: str,
+    severity: str,
+    title: str,
+    subject: str,
+    evidence: dict,
+    recommended_action: str,
+    can_auto_apply: bool,
+    policy_minimum: str = 'conservative',
+) -> dict:
+    return {
+        'id': finding_id,
+        'type': finding_type,
+        'severity': severity,
+        'title': title,
+        'subject': subject,
+        'evidence': evidence,
+        'recommended_action': recommended_action,
+        'can_auto_apply': can_auto_apply,
+        'policy_minimum': policy_minimum,
+    }
+
+
+def build_findings(graph: dict) -> list[dict]:
+    analytics = graph.get('analytics', {})
+    findings = []
+
+    for link in analytics.get('broken_links', []):
+        source = link.get('source') or link.get('id') or 'unknown'
+        target = link.get('target') or link.get('label') or 'unknown'
+        line = link.get('line', 0)
+        findings.append(
+            _finding(
+                f'broken-link:{source}:{line}:{target}',
+                'broken_link',
+                'warning',
+                'Broken link',
+                source,
+                dict(link),
+                'queue_link_repair',
+                False,
+            )
+        )
+
+    for orphan in analytics.get('orphans', []):
+        subject = orphan.get('id') or orphan.get('path') or 'unknown'
+        title = orphan.get('title') or subject
+        findings.append(
+            _finding(
+                f'orphan-node:{subject}',
+                'orphan_node',
+                'info',
+                f'Orphan wiki object: {title}',
+                subject,
+                dict(orphan),
+                'queue_orphan_attachment',
+                False,
+            )
+        )
+
+    node_count = analytics.get('node_count', 0)
+    central_threshold = max(8, node_count)
+    for node in analytics.get('central_nodes', []):
+        degree = node.get('degree', 0)
+        if degree < central_threshold:
+            continue
+        subject = node.get('id') or 'unknown'
+        findings.append(
+            _finding(
+                f'god-node:{subject}',
+                'god_node',
+                'info',
+                'High-degree central node',
+                subject,
+                dict(node),
+                'queue_digest_refresh',
+                False,
+            )
+        )
+
+    for community in analytics.get('communities', []):
+        size = community.get('size', 0)
+        if size < 3:
+            continue
+        subject = community.get('id') or 'community'
+        findings.append(
+            _finding(
+                f'mature-community:{subject}',
+                'mature_community',
+                'info',
+                'Community ready for synthesis',
+                subject,
+                dict(community),
+                'queue_community_synthesis',
+                False,
+            )
+        )
+
+    edge_count = analytics.get('edge_count', 0)
+    if node_count == 0 or edge_count == 0:
+        findings.append(
+            _finding(
+                'thin-graph',
+                'thin_graph',
+                'warning',
+                'Thin graph',
+                'graph',
+                {'node_count': node_count, 'edge_count': edge_count},
+                'record_graph_health_snapshot',
+                True,
+            )
+        )
+
+    return findings
+
+
+def summarize_findings(findings: list[dict]) -> dict:
+    by_type = Counter(finding.get('type', 'unknown') for finding in findings)
+    by_severity = Counter(finding.get('severity', 'unknown') for finding in findings)
+    return {
+        'finding_count': len(findings),
+        'by_type': dict(sorted(by_type.items())),
+        'by_severity': dict(sorted(by_severity.items())),
+    }

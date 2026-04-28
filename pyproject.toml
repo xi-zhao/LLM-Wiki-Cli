@@ -18,4 +18,4 @@ wikify = "wikify.cli:main"
 fokb = "scripts.fokb:main"
 
 [tool.setuptools]
-packages = ["wikify", "wikify.graph", "scripts"]
+packages = ["wikify", "wikify.graph", "wikify.maintenance", "scripts"]
