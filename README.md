@@ -122,6 +122,9 @@ wikify tasks --status queued --limit 5
 wikify tasks --refresh --id agent-task-1
 wikify propose --task-id agent-task-1
 wikify propose --task-id agent-task-1 --dry-run
+wikify tasks --id agent-task-1 --mark-proposed --proposal-path sorted/graph-patch-proposals/agent-task-1.json
+wikify tasks --id agent-task-1 --start
+wikify tasks --id agent-task-1 --mark-done
 ```
 
 `graph-agent-tasks.json` is the handoff artifact for later agents. Each queued task carries the source finding, action, target, evidence, write scope, agent instructions, acceptance checks, and `requires_user: false`.
@@ -129,6 +132,8 @@ wikify propose --task-id agent-task-1 --dry-run
 `wikify tasks` is the read API for that handoff artifact. By default it only reads `sorted/graph-agent-tasks.json`; `--refresh` explicitly runs `wikify maintain` first. If the artifact is missing, the command returns `agent_task_queue_missing`.
 
 `wikify propose` turns one queued graph agent task into `sorted/graph-patch-proposals/<task-id>.json`. It validates every proposed path against the task `write_scope`. `--dry-run` returns the proposal JSON without writing the artifact.
+
+Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
 V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps, agent tasks, and scoped patch proposals; only deterministic maintenance bookkeeping can be marked executed.
 

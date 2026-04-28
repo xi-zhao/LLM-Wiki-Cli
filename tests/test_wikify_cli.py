@@ -411,6 +411,111 @@ class WikifyCliTests(unittest.TestCase):
             else:
                 os.environ['FOKB_BASE'] = original_fokb
 
+    def test_tasks_command_lifecycle_marks_proposed(self):
+        cli = importlib.import_module('wikify.cli')
+        repo = Path(__file__).resolve().parents[1]
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir) / 'sample-kb'
+                shutil.copytree(repo / 'sample-kb', kb)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                with self.assertRaises(SystemExit) as raised:
+                    cli.main(['--output', 'quiet', 'maintain'])
+                self.assertEqual(raised.exception.code, 0)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'tasks',
+                        '--id',
+                        'agent-task-1',
+                        '--mark-proposed',
+                        '--proposal-path',
+                        'sorted/graph-patch-proposals/agent-task-1.json',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                events = json.loads((kb / 'sorted' / 'graph-agent-task-events.json').read_text(encoding='utf-8'))
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['result']['task']['status'], 'proposed')
+                self.assertEqual(queue['tasks'][0]['status'], 'proposed')
+                self.assertEqual(events['events'][0]['action'], 'mark_proposed')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_tasks_command_lifecycle_requires_id_and_valid_transition(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                queue = {
+                    'schema_version': 'wikify.graph-agent-tasks.v1',
+                    'summary': {'task_count': 1},
+                    'tasks': [
+                        {
+                            'id': 'agent-task-1',
+                            'source_finding_id': 'done-task',
+                            'action': 'queue_link_repair',
+                            'priority': 'normal',
+                            'target': 'topics/a.md',
+                            'evidence': {},
+                            'write_scope': ['topics/a.md'],
+                            'agent_instructions': [],
+                            'acceptance_checks': [],
+                            'requires_user': False,
+                            'status': 'done',
+                        },
+                    ],
+                }
+                target = kb / 'sorted' / 'graph-agent-tasks.json'
+                target.parent.mkdir(parents=True)
+                target.write_text(json.dumps(queue), encoding='utf-8')
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'tasks', '--start', '--id', 'agent-task-1'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['error']['code'], 'invalid_agent_task_transition')
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'tasks', '--mark-done'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['error']['code'], 'agent_task_id_required')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
 
 if __name__ == '__main__':
     unittest.main()

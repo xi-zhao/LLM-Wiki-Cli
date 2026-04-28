@@ -282,6 +282,37 @@ proposal 会包含 task id、source finding、action、target、write scope、pl
 
 V1 安全规则：`propose` 不应用 patch，不修改 topic、parsed、sorted 等正文页面，也不改变 task status。它只把“这个 agent task 可以怎样被处理”转成可审计 JSON，给后续生命周期和 apply phase 使用。
 
+## 3.10 Agent Task Lifecycle
+
+`tasks` 的默认读取行为仍然只读；只有显式 lifecycle action flag 出现时才会写入 task queue 和 event log。
+
+作用：
+- 把 `queued`、`proposed`、`in_progress`、`done`、`failed`、`blocked`、`rejected` 变成可审计状态
+- 把状态变化持久化回 `sorted/graph-agent-tasks.json`
+- 追加状态事件到 `sorted/graph-agent-task-events.json`
+- 支持 agent 自动 retry、cancel、restore 和 mark-done，不打断用户
+
+默认命令：
+
+```bash
+wikify tasks --id agent-task-1 --mark-proposed --proposal-path sorted/graph-patch-proposals/agent-task-1.json
+wikify tasks --id agent-task-1 --start
+wikify tasks --id agent-task-1 --mark-done
+wikify tasks --id agent-task-1 --mark-failed --note "patch conflict"
+wikify tasks --id agent-task-1 --retry
+wikify tasks --id agent-task-1 --block --note "ambiguous target"
+wikify tasks --id agent-task-1 --restore
+wikify tasks --id agent-task-1 --cancel
+```
+
+输出产物：
+- `sorted/graph-agent-tasks.json`
+- `sorted/graph-agent-task-events.json`
+
+非法状态流转返回 `invalid_agent_task_transition`。例如 `done -> in_progress` 会被拒绝。缺少 `--id` 时返回 `agent_task_id_required`。
+
+安全规则：lifecycle action 只修改 agent task artifact 和 event artifact，不修改正文页面、不改 proposal artifact、不应用 patch。
+
 ---
 
 # 4. 知识库对象模型

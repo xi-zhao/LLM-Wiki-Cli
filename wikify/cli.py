@@ -10,6 +10,7 @@ from wikify.maintenance.proposal import (
     proposal_path,
     write_patch_proposal,
 )
+from wikify.maintenance.task_lifecycle import TaskLifecycleError, apply_lifecycle_action
 from wikify.maintenance.task_reader import (
     TaskNotFound,
     TaskQueueNotFound,
@@ -85,9 +86,55 @@ def cmd_maintain(args):
     return envelope_ok('maintain', result)
 
 
+def _tasks_lifecycle_action(args):
+    actions = [
+        ('mark_proposed', args.mark_proposed),
+        ('start', args.start),
+        ('mark_done', args.mark_done),
+        ('mark_failed', args.mark_failed),
+        ('block', args.block),
+        ('cancel', args.cancel),
+        ('retry', args.retry),
+        ('restore', args.restore),
+    ]
+    selected = [action for action, enabled in actions if enabled]
+    if len(selected) > 1:
+        raise ValueError('only one lifecycle action can be used at a time')
+    return selected[0] if selected else None
+
+
 def cmd_tasks(args):
     base = discover_base()
     try:
+        lifecycle_action = _tasks_lifecycle_action(args)
+        if lifecycle_action:
+            if not args.id:
+                return envelope_error(
+                    'tasks',
+                    'agent_task_id_required',
+                    'task id is required for lifecycle actions',
+                    2,
+                    retryable=False,
+                )
+            result = apply_lifecycle_action(
+                base,
+                args.id,
+                lifecycle_action,
+                note=args.note,
+                proposal_path=args.proposal_path,
+            )
+            result['completion'] = {
+                'status': 'completed',
+                'summary': 'agent task lifecycle action completed',
+                'artifacts': [
+                    result['artifacts']['agent_tasks'],
+                    result['artifacts']['task_events'],
+                ],
+                'next_actions': [],
+                'user_message': 'agent task lifecycle action completed',
+            }
+            return envelope_ok('tasks', result)
+
         refreshed = False
         refresh_result = None
         if args.refresh:
@@ -125,6 +172,15 @@ def cmd_tasks(args):
             2,
             retryable=False,
             details={'id': exc.task_id},
+        )
+    except TaskLifecycleError as exc:
+        return envelope_error(
+            'tasks',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
         )
     except ValueError as exc:
         return envelope_error(
@@ -264,12 +320,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     if 'tasks' not in sub.choices:
         p_tasks = sub.add_parser('tasks', help='Read queued graph agent tasks')
-        p_tasks.add_argument('--status', choices=['queued', 'in_progress', 'done', 'blocked'])
+        p_tasks.add_argument('--status', choices=['queued', 'proposed', 'in_progress', 'done', 'failed', 'blocked', 'rejected'])
         p_tasks.add_argument('--action')
         p_tasks.add_argument('--id')
         p_tasks.add_argument('--limit', type=int)
         p_tasks.add_argument('--refresh', action='store_true')
         p_tasks.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default='balanced')
+        p_tasks.add_argument('--mark-proposed', action='store_true')
+        p_tasks.add_argument('--start', action='store_true')
+        p_tasks.add_argument('--mark-done', action='store_true')
+        p_tasks.add_argument('--mark-failed', action='store_true')
+        p_tasks.add_argument('--block', action='store_true')
+        p_tasks.add_argument('--cancel', action='store_true')
+        p_tasks.add_argument('--retry', action='store_true')
+        p_tasks.add_argument('--restore', action='store_true')
+        p_tasks.add_argument('--note')
+        p_tasks.add_argument('--proposal-path')
         p_tasks.set_defaults(func=cmd_tasks)
 
     if 'propose' not in sub.choices:
