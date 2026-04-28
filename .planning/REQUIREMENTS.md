@@ -18,6 +18,14 @@
 - [x] **DOC-01**: README and protocol docs describe the agent task queue artifact and V1 safety rule.
 - [x] **DOC-02**: The CLI result exposes the task queue artifact path and summary count for downstream automation.
 
+### Agent Task Consumption
+
+- [ ] **TSK-01**: `wikify tasks` reads `sorted/graph-agent-tasks.json` and returns a stable JSON envelope.
+- [ ] **TSK-02**: `wikify tasks` can filter tasks by `--status`, `--action`, `--id`, and `--limit`.
+- [ ] **TSK-03**: `wikify tasks --refresh` explicitly refreshes maintenance artifacts before reading tasks.
+- [ ] **TSK-04**: Missing task queue files return a structured non-retryable `agent_task_queue_missing` error.
+- [ ] **TSK-05**: Task reading does not edit content pages or mutate task status in V1.
+
 ## v2 Requirements
 
 ### Agent Consumer
@@ -44,12 +52,17 @@
 | GMT-05 | Phase 1 | Complete |
 | DOC-01 | Phase 1 | Complete |
 | DOC-02 | Phase 1 | Complete |
+| TSK-01 | Phase 2 | Pending |
+| TSK-02 | Phase 2 | Pending |
+| TSK-03 | Phase 2 | Pending |
+| TSK-04 | Phase 2 | Pending |
+| TSK-05 | Phase 2 | Pending |
 
 **Coverage:**
-- v1 requirements: 7 total
-- Mapped to phases: 7
+- v1 requirements: 12 total
+- Mapped to phases: 12
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 1 completion*
+*Last updated: 2026-04-28 after Phase 2 addition*

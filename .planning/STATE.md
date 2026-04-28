@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 1 complete; next focus is agent task consumer design.
+**Current focus:** Phase 2: Agent Task Reader
 
 ## Current Position
 
-Phase: 1 of 1 (Graph Agent Task Queue)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-04-28 — Implemented graph agent task queue, documented protocol, and verified 119 unit tests plus maintain smoke test.
+Phase: 2 of 2 (Agent Task Reader)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-04-28 — Added Phase 2 scope for reading and filtering graph agent tasks.
 
-Progress: ██████████ 100%
+Progress: █████░░░░░ 50%
 
 ## Performance Metrics
 
@@ -28,6 +28,7 @@ Progress: ██████████ 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Graph Agent Task Queue | 1/1 | 1 session | 1 session |
+| 2. Agent Task Reader | 0/1 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: 01-01
@@ -43,6 +44,7 @@ Recent decisions affecting current work:
 - [Phase 1]: Use artifact-first task queue, not embedded LLM execution.
 - [Phase 1]: Preserve V1 no-content-edit safety boundary.
 - [Phase 1]: Dry-run returns task queue preview but writes no task artifact.
+- [Phase 2]: Default task reading is read-only; `--refresh` is the explicit write-producing path.
 
 ### Pending Todos
 
@@ -60,6 +62,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-28 11:55
-Stopped at: Phase 1 complete and verified.
+Last session: 2026-04-28 12:04
+Stopped at: Phase 2 added and ready to plan.
 Resume file: None
