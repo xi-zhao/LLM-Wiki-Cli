@@ -170,6 +170,10 @@
 - `run-task --id <id> --bundle-path <path>`
 - `run-task --id <id> --agent-command <command>`
 - `run-task --id <id> --agent-command <command> --producer-timeout <seconds>`
+- `run-tasks`
+- `run-tasks --status <status> --action <action> --limit <n>`
+- `run-tasks --agent-command <command>`
+- `run-tasks --continue-on-error --agent-command <command>`
 
 ### 巡检层
 - `lint`
@@ -975,6 +979,90 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - lifecycle 阶段错误沿用 `invalid_agent_task_transition` 等 code，exit code 为 `2`
 
 安全规则：`run-task` 只编排现有 audited primitives。默认情况下它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批。只有调用方显式传入 `--agent-command` 时，它才会执行外部 producer command；provider、模型、密钥、retry 均不由 Wikify 隐式决定。
+
+### `run-tasks`
+推荐用作 bounded batch task automation。
+
+常用：
+- `run-tasks --dry-run`
+- `run-tasks --limit 5 --agent-command "python3 agent.py"`
+- `run-tasks --status queued --action queue_link_repair --limit 5 --agent-command "python3 agent.py"`
+- `run-tasks --status queued --limit 5 --continue-on-error --agent-command "python3 agent.py"`
+
+默认行为：
+- 读取 `sorted/graph-agent-tasks.json`
+- 默认选择 `status=queued`
+- 默认 `limit=5`
+- 按队列顺序顺序执行
+- 每个 task 都调用现有 `run-task` 工作流
+- 默认遇到第一个 per-task failure 停止
+- 显式 `--continue-on-error` 时记录失败并继续后续 task
+- 不新增 apply 语义，不并发执行
+
+`run-tasks --dry-run` 在整个 batch 中不写 proposal、不写 bundle request、不写 patch bundle、不写 lifecycle event、不改正文、不写 application record。即使传入 `--agent-command`，dry-run 也不执行外部 command。
+
+`wikify.agent-task-batch-run.v1` schema:
+
+```json
+{
+  "schema_version": "wikify.agent-task-batch-run.v1",
+  "base": "/abs/kb",
+  "dry_run": false,
+  "status": "completed",
+  "selection": {
+    "status": "queued",
+    "action": null,
+    "id": null,
+    "limit": 5,
+    "source_schema_version": "wikify.graph-agent-tasks.v1",
+    "total_task_count": 7
+  },
+  "execution": {
+    "mode": "sequential",
+    "continue_on_error": false,
+    "stop_on_error": true
+  },
+  "items": [
+    {
+      "task_id": "agent-task-1",
+      "ok": true,
+      "status": "completed",
+      "result": {
+        "schema_version": "wikify.agent-task-run.v1"
+      }
+    }
+  ],
+  "summary": {
+    "selected_count": 1,
+    "completed_count": 1,
+    "waiting_count": 0,
+    "failed_count": 0,
+    "stopped": false
+  },
+  "next_actions": []
+}
+```
+
+状态：
+- `no_tasks`
+  - 筛选后没有 task
+- `dry_run`
+  - 完成预演且零写入
+- `completed`
+  - 所有 selected tasks 完成
+- `waiting_for_patch_bundle`
+  - 至少一个 task 等待 bundle，且没有失败
+- `stopped_on_error`
+  - 默认 stop-on-error 触发
+- `completed_with_errors`
+  - `--continue-on-error` 模式下至少一个 task 失败，但 batch 跑完 selected tasks
+
+错误：
+- 缺少 task queue 时返回 `agent_task_queue_missing`，exit code 为 `2`
+- 找不到指定 task id 时返回 `agent_task_not_found`，exit code 为 `2`
+- 单个 task 失败不会让 batch command 变成 envelope error；失败进入 `items[].error`，batch status 进入 `stopped_on_error` 或 `completed_with_errors`
+
+安全规则：`run-tasks` 是 bounded sequential orchestration。默认 limit 5、默认 stop-on-error。它只组合 `run-task`，不绕过 proposal/write_scope/preflight/apply/rollback/lifecycle 规则。只有显式 `--agent-command` 才会触发外部 command。
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。

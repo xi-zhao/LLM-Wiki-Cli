@@ -545,6 +545,76 @@ producer 失败时，`run-task` 返回对应 `bundle_producer_*` code，`details
 
 安全规则：`run-task` 是编排层，不是隐藏 provider 层。它只有在调用方显式传入 `--agent-command` 时才会执行外部 command；provider、模型、密钥和 retry 都属于该 command 的责任。runner 不会绕过 proposal `write_scope`，正文修改仍然只发生在 deterministic apply 之后。
 
+## 3.15 Batch Task Workflow Runner
+
+- `run-tasks`
+
+作用：
+- 从 `sorted/graph-agent-tasks.json` 选择一组任务
+- 默认只选择 `queued`
+- 默认 `limit=5`
+- 顺序调用现有 `run-task` 工作流
+- 返回每个 task 的结构化结果或结构化错误
+- 默认遇到第一个失败 task 就停止
+- 显式 `--continue-on-error` 时继续处理后续 task
+
+默认命令：
+
+```bash
+wikify run-tasks --dry-run
+wikify run-tasks --limit 5 --agent-command "python3 agent.py"
+wikify run-tasks --status queued --action queue_link_repair --limit 5 --agent-command "python3 agent.py"
+wikify run-tasks --status queued --limit 5 --continue-on-error --agent-command "python3 agent.py"
+```
+
+返回 schema：
+
+```json
+{
+  "schema_version": "wikify.agent-task-batch-run.v1",
+  "dry_run": false,
+  "status": "completed",
+  "selection": {
+    "status": "queued",
+    "action": null,
+    "id": null,
+    "limit": 5
+  },
+  "execution": {
+    "mode": "sequential",
+    "continue_on_error": false,
+    "stop_on_error": true
+  },
+  "items": [
+    {
+      "task_id": "agent-task-1",
+      "ok": true,
+      "status": "completed",
+      "result": {
+        "schema_version": "wikify.agent-task-run.v1"
+      }
+    }
+  ],
+  "summary": {
+    "selected_count": 1,
+    "completed_count": 1,
+    "waiting_count": 0,
+    "failed_count": 0,
+    "stopped": false
+  }
+}
+```
+
+状态语义：
+- `no_tasks`：筛选后没有任务
+- `dry_run`：完成预演，未写任何 artifact
+- `completed`：选中的任务都完成
+- `waiting_for_patch_bundle`：至少一个任务停在等待 bundle，且没有失败
+- `stopped_on_error`：默认 stop-on-error 触发，后续任务未执行
+- `completed_with_errors`：启用 `--continue-on-error` 后有失败，但后续任务仍继续处理
+
+安全规则：`run-tasks` 不新增任何 apply 语义，也不并发执行。它只是顺序组合现有 `run-task`。默认 limit 5 和 stop-on-error 是批量执行的刹车。`--agent-command` 仍然是显式外部 command，Wikify 不隐藏 provider、模型、密钥或 retry 策略。`run-tasks --dry-run` 在整个 batch 内都不写 proposal、request、bundle、event、正文或 application record。
+
 ---
 
 # 4. 知识库对象模型
