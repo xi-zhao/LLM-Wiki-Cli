@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 9 planning: stable patch bundle request artifacts for external agents.
+**Current focus:** Phase 9 complete: stable patch bundle request artifacts for external agents.
 
 ## Current Position
 
 Phase: 9 of 9 (Patch Bundle Request Contract)
 Plan: 1 of 1 in current phase
-Status: Planning
-Last activity: 2026-04-28 - Added Phase 9 patch bundle request contract.
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 9 patch bundle request contract.
 
-Progress: █████████░ 89%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 1 session
-- Total execution time: 8 sessions
+- Total execution time: 9 sessions
 
 **By Phase:**
 
@@ -35,10 +35,10 @@ Progress: █████████░ 89%
 | 6. Purpose-Aware Proposals | 1/1 | 1 session | 1 session |
 | 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
 | 8. Agent Task Workflow Runner | 1/1 | 1 session | 1 session |
-| 9. Patch Bundle Request Contract | 0/1 | In progress | TBD |
+| 9. Patch Bundle Request Contract | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 04-01, 05-01, 06-01, 07-01, 08-01
+- Last 5 plans: 05-01, 06-01, 07-01, 08-01, 09-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -73,10 +73,12 @@ Recent decisions affecting current work:
 - [Phase 8]: `run-task` composes audited primitives and stops at `waiting_for_patch_bundle` when semantic patch content is missing.
 - [Phase 8]: Successful run-task apply marks tasks done through lifecycle events.
 - [Planning]: Generate patch bundle requests as explicit handoff artifacts before any provider-backed consumer work.
+- [Phase 9]: `bundle-request` packages target snapshots, hashes, proposal context, and bundle schema instructions for external agents.
+- [Phase 9]: Bundle request generation does not mutate content pages or lifecycle state.
 
 ### Pending Todos
 
-- Execute Phase 9: Build patch bundle request contract.
+- None for this milestone.
 
 ### Blockers/Concerns
 

@@ -84,12 +84,12 @@
 
 ### Patch Bundle Request Contract
 
-- [ ] **BND-01**: `wikify bundle-request --task-id <id>` reads one graph agent task, creates or reuses its proposal context, and returns a stable request envelope.
-- [ ] **BND-02**: Non-dry-run writes `sorted/graph-patch-bundle-requests/<task-id>.json`; `--dry-run` writes nothing.
-- [ ] **BND-03**: Request artifacts include task/proposal evidence, intended write scope, allowed operation contract, target file snapshots, and content hashes.
-- [ ] **BND-04**: Request generation never edits content pages and never mutates task lifecycle state.
-- [ ] **BND-05**: Missing task queue, missing task, unsafe paths, and missing target files return structured errors with exit code 2.
-- [ ] **BND-06**: Docs define how an external agent should turn a request into a `wikify.patch-bundle.v1` artifact.
+- [x] **BND-01**: `wikify bundle-request --task-id <id>` reads one graph agent task, creates or reuses its proposal context, and returns a stable request envelope.
+- [x] **BND-02**: Non-dry-run writes `sorted/graph-patch-bundle-requests/<task-id>.json`; `--dry-run` writes nothing.
+- [x] **BND-03**: Request artifacts include task/proposal evidence, intended write scope, allowed operation contract, target file snapshots, and content hashes.
+- [x] **BND-04**: Request generation never edits content pages and never mutates task lifecycle state.
+- [x] **BND-05**: Missing task queue, missing task, unsafe paths, and missing target files return structured errors with exit code 2.
+- [x] **BND-06**: Docs define how an external agent should turn a request into a `wikify.patch-bundle.v1` artifact.
 
 ### Agent Consumer
 
@@ -155,12 +155,12 @@
 | RUN-05 | Phase 8 | Complete |
 | RUN-06 | Phase 8 | Complete |
 | RUN-07 | Phase 8 | Complete |
-| BND-01 | Phase 9 | Planned |
-| BND-02 | Phase 9 | Planned |
-| BND-03 | Phase 9 | Planned |
-| BND-04 | Phase 9 | Planned |
-| BND-05 | Phase 9 | Planned |
-| BND-06 | Phase 9 | Planned |
+| BND-01 | Phase 9 | Complete |
+| BND-02 | Phase 9 | Complete |
+| BND-03 | Phase 9 | Complete |
+| BND-04 | Phase 9 | Complete |
+| BND-05 | Phase 9 | Complete |
+| BND-06 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -173,4 +173,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 during Phase 9 planning*
+*Last updated: 2026-04-28 after Phase 9 completion*

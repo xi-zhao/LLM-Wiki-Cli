@@ -20,7 +20,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
 - [x] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
 - [x] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
-- [ ] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
+- [x] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
 
 ## Phase Details
 
@@ -172,7 +172,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 09-01: Build patch bundle request contract
+- [x] 09-01: Build patch bundle request contract
 
 ## Progress
 
@@ -186,4 +186,4 @@ Plans:
 | 6. Purpose-Aware Proposals | 1/1 | Complete | 2026-04-28 |
 | 7. Patch Apply And Rollback Contract | 1/1 | Complete | 2026-04-28 |
 | 8. Agent Task Workflow Runner | 1/1 | Complete | 2026-04-28 |
-| 9. Patch Bundle Request Contract | 0/1 | Planned | |
+| 9. Patch Bundle Request Contract | 1/1 | Complete | 2026-04-28 |
