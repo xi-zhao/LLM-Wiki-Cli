@@ -19,10 +19,10 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify maintain` builds graph artifacts, findings, plan, execution classification, and history without editing content pages.
 - [x] `wikify maintain` writes a deterministic graph agent task queue artifact.
 - [x] `wikify tasks` lets agents read, filter, and inspect queued graph tasks without mutating task state.
+- [x] `wikify propose` generates scoped patch proposal artifacts from one graph agent task without applying edits.
 
 ### Active
 
-- [ ] Add scoped patch proposal artifacts so an agent can inspect one task and propose edits without applying them.
 - [ ] Add durable task lifecycle transitions after proposal artifacts exist.
 - [ ] Add graph relevance scores that prioritize findings/tasks using explainable graph signals.
 - [ ] Add optional purpose-aware context so proposals optimize for the wiki's goals, not just local graph shape.
@@ -62,6 +62,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Learn from `nashsu/llm_wiki` without copying code | Its GPLv3 license conflicts with Wikify's MIT direction, but product patterns are useful | ✓ Good |
 | Sequence proposal before lifecycle and apply | Agents need auditable proposals before state mutation or content mutation becomes useful | ✓ Good |
 | Keep relevance scoring advisory first | Scores should improve prioritization before they drive automatic writes | ✓ Good |
+| Keep patch proposals read-only | Lets agents review planned edits while preserving V1 no-content-mutation safety | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 after llm_wiki reference planning*
+*Last updated: 2026-04-28 after Phase 3 completion*

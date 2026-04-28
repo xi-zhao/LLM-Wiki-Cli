@@ -14,7 +14,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 
 - [x] **Phase 1: Graph Agent Task Queue** - Convert queued graph maintenance steps into an agent-consumable task artifact.
 - [x] **Phase 2: Agent Task Reader** - Add a stable CLI entrypoint for listing and inspecting queued graph agent tasks.
-- [ ] **Phase 3: Scoped Patch Proposal** - Let agents generate auditable, scoped patch proposals from one queued task without applying edits.
+- [x] **Phase 3: Scoped Patch Proposal** - Let agents generate auditable, scoped patch proposals from one queued task without applying edits.
 - [ ] **Phase 4: Agent Task Lifecycle** - Add durable task state transitions, retry/cancel/restore, and append-only lifecycle events.
 - [ ] **Phase 5: Graph Relevance Scoring** - Rank findings and tasks using explainable graph relevance signals.
 - [ ] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
@@ -67,7 +67,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Build scoped patch proposal command
+- [x] 03-01: Build scoped patch proposal command
 
 ### Phase 4: Agent Task Lifecycle
 **Goal**: Add explicit task state mutation commands and append-only lifecycle events after proposals exist.
@@ -80,7 +80,7 @@ Plans:
   3. Every transition appends an audit event.
   4. Read-only `wikify tasks` remains backward compatible.
   5. No lifecycle command rewrites content pages.
-**Plans**: To plan after Phase 3.
+**Plans**: Ready to plan.
 
 ### Phase 5: Graph Relevance Scoring
 **Goal**: Improve maintenance priority by computing direct-link, source-overlap, common-neighbor, and type-affinity relevance signals.
@@ -113,7 +113,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Graph Agent Task Queue | 1/1 | Complete | 2026-04-28 |
 | 2. Agent Task Reader | 1/1 | Complete | 2026-04-28 |
-| 3. Scoped Patch Proposal | 0/1 | Ready to execute | - |
-| 4. Agent Task Lifecycle | 0/0 | Planned | - |
+| 3. Scoped Patch Proposal | 1/1 | Complete | 2026-04-28 |
+| 4. Agent Task Lifecycle | 0/0 | Ready to plan | - |
 | 5. Graph Relevance Scoring | 0/0 | Planned | - |
 | 6. Purpose-Aware Proposals | 0/0 | Planned | - |

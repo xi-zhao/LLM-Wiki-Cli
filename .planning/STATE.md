@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 3 ready: scoped patch proposal from graph agent tasks.
+**Current focus:** Phase 4 planning: durable graph agent task lifecycle.
 
 ## Current Position
 
-Phase: 3 of 6 (Scoped Patch Proposal)
-Plan: 1 of 1 in current phase
-Status: Planned and ready to execute
-Last activity: 2026-04-28 - Referenced `nashsu/llm_wiki`, expanded GSD roadmap to six phases, and wrote Phase 3 execution plan.
+Phase: 4 of 6 (Agent Task Lifecycle)
+Plan: 0 of 0 in current phase
+Status: Phase 3 complete; Phase 4 ready to plan
+Last activity: 2026-04-28 - Implemented `wikify propose`, documented protocol, and verified 135 unit tests plus proposal smoke.
 
-Progress: ███░░░░░░░ 33%
+Progress: █████░░░░░ 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
+- Total plans completed: 3
 - Average duration: 1 session
-- Total execution time: 2 sessions
+- Total execution time: 3 sessions
 
 **By Phase:**
 
@@ -29,13 +29,13 @@ Progress: ███░░░░░░░ 33%
 |-------|-------|-------|----------|
 | 1. Graph Agent Task Queue | 1/1 | 1 session | 1 session |
 | 2. Agent Task Reader | 1/1 | 1 session | 1 session |
-| 3. Scoped Patch Proposal | 0/1 | Not started | - |
+| 3. Scoped Patch Proposal | 1/1 | 1 session | 1 session |
 | 4. Agent Task Lifecycle | 0/0 | Not started | - |
 | 5. Graph Relevance Scoring | 0/0 | Not started | - |
 | 6. Purpose-Aware Proposals | 0/0 | Not started | - |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 02-01
+- Last 5 plans: 01-01, 02-01, 03-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -53,16 +53,18 @@ Recent decisions affecting current work:
 - [Planning]: Borrow `llm_wiki` product ideas, not GPLv3 implementation code.
 - [Planning]: Execute proposal before lifecycle so task states have meaningful artifacts to point to.
 - [Planning]: Keep relevance scoring advisory before it affects automation.
+- [Phase 3]: `wikify propose` is read-only with respect to content pages and task status.
+- [Phase 3]: Proposal paths must pass task `write_scope` validation before artifact write.
+- [Phase 3]: `--dry-run` returns proposal JSON without writing `graph-patch-proposals`.
 
 ### Pending Todos
 
-- Execute Phase 3 plan: build `wikify propose --task-id <id>`.
 - Plan Phase 4 after proposal artifacts exist.
 
 ### Blockers/Concerns
 
 - `gsd-sdk` is not available in PATH; GSD files are maintained manually in this session.
-- Patch proposal must stay read-only until a later apply contract exists.
+- Task lifecycle must remain content-read-only until a later apply contract exists.
 
 ## Deferred Items
 
@@ -75,5 +77,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 3 planned and ready to execute.
+Stopped at: Phase 3 complete and verified; Phase 4 ready to plan.
 Resume file: None

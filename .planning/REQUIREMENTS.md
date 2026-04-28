@@ -30,12 +30,12 @@
 
 ### Scoped Patch Proposal
 
-- [ ] **PRP-01**: `wikify propose --task-id <id>` reads one existing graph agent task and returns a stable JSON envelope.
-- [ ] **PRP-02**: Proposals are written to `sorted/graph-patch-proposals/<task-id>.json` unless `--dry-run` is used.
-- [ ] **PRP-03**: Every proposed file path is validated against the selected task `write_scope`.
-- [ ] **PRP-04**: Proposal generation never applies patches, rewrites content pages, or mutates task status.
-- [ ] **PRP-05**: Missing task, missing write scope, invalid write path, and missing queue cases return structured errors with exit code 2.
-- [ ] **PRP-06**: Proposal artifacts include evidence, planned edits, acceptance checks, risk level, and a preflight summary.
+- [x] **PRP-01**: `wikify propose --task-id <id>` reads one existing graph agent task and returns a stable JSON envelope.
+- [x] **PRP-02**: Proposals are written to `sorted/graph-patch-proposals/<task-id>.json` unless `--dry-run` is used.
+- [x] **PRP-03**: Every proposed file path is validated against the selected task `write_scope`.
+- [x] **PRP-04**: Proposal generation never applies patches, rewrites content pages, or mutates task status.
+- [x] **PRP-05**: Missing task, missing write scope, invalid write path, and missing queue cases return structured errors with exit code 2.
+- [x] **PRP-06**: Proposal artifacts include evidence, planned edits, acceptance checks, risk level, and a preflight summary.
 
 ### Agent Task Lifecycle
 
@@ -93,12 +93,12 @@
 | TSK-03 | Phase 2 | Complete |
 | TSK-04 | Phase 2 | Complete |
 | TSK-05 | Phase 2 | Complete |
-| PRP-01 | Phase 3 | Planned |
-| PRP-02 | Phase 3 | Planned |
-| PRP-03 | Phase 3 | Planned |
-| PRP-04 | Phase 3 | Planned |
-| PRP-05 | Phase 3 | Planned |
-| PRP-06 | Phase 3 | Planned |
+| PRP-01 | Phase 3 | Complete |
+| PRP-02 | Phase 3 | Complete |
+| PRP-03 | Phase 3 | Complete |
+| PRP-04 | Phase 3 | Complete |
+| PRP-05 | Phase 3 | Complete |
+| PRP-06 | Phase 3 | Complete |
 | LIF-01 | Phase 4 | Planned |
 | LIF-02 | Phase 4 | Planned |
 | LIF-03 | Phase 4 | Planned |
@@ -121,4 +121,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after llm_wiki reference planning*
+*Last updated: 2026-04-28 after Phase 3 completion*
