@@ -93,11 +93,11 @@
 
 ### Runner Bundle Request Handoff
 
-- [ ] **HND-01**: `wikify run-task --id <id>` writes or refreshes a patch bundle request artifact when the patch bundle is missing.
-- [ ] **HND-02**: `run-task --dry-run` previews bundle request handoff without writing proposal, request, lifecycle events, content changes, or application records.
-- [ ] **HND-03**: `run-task` results expose `artifacts.patch_bundle_request`, `summary.bundle_request_path`, and `summary.suggested_bundle_path`.
-- [ ] **HND-04**: Bundle request generation errors inside `run-task` are structured with `details.phase = "bundle_request"` and preserve already-auditable intermediate state.
-- [ ] **HND-05**: Docs explain that normal automation can call `run-task` first; a separate `bundle-request` command remains available for explicit handoff refreshes.
+- [x] **HND-01**: `wikify run-task --id <id>` writes or refreshes a patch bundle request artifact when the patch bundle is missing.
+- [x] **HND-02**: `run-task --dry-run` previews bundle request handoff without writing proposal, request, lifecycle events, content changes, or application records.
+- [x] **HND-03**: `run-task` results expose `artifacts.patch_bundle_request`, `summary.bundle_request_path`, and `summary.suggested_bundle_path`.
+- [x] **HND-04**: Bundle request generation errors inside `run-task` are structured with `details.phase = "bundle_request"` and preserve already-auditable intermediate state.
+- [x] **HND-05**: Docs explain that normal automation can call `run-task` first; a separate `bundle-request` command remains available for explicit handoff refreshes.
 
 ### Agent Consumer
 
@@ -169,11 +169,11 @@
 | BND-04 | Phase 9 | Complete |
 | BND-05 | Phase 9 | Complete |
 | BND-06 | Phase 9 | Complete |
-| HND-01 | Phase 10 | Planned |
-| HND-02 | Phase 10 | Planned |
-| HND-03 | Phase 10 | Planned |
-| HND-04 | Phase 10 | Planned |
-| HND-05 | Phase 10 | Planned |
+| HND-01 | Phase 10 | Complete |
+| HND-02 | Phase 10 | Complete |
+| HND-03 | Phase 10 | Complete |
+| HND-04 | Phase 10 | Complete |
+| HND-05 | Phase 10 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -187,4 +187,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 during Phase 10 planning*
+*Last updated: 2026-04-28 after Phase 10 completion*

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 10 planning: runner automatically prepares bundle request handoffs.
+**Current focus:** Phase 10 complete: runner automatically prepares bundle request handoffs.
 
 ## Current Position
 
 Phase: 10 of 10 (Runner Bundle Request Handoff)
 Plan: 1 of 1 in current phase
-Status: Planning
-Last activity: 2026-04-28 - Added Phase 10 runner bundle request handoff.
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 10 runner bundle request handoff.
 
-Progress: █████████░ 90%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 10
 - Average duration: 1 session
-- Total execution time: 9 sessions
+- Total execution time: 10 sessions
 
 **By Phase:**
 
@@ -36,10 +36,10 @@ Progress: █████████░ 90%
 | 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
 | 8. Agent Task Workflow Runner | 1/1 | 1 session | 1 session |
 | 9. Patch Bundle Request Contract | 1/1 | 1 session | 1 session |
-| 10. Runner Bundle Request Handoff | 0/1 | In progress | TBD |
+| 10. Runner Bundle Request Handoff | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 05-01, 06-01, 07-01, 08-01, 09-01
+- Last 5 plans: 06-01, 07-01, 08-01, 09-01, 10-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -77,10 +77,12 @@ Recent decisions affecting current work:
 - [Phase 9]: `bundle-request` packages target snapshots, hashes, proposal context, and bundle schema instructions for external agents.
 - [Phase 9]: Bundle request generation does not mutate content pages or lifecycle state.
 - [Planning]: `run-task` should prepare the request handoff automatically when bundle content is missing.
+- [Phase 10]: `run-task` writes a patch bundle request artifact automatically when it reaches `waiting_for_patch_bundle`.
+- [Phase 10]: `run-task --dry-run` reports request paths but remains zero-write.
 
 ### Pending Todos
 
-- Execute Phase 10: Build runner bundle request handoff.
+- None for this milestone.
 
 ### Blockers/Concerns
 

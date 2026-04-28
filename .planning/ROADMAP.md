@@ -21,7 +21,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
 - [x] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
 - [x] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
-- [ ] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
+- [x] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
 
 ## Phase Details
 
@@ -191,7 +191,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01: Build runner bundle request handoff
+- [x] 10-01: Build runner bundle request handoff
 
 ## Progress
 
@@ -206,4 +206,4 @@ Plans:
 | 7. Patch Apply And Rollback Contract | 1/1 | Complete | 2026-04-28 |
 | 8. Agent Task Workflow Runner | 1/1 | Complete | 2026-04-28 |
 | 9. Patch Bundle Request Contract | 1/1 | Complete | 2026-04-28 |
-| 10. Runner Bundle Request Handoff | 0/1 | Planned | |
+| 10. Runner Bundle Request Handoff | 1/1 | Complete | 2026-04-28 |

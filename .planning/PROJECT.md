@@ -26,7 +26,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify apply` and `wikify rollback` support deterministic agent-generated patch bundles with audit and hash-guarded rollback.
 - [x] `wikify run-task` orchestrates proposal, bundle detection, apply, and lifecycle completion with low user interruption.
 - [x] `wikify bundle-request` generates a stable agent-facing request artifact for producing explicit patch bundles.
-- [ ] `wikify run-task` automatically prepares a patch bundle request when no bundle exists.
+- [x] `wikify run-task` automatically prepares a patch bundle request when no bundle exists.
 
 ### Out of Scope
 
@@ -70,7 +70,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Good |
 | Stop at missing patch bundles | Workflow automation should return an agent action instead of prompting the user or inventing content | ✓ Good |
 | Generate patch bundle requests before provider execution | A stable request artifact lets any external agent generate bundle content without hidden CLI LLM calls | ✓ Good |
-| Let runner prepare bundle requests | The main workflow should create the agent handoff artifact automatically when it reaches `waiting_for_patch_bundle` | ✓ Active |
+| Let runner prepare bundle requests | The main workflow should create the agent handoff artifact automatically when it reaches `waiting_for_patch_bundle` | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 during Phase 10 planning*
+*Last updated: 2026-04-28 after Phase 10 completion*
