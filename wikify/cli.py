@@ -15,6 +15,12 @@ from wikify.maintenance.bundle_producer import (
     BundleProducerError,
     produce_patch_bundle,
 )
+from wikify.maintenance.batch_runner import (
+    DEFAULT_LIMIT as DEFAULT_BATCH_LIMIT,
+    DEFAULT_STATUS as DEFAULT_BATCH_STATUS,
+    BatchTaskRunError,
+    run_agent_tasks,
+)
 from wikify.maintenance.patch_apply import (
     PatchApplyError,
     apply_patch_bundle,
@@ -548,6 +554,49 @@ def cmd_run_task(args):
     return envelope_ok('run-task', result)
 
 
+def cmd_run_tasks(args):
+    base = discover_base()
+    try:
+        result = run_agent_tasks(
+            base,
+            status=args.status,
+            action=args.action,
+            task_id=args.id,
+            limit=args.limit,
+            dry_run=args.dry_run,
+            agent_command=args.agent_command,
+            producer_timeout_seconds=args.producer_timeout,
+            continue_on_error=args.continue_on_error,
+        )
+    except BatchTaskRunError as exc:
+        return envelope_error(
+            'run-tasks',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'run-tasks',
+            'agent_task_batch_run_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'agent task batch workflow advanced',
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'agent task batch workflow advanced',
+    }
+    return envelope_ok('run-tasks', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -634,6 +683,18 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_task.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_task.add_argument('--dry-run', action='store_true')
         p_run_task.set_defaults(func=cmd_run_task)
+
+    if 'run-tasks' not in sub.choices:
+        p_run_tasks = sub.add_parser('run-tasks', help='Advance a bounded batch of graph agent tasks sequentially')
+        p_run_tasks.add_argument('--status', choices=['queued', 'proposed', 'in_progress', 'done', 'failed', 'blocked', 'rejected'], default=DEFAULT_BATCH_STATUS)
+        p_run_tasks.add_argument('--action')
+        p_run_tasks.add_argument('--id')
+        p_run_tasks.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
+        p_run_tasks.add_argument('--agent-command')
+        p_run_tasks.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_run_tasks.add_argument('--continue-on-error', action='store_true')
+        p_run_tasks.add_argument('--dry-run', action='store_true')
+        p_run_tasks.set_defaults(func=cmd_run_tasks)
 
     return parser
 

@@ -286,6 +286,38 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.producer_timeout, 30.0)
         self.assertTrue(args.dry_run)
 
+    def test_build_parser_accepts_run_tasks_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'run-tasks',
+            '--status',
+            'queued',
+            '--action',
+            'queue_link_repair',
+            '--id',
+            'agent-task-1',
+            '--limit',
+            '3',
+            '--agent-command',
+            'python3 agent.py',
+            '--producer-timeout',
+            '30',
+            '--continue-on-error',
+            '--dry-run',
+        ])
+
+        self.assertEqual(args.command, 'run-tasks')
+        self.assertEqual(args.status, 'queued')
+        self.assertEqual(args.action, 'queue_link_repair')
+        self.assertEqual(args.id, 'agent-task-1')
+        self.assertEqual(args.limit, 3)
+        self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.producer_timeout, 30.0)
+        self.assertTrue(args.continue_on_error)
+        self.assertTrue(args.dry_run)
+
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')
         repo = Path(__file__).resolve().parents[1]
@@ -870,6 +902,55 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertTrue((kb / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json').exists())
                 self.assertEqual(queue['tasks'][0]['status'], 'done')
                 self.assertTrue(Path(payload['result']['artifacts']['application']).exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_run_tasks_command_with_agent_command_processes_selected_tasks(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                self._write_run_task_queue(kb)
+                (kb / 'topics').mkdir()
+                target = kb / 'topics' / 'a.md'
+                target.write_text('See [[Missing]].\n', encoding='utf-8')
+                script = self._write_stdout_bundle_agent(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'run-tasks',
+                        '--limit',
+                        '1',
+                        '--agent-command',
+                        f'{sys.executable} {script}',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                self.assertEqual(payload['command'], 'run-tasks')
+                self.assertEqual(payload['result']['schema_version'], 'wikify.agent-task-batch-run.v1')
+                self.assertEqual(payload['result']['status'], 'completed')
+                self.assertEqual(payload['result']['summary']['selected_count'], 1)
+                self.assertEqual(payload['result']['summary']['completed_count'], 1)
+                self.assertEqual(payload['result']['items'][0]['task_id'], 'agent-task-1')
+                self.assertTrue(payload['result']['items'][0]['ok'])
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+                self.assertEqual(queue['tasks'][0]['status'], 'done')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
