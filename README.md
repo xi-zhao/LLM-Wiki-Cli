@@ -117,9 +117,14 @@ wikify maintain --dry-run
 wikify maintain --policy conservative
 wikify maintain --policy balanced
 wikify maintain --policy aggressive
+wikify tasks
+wikify tasks --status queued --limit 5
+wikify tasks --refresh --id agent-task-1
 ```
 
 `graph-agent-tasks.json` is the handoff artifact for later agents. Each queued task carries the source finding, action, target, evidence, write scope, agent instructions, acceptance checks, and `requires_user: false`.
+
+`wikify tasks` is the read API for that handoff artifact. By default it only reads `sorted/graph-agent-tasks.json`; `--refresh` explicitly runs `wikify maintain` first. If the artifact is missing, the command returns `agent_task_queue_missing`.
 
 V1 safety rule: `wikify maintain` does not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps and agent tasks; only deterministic maintenance bookkeeping can be marked executed.
 

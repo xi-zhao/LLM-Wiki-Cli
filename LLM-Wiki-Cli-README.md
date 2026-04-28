@@ -234,6 +234,28 @@ wikify maintain --policy aggressive
 
 V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面，也不在 CLI 内隐藏调用 LLM；断链修复、孤立对象挂接、digest 刷新和 community synthesis 都只进入 plan 和 agent task queue，由后续 agent 审核或执行。
 
+## 3.8 Agent Task Reader
+
+- `tasks`
+
+作用：
+- 读取 `sorted/graph-agent-tasks.json`
+- 按 status、action、id、limit 筛选任务
+- 为后续 agent 提供稳定 JSON selection，而不是让 agent 自己解析文件路径和筛选逻辑
+- 在显式 `--refresh` 时先执行一次 `maintain`，再读取最新任务
+
+默认命令：
+
+```bash
+wikify tasks
+wikify tasks --status queued --limit 5
+wikify tasks --action queue_link_repair
+wikify tasks --id agent-task-1
+wikify tasks --refresh --id agent-task-1
+```
+
+缺少 `sorted/graph-agent-tasks.json` 时，返回 `agent_task_queue_missing`。V1 中 `tasks` 默认只读，不修改正文页面，也不改变 task status；状态流转和 patch 应用属于后续 phase。
+
 ---
 
 # 4. 知识库对象模型
