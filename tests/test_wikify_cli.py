@@ -123,6 +123,36 @@ class WikifyCliTests(unittest.TestCase):
         )
         return script
 
+    def _write_sample_link_repair_agent(self, kb: Path):
+        script = kb / 'sample_link_repair_agent.py'
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'target = request["targets"][0]',
+                'edit = request["proposal"]["planned_edits"][0]',
+                'missing = edit["evidence"]["target"]',
+                'bundle = {',
+                '    "schema_version": "wikify.patch-bundle.v1",',
+                '    "proposal_task_id": request["task_id"],',
+                '    "proposal_path": request["proposal_path"],',
+                '    "operations": [',
+                '        {',
+                '            "operation": "replace_text",',
+                '            "path": target["path"],',
+                '            "find": f"[[{missing}]]",',
+                '            "replace": "[[agent-knowledge-loops]]",',
+                '            "rationale": "resolve sample broken wikilink"',
+                '        }',
+                '    ]',
+                '}',
+                'print(json.dumps(bundle))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
+
     def test_discover_base_prefers_wikify_base(self):
         original_wikify = os.environ.get('WIKIFY_BASE')
         original_fokb = os.environ.get('FOKB_BASE')
@@ -309,6 +339,41 @@ class WikifyCliTests(unittest.TestCase):
         ])
 
         self.assertEqual(args.command, 'run-tasks')
+        self.assertEqual(args.status, 'queued')
+        self.assertEqual(args.action, 'queue_link_repair')
+        self.assertEqual(args.id, 'agent-task-1')
+        self.assertEqual(args.limit, 3)
+        self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.producer_timeout, 30.0)
+        self.assertTrue(args.continue_on_error)
+        self.assertTrue(args.dry_run)
+
+    def test_build_parser_accepts_maintain_run_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'maintain-run',
+            '--policy',
+            'balanced',
+            '--status',
+            'queued',
+            '--action',
+            'queue_link_repair',
+            '--id',
+            'agent-task-1',
+            '--limit',
+            '3',
+            '--agent-command',
+            'python3 agent.py',
+            '--producer-timeout',
+            '30',
+            '--continue-on-error',
+            '--dry-run',
+        ])
+
+        self.assertEqual(args.command, 'maintain-run')
+        self.assertEqual(args.policy, 'balanced')
         self.assertEqual(args.status, 'queued')
         self.assertEqual(args.action, 'queue_link_repair')
         self.assertEqual(args.id, 'agent-task-1')
@@ -951,6 +1016,54 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertTrue(payload['result']['items'][0]['ok'])
                 self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
                 self.assertEqual(queue['tasks'][0]['status'], 'done')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_maintain_run_command_with_agent_command_refreshes_and_processes_selected_tasks(self):
+        cli = importlib.import_module('wikify.cli')
+        repo = Path(__file__).resolve().parents[1]
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir) / 'sample-kb'
+                shutil.copytree(repo / 'sample-kb', kb)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                script = self._write_sample_link_repair_agent(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'maintain-run',
+                        '--action',
+                        'queue_link_repair',
+                        '--limit',
+                        '1',
+                        '--agent-command',
+                        f'{sys.executable} {script}',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                target = kb / 'topics' / 'topics-moc.md'
+                self.assertEqual(payload['command'], 'maintain-run')
+                self.assertEqual(payload['result']['schema_version'], 'wikify.maintenance-run.v1')
+                self.assertEqual(payload['result']['status'], 'completed')
+                self.assertEqual(payload['result']['batch']['summary']['selected_count'], 1)
+                self.assertEqual(payload['result']['batch']['summary']['completed_count'], 1)
+                self.assertEqual(queue['tasks'][0]['status'], 'done')
+                self.assertIn('[[agent-knowledge-loops]]', target.read_text(encoding='utf-8'))
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

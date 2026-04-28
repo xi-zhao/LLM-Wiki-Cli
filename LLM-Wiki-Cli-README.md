@@ -170,12 +170,14 @@ CLI 输出里可直接读取：
 - `lint --deep`
 - `maintenance`
 - `maintain`
+- `maintain-run`
 - `decide`
 
 作用：
 - 基础巡检和全库深巡检
 - 查询 maintenance history
 - 基于 graph 自动生成 findings、plan 和 history，不打断用户
+- 一条命令刷新维护产物并推进有界 agent task batch
 - 根据 maintenance verdict 产出下一步 decision plan
 
 ## 3.6 图谱结构层
@@ -615,6 +617,40 @@ wikify run-tasks --status queued --limit 5 --continue-on-error --agent-command "
 
 安全规则：`run-tasks` 不新增任何 apply 语义，也不并发执行。它只是顺序组合现有 `run-task`。默认 limit 5 和 stop-on-error 是批量执行的刹车。`--agent-command` 仍然是显式外部 command，Wikify 不隐藏 provider、模型、密钥或 retry 策略。`run-tasks --dry-run` 在整个 batch 内都不写 proposal、request、bundle、event、正文或 application record。
 
+## 3.16 Maintenance Run Automation
+
+- `maintain-run`
+
+作用：
+- 先执行 `maintain` 刷新 graph findings、plan、history 和 agent task queue
+- 再从刷新后的队列中选择 bounded batch
+- 复用现有 `run-tasks` 执行路径，不新增 apply 语义
+- 默认 `policy=balanced`、`status=queued`、`limit=5`
+- 默认顺序执行，遇到第一个 per-task failure 停止
+- 显式 `--continue-on-error` 时继续后续 task
+
+默认命令：
+
+```bash
+wikify maintain-run --dry-run
+wikify maintain-run --limit 5 --agent-command "python3 agent.py"
+wikify maintain-run --status queued --action queue_link_repair --limit 5 --agent-command "python3 agent.py"
+wikify maintain-run --status queued --limit 5 --continue-on-error --agent-command "python3 agent.py"
+```
+
+`maintain-run --dry-run` 会运行 maintenance dry-run 并用返回的 in-memory task queue 预览 selection；它不会读取旧的 `sorted/graph-agent-tasks.json` 来决定 would-run tasks，也不会执行 producer、写 proposal/request/bundle、写 lifecycle event、apply bundle 或修改正文。和 `maintain --dry-run` 一样，它可能刷新 `graph/` 产物。
+
+返回结果使用 `wikify.maintenance-run.v1`，包含：
+- `maintenance.summary`
+- `batch.summary`
+- `artifacts.maintenance`
+- `artifacts.batch`
+- `summary.selected_count`
+- `summary.completed_count`
+- `next_actions`
+
+安全规则：`maintain-run` 是组合层。它只组合 `maintain` 和 `run-tasks`，不会隐藏调用 provider、不会选择模型、不会读取 API key、不会绕过 proposal/write_scope/preflight/apply/rollback/lifecycle 规则。只有调用方显式传入 `--agent-command` 时，后续 batch task 才可能执行外部 command。
+
 ---
 
 # 4. 知识库对象模型
@@ -1003,6 +1039,7 @@ wikify promote /absolute/path/to/sorted/object.md
 - history/state 可查询
 - 兼容旧历史的 lazy normalization
 - 端到端 control loop 已跑通
+- `maintain-run` 已能把维护刷新和有界 agent task 执行串成一条低打扰自动化路径
 
 因此，它已经可以视为：
 

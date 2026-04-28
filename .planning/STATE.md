@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 14 planned: maintenance run automation.
+**Current focus:** Phase 14 complete: maintenance run automation.
 
 ## Current Position
 
 Phase: 14 of 14 (Maintenance Run Automation)
 Plan: 1 of 1 in current phase
-Status: Planned
-Last activity: 2026-04-28 - Planned Phase 14 maintenance run automation.
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 14 maintenance run automation.
 
-Progress: █████████░ 93%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 1 session
-- Total execution time: 13 sessions
+- Total execution time: 14 sessions
 
 **By Phase:**
 
@@ -40,10 +40,10 @@ Progress: █████████░ 93%
 | 11. External Patch Bundle Producer | 1/1 | 1 session | 1 session |
 | 12. Run Task Inline Producer Automation | 1/1 | 1 session | 1 session |
 | 13. Batch Task Automation | 1/1 | 1 session | 1 session |
-| 14. Maintenance Run Automation | 0/1 | - | - |
+| 14. Maintenance Run Automation | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 09-01, 10-01, 11-01, 12-01, 13-01
+- Last 5 plans: 10-01, 11-01, 12-01, 13-01, 14-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -93,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 13]: `run-tasks` composes existing single-task runner results and returns per-task outcomes.
 - [Phase 13]: Batch defaults are queued status, limit 5, sequential execution, and stop-on-error.
 - [Planning]: Maintenance run automation should compose `maintain` and `run-tasks` without introducing hidden provider execution.
+- [Phase 14]: `maintain-run` refreshes maintenance artifacts before selecting tasks and uses the bounded batch runner.
+- [Phase 14]: Dry-run previews from the fresh in-memory maintenance task queue instead of stale on-disk queues.
 
 ### Pending Todos
 
@@ -116,6 +118,7 @@ Recent decisions affecting current work:
 - Phase 13 added: Batch Task Automation.
 - Phase 13 completed: Batch Task Automation.
 - Phase 14 added: Maintenance Run Automation.
+- Phase 14 completed: Maintenance Run Automation.
 
 ## Deferred Items
 

@@ -132,13 +132,13 @@
 
 ### Maintenance Run Automation
 
-- [ ] **MRA-01**: `wikify maintain-run` refreshes graph maintenance artifacts before task selection.
-- [ ] **MRA-02**: The command executes selected tasks through the existing bounded `run_agent_tasks` workflow.
-- [ ] **MRA-03**: Defaults are conservative: balanced maintenance policy, queued task status, limit 5, sequential execution, and stop-on-error.
-- [ ] **MRA-04**: `--agent-command` remains explicit and is only forwarded to the batch runner when provided.
-- [ ] **MRA-05**: `--dry-run` previews maintenance and task selection intent without executing task producers, writing lifecycle events, applying bundles, or mutating content.
-- [ ] **MRA-06**: Results use a stable `wikify.maintenance-run.v1` schema with maintenance summary, batch summary or preview, artifacts, and next actions.
-- [ ] **MRA-07**: Structured errors preserve phase context for maintenance refresh and batch execution failures.
+- [x] **MRA-01**: `wikify maintain-run` refreshes graph maintenance artifacts before task selection.
+- [x] **MRA-02**: The command executes selected tasks through the existing bounded `run_agent_tasks` workflow.
+- [x] **MRA-03**: Defaults are conservative: balanced maintenance policy, queued task status, limit 5, sequential execution, and stop-on-error.
+- [x] **MRA-04**: `--agent-command` remains explicit and is only forwarded to the batch runner when provided.
+- [x] **MRA-05**: `--dry-run` previews maintenance and task selection intent without executing task producers, writing lifecycle events, applying bundles, or mutating content.
+- [x] **MRA-06**: Results use a stable `wikify.maintenance-run.v1` schema with maintenance summary, batch summary or preview, artifacts, and next actions.
+- [x] **MRA-07**: Structured errors preserve phase context for maintenance refresh and batch execution failures.
 
 ### Agent Consumer
 
@@ -237,13 +237,13 @@
 | BTA-06 | Phase 13 | Complete |
 | BTA-07 | Phase 13 | Complete |
 | BTA-08 | Phase 13 | Complete |
-| MRA-01 | Phase 14 | Planned |
-| MRA-02 | Phase 14 | Planned |
-| MRA-03 | Phase 14 | Planned |
-| MRA-04 | Phase 14 | Planned |
-| MRA-05 | Phase 14 | Planned |
-| MRA-06 | Phase 14 | Planned |
-| MRA-07 | Phase 14 | Planned |
+| MRA-01 | Phase 14 | Complete |
+| MRA-02 | Phase 14 | Complete |
+| MRA-03 | Phase 14 | Complete |
+| MRA-04 | Phase 14 | Complete |
+| MRA-05 | Phase 14 | Complete |
+| MRA-06 | Phase 14 | Complete |
+| MRA-07 | Phase 14 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -261,4 +261,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 14 planning*
+*Last updated: 2026-04-28 after Phase 14 completion*

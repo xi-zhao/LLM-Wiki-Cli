@@ -21,6 +21,11 @@ from wikify.maintenance.batch_runner import (
     BatchTaskRunError,
     run_agent_tasks,
 )
+from wikify.maintenance.maintain_run import (
+    DEFAULT_POLICY as DEFAULT_MAINTAIN_RUN_POLICY,
+    MaintenanceRunError,
+    run_maintenance_workflow,
+)
 from wikify.maintenance.patch_apply import (
     PatchApplyError,
     apply_patch_bundle,
@@ -597,6 +602,55 @@ def cmd_run_tasks(args):
     return envelope_ok('run-tasks', result)
 
 
+def cmd_maintain_run(args):
+    base = discover_base()
+    try:
+        result = run_maintenance_workflow(
+            base,
+            policy=args.policy,
+            status=args.status,
+            action=args.action,
+            task_id=args.id,
+            limit=args.limit,
+            dry_run=args.dry_run,
+            agent_command=args.agent_command,
+            producer_timeout_seconds=args.producer_timeout,
+            continue_on_error=args.continue_on_error,
+        )
+    except MaintenanceRunError as exc:
+        return envelope_error(
+            'maintain-run',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'maintain-run',
+            'maintenance_run_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = []
+    for group in result.get('artifacts', {}).values():
+        if isinstance(group, dict):
+            artifacts.extend(path for path in group.values() if path)
+        elif group:
+            artifacts.append(group)
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'maintenance run workflow advanced',
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'maintenance run workflow advanced',
+    }
+    return envelope_ok('maintain-run', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -695,6 +749,19 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_tasks.add_argument('--continue-on-error', action='store_true')
         p_run_tasks.add_argument('--dry-run', action='store_true')
         p_run_tasks.set_defaults(func=cmd_run_tasks)
+
+    if 'maintain-run' not in sub.choices:
+        p_maintain_run = sub.add_parser('maintain-run', help='Refresh graph maintenance and advance a bounded task batch')
+        p_maintain_run.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default=DEFAULT_MAINTAIN_RUN_POLICY)
+        p_maintain_run.add_argument('--status', choices=['queued', 'proposed', 'in_progress', 'done', 'failed', 'blocked', 'rejected'], default=DEFAULT_BATCH_STATUS)
+        p_maintain_run.add_argument('--action')
+        p_maintain_run.add_argument('--id')
+        p_maintain_run.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
+        p_maintain_run.add_argument('--agent-command')
+        p_maintain_run.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_maintain_run.add_argument('--continue-on-error', action='store_true')
+        p_maintain_run.add_argument('--dry-run', action='store_true')
+        p_maintain_run.set_defaults(func=cmd_maintain_run)
 
     return parser
 

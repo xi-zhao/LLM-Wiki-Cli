@@ -119,6 +119,8 @@ wikify maintain --dry-run
 wikify maintain --policy conservative
 wikify maintain --policy balanced
 wikify maintain --policy aggressive
+wikify maintain-run --dry-run
+wikify maintain-run --limit 5 --agent-command "python3 agent.py"
 wikify tasks
 wikify tasks --status queued --limit 5
 wikify tasks --refresh --id agent-task-1
@@ -162,9 +164,11 @@ For one-command automation, `wikify run-task --id <task-id> --agent-command "<co
 
 `wikify run-tasks` is the bounded batch runner. By default it selects queued tasks, limits the batch to 5, runs tasks sequentially through the same audited `run-task` workflow, and stops on the first per-task failure. Use `--continue-on-error` to keep going after a failed item. `--dry-run` writes nothing across the whole batch, and `--agent-command` remains an explicit external command passed into each task run.
 
+`wikify maintain-run` is the one-command maintenance automation entrypoint. It refreshes graph maintenance first, then executes a bounded `run-tasks` batch from the freshly written queue. Defaults stay conservative: balanced policy, queued status, limit 5, sequential execution, and stop on first failure. `--dry-run` refreshes graph artifacts and previews selection from the in-memory maintenance task queue; it does not execute producers, apply bundles, write lifecycle events, or mutate content. `--agent-command` remains the explicit external agent boundary.
+
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
-Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `run-task --agent-command`, `run-tasks --agent-command`, and `produce-bundle` only invoke the explicit command supplied by the caller and preflight its bundle output. `wikify apply` remains the deterministic content mutation path.
+Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `maintain-run --agent-command`, `run-task --agent-command`, `run-tasks --agent-command`, and `produce-bundle` only invoke the explicit command supplied by the caller and preflight its bundle output. `wikify apply` remains the deterministic content mutation path.
 
 ## Documentation map
 
@@ -187,6 +191,7 @@ Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle
 - Patch bundle requests should package target snapshots and bundle instructions for external agents instead of hiding provider calls in the CLI
 - Patch bundle production should be an explicit external-command adapter with stdin/env contracts and deterministic preflight, not a hidden provider integration
 - Patch application should require explicit patch bundle input, exact preflight, audit records, and hash-guarded rollback
+- One-command maintenance automation should compose audited primitives instead of adding hidden provider behavior
 - Agent task runners should prepare a patch bundle request at `waiting_for_patch_bundle` instead of prompting users or generating hidden content
 - Batch automation should be bounded, sequential, and stop-on-error by default before any concurrent execution exists
 
@@ -206,6 +211,7 @@ Implemented areas include:
 - deterministic patch bundle apply and rollback
 - low-interruption agent task runner
 - bounded batch task runner
+- one-command maintenance run automation
 - completion contract for write actions
 - Obsidian-friendly topic, digest, article, brief, and navigation outputs
 - local graph artifact generation with JSON, Markdown report, and optional HTML
