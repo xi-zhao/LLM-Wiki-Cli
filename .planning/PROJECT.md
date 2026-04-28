@@ -25,6 +25,10 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] Purpose-aware proposals include optional wiki goal context and rationale without weakening path safety.
 - [x] `wikify apply` and `wikify rollback` support deterministic agent-generated patch bundles with audit and hash-guarded rollback.
 
+### Active
+
+- [ ] `wikify run-task` can orchestrate proposal, bundle detection, apply, and lifecycle completion with low user interruption.
+
 ### Out of Scope
 
 - Hidden LLM calls inside the CLI — provider/key/retry semantics should be explicit in a later phase.
@@ -65,6 +69,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Keep graph relevance advisory | Relevance improves explanation and prioritization without becoming an automatic write trigger | ✓ Good |
 | Keep purpose context explanatory | Purpose files should enrich proposal rationale, not expand write scope or apply content changes | ✓ Good |
 | Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Good |
+| Stop at missing patch bundles | Workflow automation should return an agent action instead of prompting the user or inventing content | ✓ Active |
 
 ---
-*Last updated: 2026-04-28 after Phase 7 completion*
+*Last updated: 2026-04-28 after Phase 8 planning start*

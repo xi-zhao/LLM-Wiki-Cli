@@ -72,9 +72,19 @@
 
 ## v2 Requirements
 
+### Agent Task Workflow Runner
+
+- [ ] **RUN-01**: `wikify run-task --id <id>` reads one graph agent task and returns a stable workflow run envelope.
+- [ ] **RUN-02**: The runner creates or reuses a scoped patch proposal for the task.
+- [ ] **RUN-03**: If no patch bundle exists, the runner returns `waiting_for_patch_bundle` with agent-facing next actions and no content mutation.
+- [ ] **RUN-04**: If a patch bundle exists, the runner applies it through the existing deterministic apply contract.
+- [ ] **RUN-05**: Successful non-dry-run application marks the task `done` through lifecycle events.
+- [ ] **RUN-06**: `run-task --dry-run` writes no proposals, task events, content changes, or application records.
+- [ ] **RUN-07**: Workflow errors are structured and preserve already-auditable intermediate state.
+
 ### Agent Consumer
 
-- **AGT-01**: A future command can run multi-step agent policy over proposal selection, patch bundle generation, apply, lifecycle, and verification.
+- **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
 - **AGT-02**: A future command can run provider-backed semantic generation with explicit provider/key/retry semantics.
 - **AGT-03**: A future command can support richer multi-operation patch bundles after sequential hash semantics are designed.
 
@@ -129,14 +139,22 @@
 | APP-04 | Phase 7 | Complete |
 | APP-05 | Phase 7 | Complete |
 | APP-06 | Phase 7 | Complete |
+| RUN-01 | Phase 8 | Planned |
+| RUN-02 | Phase 8 | Planned |
+| RUN-03 | Phase 8 | Planned |
+| RUN-04 | Phase 8 | Planned |
+| RUN-05 | Phase 8 | Planned |
+| RUN-06 | Phase 8 | Planned |
+| RUN-07 | Phase 8 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
 - v1.1 requirements: 19 total
 - v1.2 requirements: 6 total
-- Mapped to phases: 37
+- v2 runner requirements: 7 total
+- Mapped to phases: 44
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 7 completion*
+*Last updated: 2026-04-28 after Phase 8 planning start*

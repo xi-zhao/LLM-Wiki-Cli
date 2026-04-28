@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 7 complete: deterministic patch apply and rollback contract.
+**Current focus:** Phase 8 planning: low-interruption agent task workflow runner.
 
 ## Current Position
 
-Phase: 7 of 7 (Patch Apply And Rollback Contract)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 7 patch apply and rollback contract.
+Phase: 8 of 8 (Agent Task Workflow Runner)
+Plan: 0 of 1 in current phase
+Status: Added and ready to plan
+Last activity: 2026-04-28 - Added Phase 8 agent task workflow runner.
 
-Progress: ██████████ 100%
+Progress: ████████░░ 88%
 
 ## Performance Metrics
 
@@ -34,6 +34,7 @@ Progress: ██████████ 100%
 | 5. Graph Relevance Scoring | 1/1 | 1 session | 1 session |
 | 6. Purpose-Aware Proposals | 1/1 | 1 session | 1 session |
 | 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
+| 8. Agent Task Workflow Runner | 0/1 | Not started | - |
 
 **Recent Trend:**
 - Last 5 plans: 03-01, 04-01, 05-01, 06-01, 07-01
@@ -71,7 +72,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- None for this milestone.
+- Plan and execute Phase 8 agent task workflow runner.
 
 ### Blockers/Concerns
 
@@ -81,6 +82,7 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 7 added: Patch Apply And Rollback Contract.
+- Phase 8 added: Agent Task Workflow Runner.
 
 ## Deferred Items
 
@@ -93,5 +95,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 7 complete.
+Stopped at: Phase 8 added and ready to plan.
 Resume file: None
