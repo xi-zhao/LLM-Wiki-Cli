@@ -38,6 +38,12 @@ from wikify.maintenance.maintain_run import (
     MaintenanceRunError,
     run_maintenance_workflow,
 )
+from wikify.maintenance.maintain_loop import (
+    DEFAULT_MAX_ROUNDS as DEFAULT_MAINTAIN_LOOP_MAX_ROUNDS,
+    DEFAULT_TASK_BUDGET as DEFAULT_MAINTAIN_LOOP_TASK_BUDGET,
+    MaintenanceLoopError,
+    run_maintenance_loop,
+)
 from wikify.maintenance.patch_apply import (
     PatchApplyError,
     apply_patch_bundle,
@@ -241,6 +247,19 @@ def _attach_agent_execution(result: dict, execution: dict):
     result['execution']['agent_profile'] = execution.get('profile')
     if execution.get('profile_path'):
         result['execution']['agent_profile_path'] = execution.get('profile_path')
+
+
+def _collect_artifact_paths(value, paths: list[str]):
+    if isinstance(value, dict):
+        for item in value.values():
+            _collect_artifact_paths(item, paths)
+    elif isinstance(value, list):
+        for item in value:
+            _collect_artifact_paths(item, paths)
+    elif value:
+        path = str(value)
+        if path not in paths:
+            paths.append(path)
 
 
 def _tasks_lifecycle_action(args):
@@ -795,6 +814,57 @@ def cmd_maintain_run(args):
     return envelope_ok('maintain-run', result)
 
 
+def cmd_maintain_loop(args):
+    base = discover_base()
+    agent_execution, error = _resolve_agent_execution_or_error('maintain-loop', base, args)
+    if error:
+        return error
+    try:
+        result = run_maintenance_loop(
+            base,
+            policy=args.policy,
+            status=args.status,
+            action=args.action,
+            task_id=args.id,
+            limit=args.limit,
+            max_rounds=args.max_rounds,
+            task_budget=args.task_budget,
+            dry_run=args.dry_run,
+            agent_command=agent_execution['agent_command'],
+            producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
+            continue_on_error=args.continue_on_error,
+        )
+    except MaintenanceLoopError as exc:
+        return envelope_error(
+            'maintain-loop',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'maintain-loop',
+            'maintenance_loop_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts: list[str] = []
+    _attach_agent_execution(result, agent_execution)
+    _collect_artifact_paths(result.get('artifacts', {}), artifacts)
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'maintenance loop workflow advanced',
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'maintenance loop workflow advanced',
+    }
+    return envelope_ok('maintain-loop', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -924,6 +994,22 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain_run.add_argument('--continue-on-error', action='store_true')
         p_maintain_run.add_argument('--dry-run', action='store_true')
         p_maintain_run.set_defaults(func=cmd_maintain_run)
+
+    if 'maintain-loop' not in sub.choices:
+        p_maintain_loop = sub.add_parser('maintain-loop', help='Repeat maintenance-run until no selected tasks remain or a bound is reached')
+        p_maintain_loop.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default=DEFAULT_MAINTAIN_RUN_POLICY)
+        p_maintain_loop.add_argument('--status', choices=['queued', 'proposed', 'in_progress', 'done', 'failed', 'blocked', 'rejected'], default=DEFAULT_BATCH_STATUS)
+        p_maintain_loop.add_argument('--action')
+        p_maintain_loop.add_argument('--id')
+        p_maintain_loop.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
+        p_maintain_loop.add_argument('--max-rounds', type=int, default=DEFAULT_MAINTAIN_LOOP_MAX_ROUNDS)
+        p_maintain_loop.add_argument('--task-budget', type=int, default=DEFAULT_MAINTAIN_LOOP_TASK_BUDGET)
+        p_maintain_loop.add_argument('--agent-command')
+        p_maintain_loop.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_maintain_loop.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_maintain_loop.add_argument('--continue-on-error', action='store_true')
+        p_maintain_loop.add_argument('--dry-run', action='store_true')
+        p_maintain_loop.set_defaults(func=cmd_maintain_loop)
 
     return parser
 

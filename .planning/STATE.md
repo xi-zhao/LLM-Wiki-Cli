@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 17 planned: maintenance loop automation.
+**Current focus:** Phase 17 complete: maintenance loop automation.
 
 ## Current Position
 
 Phase: 17 of 17 (Maintenance Loop Automation)
 Plan: 1 of 1 in current phase
-Status: Planned
-Last activity: 2026-04-29 - Planned Phase 17 maintenance loop automation.
+Status: Complete
+Last activity: 2026-04-29 - Completed Phase 17 maintenance loop automation.
 
-Progress: █████████░ 94%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
+- Total plans completed: 17
 - Average duration: 1 session
-- Total execution time: 16 sessions
+- Total execution time: 17 sessions
 
 **By Phase:**
 
@@ -43,10 +43,10 @@ Progress: █████████░ 94%
 | 14. Maintenance Run Automation | 1/1 | 1 session | 1 session |
 | 15. Agent Profile Configuration | 1/1 | 1 session | 1 session |
 | 16. Explicit Default Agent Profile | 1/1 | 1 session | 1 session |
-| 17. Maintenance Loop Automation | 0/1 | planned | planned |
+| 17. Maintenance Loop Automation | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 12-01, 13-01, 14-01, 15-01, 16-01
+- Last 5 plans: 13-01, 14-01, 15-01, 16-01, 17-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -105,6 +105,8 @@ Recent decisions affecting current work:
 - [Phase 16]: Bare `--agent-profile` resolves `default_profile`, but commands without `--agent-profile` remain non-producing.
 - [Phase 16]: Removing the current default profile clears the `default_profile` pointer.
 - [Planning]: Maintenance loop automation should compose `maintain-run`, not introduce new patch or provider semantics.
+- [Phase 17]: `maintain-loop` repeats `maintain-run` with conservative max rounds and task budget bounds.
+- [Phase 17]: Dry-run previews one round only because repeated dry-runs would replay the same in-memory queue.
 
 ### Pending Todos
 
@@ -134,6 +136,7 @@ Recent decisions affecting current work:
 - Phase 16 added: Explicit Default Agent Profile.
 - Phase 16 completed: Explicit Default Agent Profile.
 - Phase 17 added: Maintenance Loop Automation.
+- Phase 17 completed: Maintenance Loop Automation.
 
 ## Deferred Items
 

@@ -126,6 +126,7 @@ wikify maintain-run --dry-run
 wikify maintain-run --limit 5 --agent-command "python3 agent.py"
 wikify maintain-run --limit 5 --agent-profile default
 wikify maintain-run --limit 5 --agent-profile
+wikify maintain-loop --max-rounds 3 --task-budget 15 --limit 5 --agent-profile
 wikify tasks
 wikify tasks --status queued --limit 5
 wikify tasks --refresh --id agent-task-1
@@ -174,9 +175,11 @@ For one-command automation, `wikify run-task --id <task-id> --agent-command "<co
 
 `wikify maintain-run` is the one-command maintenance automation entrypoint. It refreshes graph maintenance first, then executes a bounded `run-tasks` batch from the freshly written queue. Defaults stay conservative: balanced policy, queued status, limit 5, sequential execution, and stop on first failure. `--dry-run` refreshes graph artifacts and previews selection from the in-memory maintenance task queue; it does not execute producers, apply bundles, write lifecycle events, or mutate content. `--agent-command` and `--agent-profile` are the explicit external agent boundaries.
 
+`wikify maintain-loop` repeats that `maintain-run` primitive until a clear stop condition appears. Defaults are deliberately bounded: max rounds 3, task budget 15, per-round limit 5, queued status, balanced policy, sequential execution, and stop-on-error. The result uses `wikify.maintenance-loop.v1` and includes `stop_reason`, aggregate `summary`, per-round `rounds`, artifacts, and next actions. Stop reasons include `no_tasks`, `waiting_for_patch_bundle`, `failed_tasks`, `task_budget_exhausted`, `max_rounds_reached`, and `dry_run_preview`. Dry-run previews one round only, because repeated dry-runs would replay the same in-memory queue. `--agent-command` and `--agent-profile` remain explicit.
+
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
-Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `maintain-run`, `run-task`, `run-tasks`, and `produce-bundle` only invoke an external command when the caller supplies `--agent-command` or `--agent-profile`, and every bundle output is still preflighted. A configured default profile does nothing by itself; the command still needs the explicit `--agent-profile` flag. `wikify apply` remains the deterministic content mutation path.
+Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `maintain-loop`, `maintain-run`, `run-task`, `run-tasks`, and `produce-bundle` only invoke an external command when the caller supplies `--agent-command` or `--agent-profile`, and every bundle output is still preflighted. A configured default profile does nothing by itself; the command still needs the explicit `--agent-profile` flag. `wikify apply` remains the deterministic content mutation path.
 
 ## Documentation map
 

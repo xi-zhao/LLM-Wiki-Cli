@@ -171,6 +171,7 @@ CLI 输出里可直接读取：
 - `maintenance`
 - `maintain`
 - `maintain-run`
+- `maintain-loop`
 - `agent-profile`
 - `decide`
 
@@ -179,6 +180,7 @@ CLI 输出里可直接读取：
 - 查询 maintenance history
 - 基于 graph 自动生成 findings、plan 和 history，不打断用户
 - 一条命令刷新维护产物并推进有界 agent task batch
+- 多轮重复维护刷新和任务推进，直到没有可选任务或触发明确 stop condition
 - 管理显式外部 agent command profile，减少重复输入
 - 根据 maintenance verdict 产出下一步 decision plan
 
@@ -651,15 +653,60 @@ wikify maintain-run --status queued --limit 5 --continue-on-error --agent-comman
 - `summary.completed_count`
 - `next_actions`
 
-安全规则：`maintain-run` 是组合层。它只组合 `maintain` 和 `run-tasks`，不会隐藏调用 provider、不会选择模型、不会读取 API key、不会绕过 proposal/write_scope/preflight/apply/rollback/lifecycle 规则。只有调用方显式传入 `--agent-command` 时，后续 batch task 才可能执行外部 command。
+安全规则：`maintain-run` 是组合层。它只组合 `maintain` 和 `run-tasks`，不会隐藏调用 provider、不会选择模型、不会读取 API key、不会绕过 proposal/write_scope/preflight/apply/rollback/lifecycle 规则。只有调用方显式传入 `--agent-command` 或 `--agent-profile` 时，后续 batch task 才可能执行外部 command。
 
-## 3.17 Agent Profile Configuration
+## 3.17 Maintenance Loop Automation
+
+- `maintain-loop`
+
+作用：
+- 重复执行 `maintain-run`，让维护刷新和 agent task 执行可以自动推进多轮
+- 每轮继续复用现有 proposal/request/producer/preflight/apply/lifecycle 路径
+- 默认 `policy=balanced`、`status=queued`、`limit=5`
+- 默认 `max_rounds=3`、`task_budget=15`
+- 遇到无任务、等待 bundle、失败、任务预算耗尽、轮数耗尽或 dry-run preview 时停止
+
+默认命令：
+
+```bash
+wikify maintain-loop --dry-run
+wikify maintain-loop --max-rounds 3 --task-budget 15 --limit 5 --agent-command "python3 agent.py"
+wikify maintain-loop --max-rounds 3 --task-budget 15 --limit 5 --agent-profile default
+wikify maintain-loop --max-rounds 3 --task-budget 15 --limit 5 --agent-profile
+wikify maintain-loop --status queued --action queue_link_repair --limit 1 --max-rounds 3 --task-budget 3 --agent-profile
+```
+
+`maintain-loop --dry-run` 只预览一轮，因为 dry-run 不写 task queue、proposal、request、bundle、event、application record 或正文；重复 dry-run 会不断看到同一个 in-memory selection。
+
+返回结果使用 `wikify.maintenance-loop.v1`，包含：
+- `stop_reason`
+- `summary.round_count`
+- `summary.selected_count`
+- `summary.completed_count`
+- `summary.waiting_count`
+- `summary.failed_count`
+- `rounds[]`
+- `artifacts.paths`
+- `next_actions`
+
+stop reasons：
+- `no_tasks`
+- `waiting_for_patch_bundle`
+- `failed_tasks`
+- `task_budget_exhausted`
+- `max_rounds_reached`
+- `dry_run_preview`
+
+安全规则：`maintain-loop` 只是多轮组合层。它不新增 apply 语义，不并发执行，不隐藏 provider、模型、密钥或 retry。只有调用方显式传入 `--agent-command` 或 `--agent-profile` 时，每轮 task 才可能执行外部 command。仅配置 default profile 不会触发外部 command。
+
+## 3.18 Agent Profile Configuration
 
 - `agent-profile`
 
 作用：
 - 把外部 agent command 保存为命名 profile
 - 避免每次 `run-task`、`run-tasks`、`maintain-run` 或 `produce-bundle` 都重复输入长命令
+- 同样可用于 `maintain-loop`
 - profile 解析后仍然走现有 producer/preflight/apply/lifecycle 流程
 - 不保存 API key，不选择模型，不内置 retry，不隐藏 provider 行为
 
@@ -675,6 +722,7 @@ wikify agent-profile --clear-default
 wikify agent-profile --unset default
 wikify maintain-run --limit 5 --agent-profile default
 wikify maintain-run --limit 5 --agent-profile
+wikify maintain-loop --max-rounds 3 --task-budget 15 --limit 5 --agent-profile
 wikify run-task --id agent-task-1 --agent-profile default
 wikify produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-profile default
 ```
@@ -704,7 +752,7 @@ profile artifact 写在 wiki root：
 - 指定 profile 不存在返回 `agent_profile_missing`
 - 裸 `--agent-profile` 但没有配置 default profile 时返回 `agent_profile_default_missing`
 
-默认 profile 只是省略 profile 名称的显式 shorthand：`maintain-run --agent-profile` 等价于读取 `default_profile` 后再执行对应 profile。仅仅配置了 `default_profile` 不会让 `maintain-run`、`run-task`、`run-tasks` 或 `produce-bundle` 自动执行外部 command。
+默认 profile 只是省略 profile 名称的显式 shorthand：`maintain-loop --agent-profile` 或 `maintain-run --agent-profile` 等价于读取 `default_profile` 后再执行对应 profile。仅仅配置了 `default_profile` 不会让 `maintain-loop`、`maintain-run`、`run-task`、`run-tasks` 或 `produce-bundle` 自动执行外部 command。
 
 安全规则：profile 是显式命令的项目级别别名，不是 provider adapter。不要把 API key 或 token 直接写进 `wikify-agent-profiles.json`；如果外部 agent 需要密钥，应由外部 command 自己从环境变量或它自己的安全配置读取。
 

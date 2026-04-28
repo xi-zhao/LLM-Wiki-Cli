@@ -28,7 +28,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
 - [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
 - [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
-- [ ] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
+- [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
 
 ## Phase Details
 
@@ -328,7 +328,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 17-01: Build bounded maintenance loop automation
+- [x] 17-01: Build bounded maintenance loop automation
 
 ## Progress
 
@@ -350,4 +350,4 @@ Plans:
 | 14. Maintenance Run Automation | 1/1 | Complete | 2026-04-28 |
 | 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |
 | 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |
-| 17. Maintenance Loop Automation | 0/1 | Planned | - |
+| 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
