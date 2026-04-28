@@ -54,10 +54,10 @@
 
 ### Purpose-Aware Proposals
 
-- [ ] **PUR-01**: Wikify supports an optional purpose artifact, such as `purpose.md` or `wikify-purpose.md`, for project direction.
-- [ ] **PUR-02**: Proposal generation can include purpose evidence when the artifact exists.
-- [ ] **PUR-03**: Missing purpose context is non-blocking and explicitly reported in proposal metadata.
-- [ ] **PUR-04**: Purpose context influences proposal rationale, not path safety rules.
+- [x] **PUR-01**: Wikify supports an optional purpose artifact, such as `purpose.md` or `wikify-purpose.md`, for project direction.
+- [x] **PUR-02**: Proposal generation can include purpose evidence when the artifact exists.
+- [x] **PUR-03**: Missing purpose context is non-blocking and explicitly reported in proposal metadata.
+- [x] **PUR-04**: Purpose context influences proposal rationale, not path safety rules.
 
 ## v2 Requirements
 
@@ -108,10 +108,10 @@
 | REL-02 | Phase 5 | Complete |
 | REL-03 | Phase 5 | Complete |
 | REL-04 | Phase 5 | Complete |
-| PUR-01 | Phase 6 | Planned |
-| PUR-02 | Phase 6 | Planned |
-| PUR-03 | Phase 6 | Planned |
-| PUR-04 | Phase 6 | Planned |
+| PUR-01 | Phase 6 | Complete |
+| PUR-02 | Phase 6 | Complete |
+| PUR-03 | Phase 6 | Complete |
+| PUR-04 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -121,4 +121,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 5 completion*
+*Last updated: 2026-04-28 after Phase 6 completion*

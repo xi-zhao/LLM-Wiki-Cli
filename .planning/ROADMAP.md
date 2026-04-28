@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The next sequence is proposal first, then lifecycle, then better graph intelligence, then purpose-aware context.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, and purpose-aware proposal rationale.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -17,7 +17,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 3: Scoped Patch Proposal** - Let agents generate auditable, scoped patch proposals from one queued task without applying edits.
 - [x] **Phase 4: Agent Task Lifecycle** - Add durable task state transitions, retry/cancel/restore, and append-only lifecycle events.
 - [x] **Phase 5: Graph Relevance Scoring** - Rank findings and tasks using explainable graph relevance signals.
-- [ ] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
+- [x] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
 
 ## Phase Details
 
@@ -114,7 +114,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: Build purpose-aware patch proposals
+- [x] 06-01: Build purpose-aware patch proposals
 
 ## Progress
 
@@ -125,4 +125,4 @@ Plans:
 | 3. Scoped Patch Proposal | 1/1 | Complete | 2026-04-28 |
 | 4. Agent Task Lifecycle | 1/1 | Complete | 2026-04-28 |
 | 5. Graph Relevance Scoring | 1/1 | Complete | 2026-04-28 |
-| 6. Purpose-Aware Proposals | 0/1 | Ready to execute | - |
+| 6. Purpose-Aware Proposals | 1/1 | Complete | 2026-04-28 |
