@@ -11,7 +11,7 @@ The current milestone turns graph maintenance from "audit artifacts exist" into 
 - Decimal phases (2.1, 2.2): Urgent insertions marked with INSERTED
 
 - [x] **Phase 1: Graph Agent Task Queue** - Convert queued graph maintenance steps into an agent-consumable task artifact.
-- [ ] **Phase 2: Agent Task Reader** - Add a stable CLI entrypoint for listing and inspecting queued graph agent tasks.
+- [x] **Phase 2: Agent Task Reader** - Add a stable CLI entrypoint for listing and inspecting queued graph agent tasks.
 
 ## Phase Details
 
@@ -43,11 +43,11 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: Build agent task reader command
+- [x] 02-01: Build agent task reader command
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Graph Agent Task Queue | 1/1 | Complete | 2026-04-28 |
-| 2. Agent Task Reader | 0/1 | Not started | - |
+| 2. Agent Task Reader | 1/1 | Complete | 2026-04-28 |
