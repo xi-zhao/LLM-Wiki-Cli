@@ -24,6 +24,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
 - [x] **Phase 11: External Patch Bundle Producer** - Invoke explicit external agent commands to produce and preflight patch bundles from request artifacts.
 - [x] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
+- [ ] **Phase 13: Batch Task Automation** - Process bounded batches of graph agent tasks through the audited task runner with structured per-task results.
 
 ## Phase Details
 
@@ -232,6 +233,25 @@ Plans:
 Plans:
 - [x] 12-01: Build run-task inline producer automation
 
+### Phase 13: Batch Task Automation
+**Goal**: `wikify run-tasks` selects a bounded set of graph agent tasks and executes them sequentially through the existing audited runner, returning stable per-task results.
+**Depends on**: Phase 12
+**Requirements**: BTA-01, BTA-02, BTA-03, BTA-04, BTA-05, BTA-06, BTA-07, BTA-08
+**Why after Phase 12**: Single-task automation is now explicit and safe. Batch automation should compose that primitive with bounded defaults instead of introducing concurrency, hidden provider behavior, or new apply semantics.
+**Success Criteria** (what must be TRUE):
+  1. Batch selection supports status, action, id, and limit.
+  2. Defaults are conservative: queued tasks, limit 5, sequential execution, stop on first failure.
+  3. Each selected task uses the existing `run_agent_task` flow.
+  4. Dry-run remains zero-write across the whole batch.
+  5. Per-task outcomes include success, waiting, and structured failure entries.
+  6. `--continue-on-error` allows later tasks to continue after a failure.
+  7. Docs describe bounded automation and the explicit command boundary.
+  8. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 13-01: Build bounded batch task automation
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -248,3 +268,4 @@ Plans:
 | 10. Runner Bundle Request Handoff | 1/1 | Complete | 2026-04-28 |
 | 11. External Patch Bundle Producer | 1/1 | Complete | 2026-04-28 |
 | 12. Run Task Inline Producer Automation | 1/1 | Complete | 2026-04-28 |
+| 13. Batch Task Automation | 0/1 | Planned | |

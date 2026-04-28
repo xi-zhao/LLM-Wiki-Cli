@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 12 complete: run-task inline producer automation.
+**Current focus:** Phase 13 planning: bounded batch task automation.
 
 ## Current Position
 
-Phase: 12 of 12 (Run Task Inline Producer Automation)
+Phase: 13 of 13 (Batch Task Automation)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 12 run-task inline producer automation.
+Status: Planning
+Last activity: 2026-04-28 - Added Phase 13 bounded batch task automation.
 
-Progress: ██████████ 100%
+Progress: █████████░ 92%
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: ██████████ 100%
 | 10. Runner Bundle Request Handoff | 1/1 | 1 session | 1 session |
 | 11. External Patch Bundle Producer | 1/1 | 1 session | 1 session |
 | 12. Run Task Inline Producer Automation | 1/1 | 1 session | 1 session |
+| 13. Batch Task Automation | 0/1 | In progress | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 08-01, 09-01, 10-01, 11-01, 12-01
@@ -87,10 +88,11 @@ Recent decisions affecting current work:
 - [Planning]: `run-task --agent-command` should compose producer automation only when the command is explicit.
 - [Phase 12]: `run-task --agent-command` composes request, external production, deterministic apply, and mark-done in one command.
 - [Phase 12]: Existing bundles and dry-run paths do not execute the producer command.
+- [Planning]: Batch task automation should use bounded sequential execution before any concurrent execution.
 
 ### Pending Todos
 
-- None.
+- Execute Phase 13: Build bounded batch task automation.
 
 ### Blockers/Concerns
 
@@ -107,6 +109,7 @@ Recent decisions affecting current work:
 - Phase 11 completed: External Patch Bundle Producer.
 - Phase 12 added: Run Task Inline Producer Automation.
 - Phase 12 completed: Run Task Inline Producer Automation.
+- Phase 13 added: Batch Task Automation.
 
 ## Deferred Items
 
@@ -119,5 +122,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 12 complete.
+Stopped at: Phase 13 planning.
 Resume file: None

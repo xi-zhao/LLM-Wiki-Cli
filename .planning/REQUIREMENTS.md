@@ -119,6 +119,17 @@
 - [x] **RTP-06**: The CLI exposes producer timeout control without introducing hidden provider/key/retry defaults.
 - [x] **RTP-07**: Docs describe the one-command automation flow and its explicit external-command safety boundary.
 
+### Batch Task Automation
+
+- [ ] **BTA-01**: `wikify run-tasks` selects tasks from the graph agent task queue by status, action, id, and limit.
+- [ ] **BTA-02**: Batch runs default to `status=queued`, `limit=5`, and sequential execution.
+- [ ] **BTA-03**: Each selected task is executed through the existing `run_agent_task` workflow with optional explicit `--agent-command`.
+- [ ] **BTA-04**: Batch dry-run writes no proposals, requests, bundles, lifecycle events, content changes, or application records.
+- [ ] **BTA-05**: Existing per-task safety rules remain intact: no hidden provider execution, deterministic apply only, and explicit producer command only when provided.
+- [ ] **BTA-06**: Per-task successes, waiting states, and failures are returned in a stable `wikify.agent-task-batch-run.v1` result.
+- [ ] **BTA-07**: Batch execution stops on the first per-task failure by default and supports explicit `--continue-on-error`.
+- [ ] **BTA-08**: Docs describe the batch command, bounded defaults, stop-on-error behavior, and explicit external-command boundary.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -208,6 +219,14 @@
 | RTP-05 | Phase 12 | Complete |
 | RTP-06 | Phase 12 | Complete |
 | RTP-07 | Phase 12 | Complete |
+| BTA-01 | Phase 13 | Planned |
+| BTA-02 | Phase 13 | Planned |
+| BTA-03 | Phase 13 | Planned |
+| BTA-04 | Phase 13 | Planned |
+| BTA-05 | Phase 13 | Planned |
+| BTA-06 | Phase 13 | Planned |
+| BTA-07 | Phase 13 | Planned |
+| BTA-08 | Phase 13 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -218,9 +237,10 @@
 - v2 handoff requirements: 5 total
 - v2 producer requirements: 7 total
 - v2 run-task producer automation requirements: 7 total
-- Mapped to phases: 69
+- v2 batch automation requirements: 8 total
+- Mapped to phases: 77
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 12 completion*
+*Last updated: 2026-04-28 during Phase 13 planning*
