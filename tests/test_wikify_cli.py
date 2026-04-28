@@ -401,6 +401,9 @@ class WikifyCliTests(unittest.TestCase):
         list_args = parser.parse_args(['agent-profile', '--list'])
         show_args = parser.parse_args(['agent-profile', '--show', 'default'])
         unset_args = parser.parse_args(['agent-profile', '--unset', 'default'])
+        set_default_args = parser.parse_args(['agent-profile', '--set-default', 'default'])
+        show_default_args = parser.parse_args(['agent-profile', '--show-default'])
+        clear_default_args = parser.parse_args(['agent-profile', '--clear-default'])
 
         self.assertEqual(set_args.command, 'agent-profile')
         self.assertEqual(set_args.set, 'default')
@@ -410,6 +413,9 @@ class WikifyCliTests(unittest.TestCase):
         self.assertTrue(list_args.list)
         self.assertEqual(show_args.show, 'default')
         self.assertEqual(unset_args.unset, 'default')
+        self.assertEqual(set_default_args.set_default, 'default')
+        self.assertTrue(show_default_args.show_default)
+        self.assertTrue(clear_default_args.clear_default)
 
     def test_build_parser_accepts_agent_profile_on_automation_commands(self):
         cli = importlib.import_module('wikify.cli')
@@ -425,11 +431,13 @@ class WikifyCliTests(unittest.TestCase):
         run_task_args = parser.parse_args(['run-task', '--id', 'agent-task-1', '--agent-profile', 'default'])
         run_tasks_args = parser.parse_args(['run-tasks', '--agent-profile', 'default'])
         maintain_run_args = parser.parse_args(['maintain-run', '--agent-profile', 'default'])
+        bare_profile_args = parser.parse_args(['maintain-run', '--agent-profile'])
 
         self.assertEqual(produce_args.agent_profile, 'default')
         self.assertEqual(run_task_args.agent_profile, 'default')
         self.assertEqual(run_tasks_args.agent_profile, 'default')
         self.assertEqual(maintain_run_args.agent_profile, 'default')
+        self.assertEqual(bare_profile_args.agent_profile, '@default')
 
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')
@@ -1173,6 +1181,95 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(run_payload['result']['execution']['agent_profile'], 'default')
                 self.assertEqual(queue['tasks'][0]['status'], 'done')
                 self.assertTrue((kb / 'wikify-agent-profiles.json').exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_default_agent_profile_can_be_used_with_bare_agent_profile_flag(self):
+        cli = importlib.import_module('wikify.cli')
+        repo = Path(__file__).resolve().parents[1]
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir) / 'sample-kb'
+                shutil.copytree(repo / 'sample-kb', kb)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                script = self._write_sample_link_repair_agent(kb)
+                run_stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised:
+                    cli.main([
+                        '--output',
+                        'quiet',
+                        'agent-profile',
+                        '--set',
+                        'default',
+                        '--agent-command',
+                        f'{sys.executable} {script}',
+                        '--producer-timeout',
+                        '30',
+                    ])
+                self.assertEqual(raised.exception.code, 0)
+                with self.assertRaises(SystemExit) as raised:
+                    cli.main(['--output', 'quiet', 'agent-profile', '--set-default', 'default'])
+                self.assertEqual(raised.exception.code, 0)
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(run_stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'maintain-run',
+                        '--action',
+                        'queue_link_repair',
+                        '--limit',
+                        '1',
+                        '--agent-profile',
+                    ])
+
+                payload = json.loads(run_stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                profile_doc = json.loads((kb / 'wikify-agent-profiles.json').read_text(encoding='utf-8'))
+                self.assertEqual(raised.exception.code, 0)
+                self.assertEqual(profile_doc['default_profile'], 'default')
+                self.assertEqual(payload['result']['status'], 'completed')
+                self.assertEqual(payload['result']['execution']['agent_profile'], 'default')
+                self.assertEqual(queue['tasks'][0]['status'], 'done')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_bare_agent_profile_without_default_is_structured_error(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.environ['WIKIFY_BASE'] = tmpdir
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'maintain-run', '--agent-profile'])
+
+                payload = json.loads(stdout.getvalue())
+                self.assertEqual(raised.exception.code, 2)
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'maintain-run')
+                self.assertEqual(payload['error']['code'], 'agent_profile_config_missing')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

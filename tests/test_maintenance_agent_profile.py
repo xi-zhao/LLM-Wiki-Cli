@@ -94,6 +94,91 @@ class MaintenanceAgentProfileTests(unittest.TestCase):
                 resolve_agent_execution(Path(tmpdir), agent_command=None, agent_profile='default')
             self.assertEqual(missing_config.exception.code, 'agent_profile_config_missing')
 
+    def test_default_profile_can_be_set_shown_cleared_and_resolved(self):
+        from wikify.maintenance.agent_profile import (
+            DEFAULT_PROFILE_SENTINEL,
+            clear_default_agent_profile,
+            list_agent_profiles,
+            resolve_agent_execution,
+            set_agent_profile,
+            set_default_agent_profile,
+            show_default_agent_profile,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            set_agent_profile(kb, 'default', 'python3 agent.py', producer_timeout_seconds=60)
+
+            set_default = set_default_agent_profile(kb, 'default')
+            listed = list_agent_profiles(kb)
+            shown = show_default_agent_profile(kb)
+            resolved = resolve_agent_execution(kb, agent_profile=DEFAULT_PROFILE_SENTINEL)
+            cleared = clear_default_agent_profile(kb)
+
+            self.assertEqual(set_default['status'], 'default_set')
+            self.assertEqual(set_default['default_profile'], 'default')
+            self.assertEqual(listed['default_profile'], 'default')
+            self.assertEqual(listed['summary']['default_profile'], 'default')
+            self.assertEqual(shown['profile']['name'], 'default')
+            self.assertEqual(resolved['agent_command'], 'python3 agent.py')
+            self.assertEqual(resolved['profile'], 'default')
+            self.assertEqual(resolved['source'], 'profile')
+            self.assertEqual(cleared['status'], 'default_cleared')
+            self.assertIsNone(list_agent_profiles(kb)['default_profile'])
+
+    def test_unset_current_default_profile_clears_default_reference(self):
+        from wikify.maintenance.agent_profile import (
+            list_agent_profiles,
+            set_agent_profile,
+            set_default_agent_profile,
+            unset_agent_profile,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            set_agent_profile(kb, 'default', 'python3 default_agent.py')
+            set_agent_profile(kb, 'other', 'python3 other_agent.py')
+            set_default_agent_profile(kb, 'default')
+
+            unset_result = unset_agent_profile(kb, 'default')
+            listed = list_agent_profiles(kb)
+
+            self.assertEqual(unset_result['status'], 'removed')
+            self.assertIsNone(listed['default_profile'])
+            self.assertEqual(listed['summary']['profile_count'], 1)
+            self.assertEqual(listed['profiles'][0]['name'], 'other')
+
+    def test_default_profile_errors_are_structured(self):
+        from wikify.maintenance.agent_profile import (
+            DEFAULT_PROFILE_SENTINEL,
+            AgentProfileError,
+            clear_default_agent_profile,
+            resolve_agent_execution,
+            set_agent_profile,
+            set_default_agent_profile,
+            show_default_agent_profile,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            set_agent_profile(kb, 'default', 'python3 agent.py')
+
+            with self.assertRaises(AgentProfileError) as missing_default:
+                resolve_agent_execution(kb, agent_profile=DEFAULT_PROFILE_SENTINEL)
+            self.assertEqual(missing_default.exception.code, 'agent_profile_default_missing')
+
+            with self.assertRaises(AgentProfileError) as missing_profile:
+                set_default_agent_profile(kb, 'missing')
+            self.assertEqual(missing_profile.exception.code, 'agent_profile_missing')
+
+            with self.assertRaises(AgentProfileError) as show_missing:
+                show_default_agent_profile(kb)
+            self.assertEqual(show_missing.exception.code, 'agent_profile_default_missing')
+
+            with self.assertRaises(AgentProfileError) as clear_missing:
+                clear_default_agent_profile(kb)
+            self.assertEqual(clear_missing.exception.code, 'agent_profile_default_missing')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -154,8 +154,11 @@
 - `maintain-run --dry-run`
 - `maintain-run --agent-command <command>`
 - `agent-profile --set <name> --agent-command <command>`
+- `agent-profile --set-default <name>`
 - `agent-profile --list`
 - `agent-profile --show <name>`
+- `agent-profile --show-default`
+- `agent-profile --clear-default`
 - `agent-profile --unset <name>`
 - `tasks`
 - `tasks --refresh`
@@ -888,8 +891,11 @@ Purpose-aware 行为：
 
 常用：
 - `agent-profile --set default --agent-command "python3 agent.py" --producer-timeout 120`
+- `agent-profile --set-default default`
 - `agent-profile --list`
 - `agent-profile --show default`
+- `agent-profile --show-default`
+- `agent-profile --clear-default`
 - `agent-profile --unset default`
 
 profile artifact 写在 wiki root 的 `wikify-agent-profiles.json`：
@@ -897,6 +903,7 @@ profile artifact 写在 wiki root 的 `wikify-agent-profiles.json`：
 ```json
 {
   "schema_version": "wikify.agent-profiles.v1",
+  "default_profile": "default",
   "profiles": {
     "default": {
       "name": "default",
@@ -916,13 +923,20 @@ profile artifact 写在 wiki root 的 `wikify-agent-profiles.json`：
 - `run-tasks --agent-profile <name>`
 - `maintain-run --agent-profile <name>`
 
+这些命令也支持裸 `--agent-profile`，表示使用 `default_profile`：
+- `maintain-run --agent-profile`
+- `run-tasks --agent-profile`
+- `run-task --id agent-task-1 --agent-profile`
+- `produce-bundle --request-path <path> --agent-profile`
+
 错误：
 - 同时传入 `--agent-command` 和 `--agent-profile` 返回 `agent_profile_ambiguous`
+- 裸 `--agent-profile` 但没有配置 default profile 返回 `agent_profile_default_missing`
 - profile config 缺失返回 `agent_profile_config_missing`
 - 指定 profile 不存在返回 `agent_profile_missing`
 - `--set` 缺少 command 返回 `agent_profile_command_required`
 
-安全规则：profile 只是显式 command 的别名。不要把 API key、token 或私密 provider 配置写进 `wikify-agent-profiles.json`；需要密钥时，应让外部 command 自己从环境变量或安全配置读取。
+安全规则：profile 只是显式 command 的别名。`default_profile` 只是裸 `--agent-profile` 的名称来源，不会让命令在没有 `--agent-profile` 时自动执行外部 command。不要把 API key、token 或私密 provider 配置写进 `wikify-agent-profiles.json`；需要密钥时，应让外部 command 自己从环境变量或安全配置读取。
 
 ### `apply`
 推荐用作 agent-generated patch bundle 的 deterministic apply 入口。

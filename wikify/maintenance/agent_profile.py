@@ -7,6 +7,7 @@ from wikify.maintenance.bundle_producer import DEFAULT_TIMEOUT_SECONDS
 
 SCHEMA_VERSION = 'wikify.agent-profiles.v1'
 PROFILE_FILENAME = 'wikify-agent-profiles.json'
+DEFAULT_PROFILE_SENTINEL = '@default'
 
 
 class AgentProfileError(ValueError):
@@ -27,6 +28,7 @@ def agent_profile_path(base: Path | str) -> Path:
 def _empty_document() -> dict:
     return {
         'schema_version': SCHEMA_VERSION,
+        'default_profile': None,
         'profiles': {},
     }
 
@@ -70,11 +72,15 @@ def _load_document(root: Path, *, missing_ok: bool = False) -> dict:
             code='agent_profile_config_invalid',
             details={'path': str(path)},
         )
+    document.setdefault('default_profile', None)
     return document
 
 
 def _write_document(root: Path, document: dict) -> Path | None:
     path = agent_profile_path(root)
+    document.setdefault('schema_version', SCHEMA_VERSION)
+    document.setdefault('default_profile', None)
+    document.setdefault('profiles', {})
     if document.get('profiles'):
         path.write_text(json.dumps(document, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         return path
@@ -92,6 +98,7 @@ def _profile_result(root: Path, status: str, profile: dict | None = None) -> dic
         'artifacts': {
             'agent_profiles': str(path) if path.exists() else None,
         },
+        'default_profile': None,
     }
     if profile is not None:
         result['profile'] = profile
@@ -134,8 +141,12 @@ def list_agent_profiles(base: Path | str) -> dict:
     document = _load_document(root, missing_ok=True)
     profiles = [document['profiles'][key] for key in sorted(document['profiles'])]
     result = _profile_result(root, 'listed')
+    result['default_profile'] = document.get('default_profile')
     result['profiles'] = profiles
-    result['summary'] = {'profile_count': len(profiles)}
+    result['summary'] = {
+        'profile_count': len(profiles),
+        'default_profile': document.get('default_profile'),
+    }
     return result
 
 
@@ -164,11 +175,74 @@ def unset_agent_profile(base: Path | str, name: str) -> dict:
             code='agent_profile_missing',
             details={'profile': profile_name, 'path': str(agent_profile_path(root))},
         )
+    if document.get('default_profile') == profile_name:
+        document['default_profile'] = None
     _write_document(root, document)
     return _profile_result(root, 'removed', profile)
 
 
+def set_default_agent_profile(base: Path | str, name: str) -> dict:
+    root = Path(base).expanduser().resolve()
+    profile_name = _validate_name(name)
+    document = _load_document(root)
+    profile = document['profiles'].get(profile_name)
+    if profile is None:
+        raise AgentProfileError(
+            f'agent profile not found: {profile_name}',
+            code='agent_profile_missing',
+            details={'profile': profile_name, 'path': str(agent_profile_path(root))},
+        )
+    document['default_profile'] = profile_name
+    _write_document(root, document)
+    result = _profile_result(root, 'default_set', profile)
+    result['default_profile'] = profile_name
+    return result
+
+
+def show_default_agent_profile(base: Path | str) -> dict:
+    root = Path(base).expanduser().resolve()
+    document = _load_document(root)
+    default_profile = document.get('default_profile')
+    if not default_profile:
+        raise AgentProfileError(
+            'default agent profile is not configured',
+            code='agent_profile_default_missing',
+            details={'path': str(agent_profile_path(root))},
+        )
+    profile = document['profiles'].get(default_profile)
+    if profile is None:
+        raise AgentProfileError(
+            f'default agent profile not found: {default_profile}',
+            code='agent_profile_missing',
+            details={'profile': default_profile, 'path': str(agent_profile_path(root))},
+        )
+    result = _profile_result(root, 'default_shown', profile)
+    result['default_profile'] = default_profile
+    return result
+
+
+def clear_default_agent_profile(base: Path | str) -> dict:
+    root = Path(base).expanduser().resolve()
+    document = _load_document(root)
+    default_profile = document.get('default_profile')
+    if not default_profile:
+        raise AgentProfileError(
+            'default agent profile is not configured',
+            code='agent_profile_default_missing',
+            details={'path': str(agent_profile_path(root))},
+        )
+    document['default_profile'] = None
+    profile = document['profiles'].get(default_profile)
+    _write_document(root, document)
+    result = _profile_result(root, 'default_cleared', profile)
+    result['default_profile'] = None
+    result['cleared_default_profile'] = default_profile
+    return result
+
+
 def resolve_agent_profile(base: Path | str, name: str) -> dict:
+    if name == DEFAULT_PROFILE_SENTINEL:
+        return show_default_agent_profile(base)['profile']
     return show_agent_profile(base, name)['profile']
 
 

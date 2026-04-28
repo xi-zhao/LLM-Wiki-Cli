@@ -24,10 +24,14 @@ from wikify.maintenance.batch_runner import (
 from wikify.maintenance.agent_profile import (
     AgentProfileError,
     list_agent_profiles,
+    clear_default_agent_profile,
     resolve_agent_execution,
     set_agent_profile,
+    set_default_agent_profile,
     show_agent_profile,
+    show_default_agent_profile,
     unset_agent_profile,
+    DEFAULT_PROFILE_SENTINEL,
 )
 from wikify.maintenance.maintain_run import (
     DEFAULT_POLICY as DEFAULT_MAINTAIN_RUN_POLICY,
@@ -129,6 +133,9 @@ def _agent_profile_action(args):
         ('list', args.list),
         ('show', args.show),
         ('unset', args.unset),
+        ('set_default', args.set_default),
+        ('show_default', args.show_default),
+        ('clear_default', args.clear_default),
     ]
     selected = [(action, value) for action, value in actions if value]
     if len(selected) > 1:
@@ -154,6 +161,12 @@ def cmd_agent_profile(args):
             result = show_agent_profile(base, value)
         elif action == 'unset':
             result = unset_agent_profile(base, value)
+        elif action == 'set_default':
+            result = set_default_agent_profile(base, value)
+        elif action == 'show_default':
+            result = show_default_agent_profile(base)
+        elif action == 'clear_default':
+            result = clear_default_agent_profile(base)
         else:
             result = list_agent_profiles(base)
     except AgentProfileError as exc:
@@ -813,6 +826,9 @@ def build_parser() -> argparse.ArgumentParser:
         p_agent_profile.add_argument('--list', action='store_true')
         p_agent_profile.add_argument('--show')
         p_agent_profile.add_argument('--unset')
+        p_agent_profile.add_argument('--set-default')
+        p_agent_profile.add_argument('--show-default', action='store_true')
+        p_agent_profile.add_argument('--clear-default', action='store_true')
         p_agent_profile.add_argument('--agent-command')
         p_agent_profile.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_agent_profile.add_argument('--description')
@@ -854,7 +870,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_produce_bundle = sub.add_parser('produce-bundle', help='Invoke an explicit external agent command to produce a patch bundle')
         p_produce_bundle.add_argument('--request-path', required=True)
         p_produce_bundle.add_argument('--agent-command')
-        p_produce_bundle.add_argument('--agent-profile')
+        p_produce_bundle.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_produce_bundle.add_argument('--timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_produce_bundle.add_argument('--dry-run', action='store_true')
         p_produce_bundle.set_defaults(func=cmd_produce_bundle)
@@ -877,7 +893,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_task.add_argument('--id', required=True)
         p_run_task.add_argument('--bundle-path')
         p_run_task.add_argument('--agent-command')
-        p_run_task.add_argument('--agent-profile')
+        p_run_task.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_run_task.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_task.add_argument('--dry-run', action='store_true')
         p_run_task.set_defaults(func=cmd_run_task)
@@ -889,7 +905,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_tasks.add_argument('--id')
         p_run_tasks.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
         p_run_tasks.add_argument('--agent-command')
-        p_run_tasks.add_argument('--agent-profile')
+        p_run_tasks.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_run_tasks.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_tasks.add_argument('--continue-on-error', action='store_true')
         p_run_tasks.add_argument('--dry-run', action='store_true')
@@ -903,7 +919,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain_run.add_argument('--id')
         p_maintain_run.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
         p_maintain_run.add_argument('--agent-command')
-        p_maintain_run.add_argument('--agent-profile')
+        p_maintain_run.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_maintain_run.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_maintain_run.add_argument('--continue-on-error', action='store_true')
         p_maintain_run.add_argument('--dry-run', action='store_true')

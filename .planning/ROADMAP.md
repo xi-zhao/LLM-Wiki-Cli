@@ -27,7 +27,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 13: Batch Task Automation** - Process bounded batches of graph agent tasks through the audited task runner with structured per-task results.
 - [x] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
 - [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
-- [ ] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
+- [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
 
 ## Phase Details
 
@@ -308,7 +308,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 16-01: Build explicit default profile shorthand
+- [x] 16-01: Build explicit default profile shorthand
 
 ## Progress
 
@@ -329,4 +329,4 @@ Plans:
 | 13. Batch Task Automation | 1/1 | Complete | 2026-04-28 |
 | 14. Maintenance Run Automation | 1/1 | Complete | 2026-04-28 |
 | 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |
-| 16. Explicit Default Agent Profile | 0/1 | Planned | - |
+| 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |

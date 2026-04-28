@@ -667,10 +667,14 @@ wikify maintain-run --status queued --limit 5 --continue-on-error --agent-comman
 
 ```bash
 wikify agent-profile --set default --agent-command "python3 agent.py" --producer-timeout 120
+wikify agent-profile --set-default default
 wikify agent-profile --list
 wikify agent-profile --show default
+wikify agent-profile --show-default
+wikify agent-profile --clear-default
 wikify agent-profile --unset default
 wikify maintain-run --limit 5 --agent-profile default
+wikify maintain-run --limit 5 --agent-profile
 wikify run-task --id agent-task-1 --agent-profile default
 wikify produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-profile default
 ```
@@ -680,6 +684,7 @@ profile artifact 写在 wiki root：
 ```json
 {
   "schema_version": "wikify.agent-profiles.v1",
+  "default_profile": "default",
   "profiles": {
     "default": {
       "name": "default",
@@ -697,6 +702,9 @@ profile artifact 写在 wiki root：
 - 同时传入 `--agent-command` 和 `--agent-profile` 返回 `agent_profile_ambiguous`
 - profile config 缺失返回 `agent_profile_config_missing`
 - 指定 profile 不存在返回 `agent_profile_missing`
+- 裸 `--agent-profile` 但没有配置 default profile 时返回 `agent_profile_default_missing`
+
+默认 profile 只是省略 profile 名称的显式 shorthand：`maintain-run --agent-profile` 等价于读取 `default_profile` 后再执行对应 profile。仅仅配置了 `default_profile` 不会让 `maintain-run`、`run-task`、`run-tasks` 或 `produce-bundle` 自动执行外部 command。
 
 安全规则：profile 是显式命令的项目级别别名，不是 provider adapter。不要把 API key 或 token 直接写进 `wikify-agent-profiles.json`；如果外部 agent 需要密钥，应由外部 command 自己从环境变量或它自己的安全配置读取。
 

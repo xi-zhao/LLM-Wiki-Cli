@@ -120,10 +120,12 @@ wikify maintain --policy conservative
 wikify maintain --policy balanced
 wikify maintain --policy aggressive
 wikify agent-profile --set default --agent-command "python3 agent.py" --producer-timeout 120
+wikify agent-profile --set-default default
 wikify agent-profile --list
 wikify maintain-run --dry-run
 wikify maintain-run --limit 5 --agent-command "python3 agent.py"
 wikify maintain-run --limit 5 --agent-profile default
+wikify maintain-run --limit 5 --agent-profile
 wikify tasks
 wikify tasks --status queued --limit 5
 wikify tasks --refresh --id agent-task-1
@@ -160,7 +162,7 @@ Patch proposals are purpose-aware when the wiki root contains `purpose.md` or `w
 
 `wikify produce-bundle` invokes an explicit external agent command to turn a `wikify.patch-bundle-request.v1` file into a `wikify.patch-bundle.v1` artifact. The request JSON is passed on stdin, and `WIKIFY_BASE`, `WIKIFY_PATCH_BUNDLE_REQUEST`, and `WIKIFY_PATCH_BUNDLE` are exposed as environment variables. The external command may print bundle JSON to stdout or write the suggested bundle path directly. Wikify preflights the produced bundle before returning `bundle_ready`; `--dry-run` does not execute the command or write a bundle.
 
-`wikify agent-profile` stores named external command profiles in `wikify-agent-profiles.json` at the wiki root. Profiles reduce repeated CLI typing for long agent adapters: `--agent-profile default` resolves to the stored command and timeout before the existing producer flow runs. Passing both `--agent-command` and `--agent-profile` is rejected as ambiguous. Profiles are visible project config; do not store API keys or secrets in the command string.
+`wikify agent-profile` stores named external command profiles in `wikify-agent-profiles.json` at the wiki root. Profiles reduce repeated CLI typing for long agent adapters: `--agent-profile default` resolves to the stored command and timeout before the existing producer flow runs. `wikify agent-profile --set-default default` stores a default profile, and a bare `--agent-profile` flag uses that default. Passing both `--agent-command` and `--agent-profile` is rejected as ambiguous. Profiles are visible project config; do not store API keys or secrets in the command string.
 
 `wikify apply` consumes a proposal plus an agent-generated patch bundle. V1.2 supports deterministic `replace_text` operations only: each source text must match exactly once, each path must stay inside the proposal `write_scope`, and `--dry-run` writes nothing. A real apply writes `sorted/graph-patch-applications/<application-id>.json` with before/after hashes. `wikify rollback` restores from that application record only when the current file hash still matches the recorded post-apply hash.
 
@@ -174,7 +176,7 @@ For one-command automation, `wikify run-task --id <task-id> --agent-command "<co
 
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
-Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `maintain-run`, `run-task`, `run-tasks`, and `produce-bundle` only invoke an external command when the caller supplies `--agent-command` or `--agent-profile`, and every bundle output is still preflighted. `wikify apply` remains the deterministic content mutation path.
+Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, and `wikify produce-bundle` do not edit content pages or call hidden LLMs. `maintain-run`, `run-task`, `run-tasks`, and `produce-bundle` only invoke an external command when the caller supplies `--agent-command` or `--agent-profile`, and every bundle output is still preflighted. A configured default profile does nothing by itself; the command still needs the explicit `--agent-profile` flag. `wikify apply` remains the deterministic content mutation path.
 
 ## Documentation map
 
@@ -196,7 +198,7 @@ Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle
 - Purpose-aware proposals should explain alignment when `purpose.md` or `wikify-purpose.md` exists, without changing safety rules
 - Patch bundle requests should package target snapshots and bundle instructions for external agents instead of hiding provider calls in the CLI
 - Patch bundle production should be an explicit external-command adapter with stdin/env contracts and deterministic preflight, not a hidden provider integration
-- Agent profiles should remove repeated command typing without storing secrets or adding hidden provider behavior
+- Agent profiles should remove repeated command typing without storing secrets or adding hidden provider behavior; default profiles must still require explicit use
 - Patch application should require explicit patch bundle input, exact preflight, audit records, and hash-guarded rollback
 - One-command maintenance automation should compose audited primitives instead of adding hidden provider behavior
 - Agent task runners should prepare a patch bundle request at `waiting_for_patch_bundle` instead of prompting users or generating hidden content

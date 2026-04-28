@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 16 planned: explicit default agent profile.
+**Current focus:** Phase 16 complete: explicit default agent profile.
 
 ## Current Position
 
 Phase: 16 of 16 (Explicit Default Agent Profile)
 Plan: 1 of 1 in current phase
-Status: Planned
-Last activity: 2026-04-29 - Planned Phase 16 explicit default agent profile.
+Status: Complete
+Last activity: 2026-04-29 - Completed Phase 16 explicit default agent profile.
 
-Progress: █████████░ 94%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 1 session
-- Total execution time: 15 sessions
+- Total execution time: 16 sessions
 
 **By Phase:**
 
@@ -42,10 +42,10 @@ Progress: █████████░ 94%
 | 13. Batch Task Automation | 1/1 | 1 session | 1 session |
 | 14. Maintenance Run Automation | 1/1 | 1 session | 1 session |
 | 15. Agent Profile Configuration | 1/1 | 1 session | 1 session |
-| 16. Explicit Default Agent Profile | 0/1 | - | - |
+| 16. Explicit Default Agent Profile | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 11-01, 12-01, 13-01, 14-01, 15-01
+- Last 5 plans: 12-01, 13-01, 14-01, 15-01, 16-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -101,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 15]: `agent-profile` stores visible project-level external command aliases in `wikify-agent-profiles.json`.
 - [Phase 15]: `--agent-profile` is explicit and mutually exclusive with `--agent-command`.
 - [Planning]: Default agent profiles must remain explicit shorthand; a default alone must not trigger external execution.
+- [Phase 16]: Bare `--agent-profile` resolves `default_profile`, but commands without `--agent-profile` remain non-producing.
+- [Phase 16]: Removing the current default profile clears the `default_profile` pointer.
 
 ### Pending Todos
 
@@ -128,6 +130,7 @@ Recent decisions affecting current work:
 - Phase 15 added: Agent Profile Configuration.
 - Phase 15 completed: Agent Profile Configuration.
 - Phase 16 added: Explicit Default Agent Profile.
+- Phase 16 completed: Explicit Default Agent Profile.
 
 ## Deferred Items
 
