@@ -10,7 +10,7 @@ The current milestone turns graph maintenance from "audit artifacts exist" into 
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions marked with INSERTED
 
-- [ ] **Phase 1: Graph Agent Task Queue** - Convert queued graph maintenance steps into an agent-consumable task artifact.
+- [x] **Phase 1: Graph Agent Task Queue** - Convert queued graph maintenance steps into an agent-consumable task artifact.
 
 ## Phase Details
 
@@ -27,10 +27,10 @@ The current milestone turns graph maintenance from "audit artifacts exist" into 
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: Build graph agent task queue artifact
+- [x] 01-01: Build graph agent task queue artifact
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Graph Agent Task Queue | 0/1 | Not started | - |
+| 1. Graph Agent Task Queue | 1/1 | Complete | 2026-04-28 |
