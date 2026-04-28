@@ -130,6 +130,16 @@
 - [x] **BTA-07**: Batch execution stops on the first per-task failure by default and supports explicit `--continue-on-error`.
 - [x] **BTA-08**: Docs describe the batch command, bounded defaults, stop-on-error behavior, and explicit external-command boundary.
 
+### Maintenance Run Automation
+
+- [ ] **MRA-01**: `wikify maintain-run` refreshes graph maintenance artifacts before task selection.
+- [ ] **MRA-02**: The command executes selected tasks through the existing bounded `run_agent_tasks` workflow.
+- [ ] **MRA-03**: Defaults are conservative: balanced maintenance policy, queued task status, limit 5, sequential execution, and stop-on-error.
+- [ ] **MRA-04**: `--agent-command` remains explicit and is only forwarded to the batch runner when provided.
+- [ ] **MRA-05**: `--dry-run` previews maintenance and task selection intent without executing task producers, writing lifecycle events, applying bundles, or mutating content.
+- [ ] **MRA-06**: Results use a stable `wikify.maintenance-run.v1` schema with maintenance summary, batch summary or preview, artifacts, and next actions.
+- [ ] **MRA-07**: Structured errors preserve phase context for maintenance refresh and batch execution failures.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -227,6 +237,13 @@
 | BTA-06 | Phase 13 | Complete |
 | BTA-07 | Phase 13 | Complete |
 | BTA-08 | Phase 13 | Complete |
+| MRA-01 | Phase 14 | Planned |
+| MRA-02 | Phase 14 | Planned |
+| MRA-03 | Phase 14 | Planned |
+| MRA-04 | Phase 14 | Planned |
+| MRA-05 | Phase 14 | Planned |
+| MRA-06 | Phase 14 | Planned |
+| MRA-07 | Phase 14 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -238,9 +255,10 @@
 - v2 producer requirements: 7 total
 - v2 run-task producer automation requirements: 7 total
 - v2 batch automation requirements: 8 total
-- Mapped to phases: 77
+- v2 maintenance run automation requirements: 7 total
+- Mapped to phases: 84
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 13 completion*
+*Last updated: 2026-04-28 after Phase 14 planning*

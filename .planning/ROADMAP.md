@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, and low-interruption task workflow orchestration.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, and a bounded maintenance automation entrypoint.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -25,6 +25,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 11: External Patch Bundle Producer** - Invoke explicit external agent commands to produce and preflight patch bundles from request artifacts.
 - [x] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
 - [x] **Phase 13: Batch Task Automation** - Process bounded batches of graph agent tasks through the audited task runner with structured per-task results.
+- [ ] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
 
 ## Phase Details
 
@@ -252,6 +253,24 @@ Plans:
 Plans:
 - [x] 13-01: Build bounded batch task automation
 
+### Phase 14: Maintenance Run Automation
+**Goal**: `wikify maintain-run` refreshes graph maintenance artifacts and then executes a bounded set of queued agent tasks through the audited batch runner.
+**Depends on**: Phase 13
+**Requirements**: MRA-01, MRA-02, MRA-03, MRA-04, MRA-05, MRA-06, MRA-07
+**Why after Phase 13**: Batch task automation is stable. The next low-interruption step is composing maintenance refresh and bounded task execution without adding hidden provider execution or new patch semantics.
+**Success Criteria** (what must be TRUE):
+  1. A single command refreshes maintenance artifacts before selecting queued tasks.
+  2. Task execution still uses the existing bounded `run_agent_tasks` flow.
+  3. Defaults remain conservative: balanced policy, queued status, limit 5, sequential execution, stop on first failure.
+  4. `--agent-command` remains explicit and is only forwarded when provided.
+  5. Dry-run previews the maintenance result and does not execute task producers or mutate content/lifecycle artifacts.
+  6. Results include maintenance summary, batch summary or preview, artifacts, and next actions.
+  7. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 14-01: Build maintenance run automation command
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -269,3 +288,4 @@ Plans:
 | 11. External Patch Bundle Producer | 1/1 | Complete | 2026-04-28 |
 | 12. Run Task Inline Producer Automation | 1/1 | Complete | 2026-04-28 |
 | 13. Batch Task Automation | 1/1 | Complete | 2026-04-28 |
+| 14. Maintenance Run Automation | 0/1 | Planned | - |
