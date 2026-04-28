@@ -7,6 +7,7 @@
 - Plan commit: `7d0d8aa`
 - Implementation commit: `4def9cb`
 - Documentation commit: `bb983b2`
+- Follow-up fix commit: `95c568d`
 - Status: Complete
 
 ## What Changed
@@ -17,6 +18,7 @@
 - Non-dry-run writes `sorted/graph-patch-bundle-requests/<task-id>.json`.
 - Non-dry-run writes the scoped proposal artifact if it is missing.
 - Request artifacts include proposal context, write scope, target file snapshots, SHA-256 hashes, default bundle path, and the allowed `replace_text` patch bundle contract.
+- `suggested_bundle_path` is reported separately from written artifacts so callers do not mistake a suggested output path for an existing file.
 - Documented the external-agent request-to-bundle handoff in README, product README, and protocol docs.
 
 ## Verification
