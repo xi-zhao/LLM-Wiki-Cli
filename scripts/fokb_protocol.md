@@ -76,6 +76,15 @@
 - `bundle_request_failed`
 - `bundle_request_path_invalid`
 - `bundle_request_target_not_found`
+- `bundle_producer_request_not_found`
+- `bundle_producer_request_invalid_json`
+- `bundle_producer_request_schema_invalid`
+- `bundle_producer_command_invalid`
+- `bundle_producer_command_failed`
+- `bundle_producer_timeout`
+- `bundle_producer_invalid_output`
+- `bundle_producer_no_bundle_output`
+- `bundle_producer_failed`
 - `patch_bundle_not_found`
 - `patch_bundle_schema_invalid`
 - `patch_bundle_task_mismatch`
@@ -150,6 +159,8 @@
 - `propose --task-id <id> --dry-run`
 - `bundle-request --task-id <id>`
 - `bundle-request --task-id <id> --dry-run`
+- `produce-bundle --request-path <path> --agent-command <command>`
+- `produce-bundle --request-path <path> --agent-command <command> --dry-run`
 - `apply --proposal-path <path> --bundle-path <path>`
 - `apply --proposal-path <path> --bundle-path <path> --dry-run`
 - `rollback --application-path <path>`
@@ -693,6 +704,92 @@ Purpose-aware 行为：
 
 安全规则：`bundle-request` 只生成 agent handoff artifact，不生成语义内容，不调用隐藏 LLM，不修改 task status，不修改正文页面。
 
+### `produce-bundle`
+推荐用作 request artifact 到 patch bundle artifact 的显式外部 agent adapter。
+
+常用：
+- `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py" --dry-run`
+- `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py"`
+- `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py" --timeout 120`
+
+默认行为：
+- 读取 `wikify.patch-bundle-request.v1`
+- 解析调用方显式传入的 `--agent-command`
+- 非 dry-run 时以 `shell=false` 执行外部 command
+- 通过 stdin 向外部 command 传入完整 request JSON
+- 向外部 command 暴露 `WIKIFY_BASE`、`WIKIFY_PATCH_BUNDLE_REQUEST`、`WIKIFY_PATCH_BUNDLE`
+- 如果 stdout 非空，把 stdout 当作 `wikify.patch-bundle.v1` JSON 写入 request 的 `suggested_bundle_path`
+- 如果 stdout 为空，接受外部 command 已写好的 `suggested_bundle_path`
+- 对产出的 bundle 运行 deterministic preflight
+- 返回 `wikify.patch-bundle-production.v1`
+- 不修改 task status
+- 不修改 topic、parsed、sorted 等正文页面
+
+`produce-bundle --dry-run` 不执行外部 command，不写 patch bundle，不运行 preflight；它只校验 request、解析 command，并返回 invocation contract。
+
+外部 command contract：
+- stdin：完整 `wikify.patch-bundle-request.v1` JSON
+- `WIKIFY_BASE`：wiki root 绝对路径
+- `WIKIFY_PATCH_BUNDLE_REQUEST`：request artifact 绝对路径
+- `WIKIFY_PATCH_BUNDLE`：建议 patch bundle 绝对路径
+
+`wikify.patch-bundle-production.v1` schema:
+
+```json
+{
+  "schema_version": "wikify.patch-bundle-production.v1",
+  "base": "/abs/kb",
+  "dry_run": false,
+  "executed": true,
+  "status": "bundle_ready",
+  "request_path": "/abs/kb/sorted/graph-patch-bundle-requests/agent-task-1.json",
+  "suggested_bundle_path": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json",
+  "task_id": "agent-task-1",
+  "agent_command": ["python3", "agent.py"],
+  "invocation": {
+    "stdin": "wikify.patch-bundle-request.v1 JSON",
+    "env": {
+      "WIKIFY_BASE": "/abs/kb",
+      "WIKIFY_PATCH_BUNDLE_REQUEST": "/abs/kb/sorted/graph-patch-bundle-requests/agent-task-1.json",
+      "WIKIFY_PATCH_BUNDLE": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json"
+    },
+    "shell": false
+  },
+  "output_mode": "stdout",
+  "artifacts": {
+    "patch_bundle": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json"
+  },
+  "preflight": {
+    "schema_version": "wikify.patch-application-preflight.v1",
+    "status": "ready"
+  },
+  "summary": {
+    "task_id": "agent-task-1",
+    "operation_count": 1,
+    "affected_paths": ["topics/a.md"]
+  }
+}
+```
+
+状态：
+- `dry_run`
+  - request 和 command contract 可用，但 command 未执行
+- `bundle_ready`
+  - bundle 已生成或已存在于 suggested path，并通过 apply preflight
+
+错误：
+- request 文件不存在时返回 `bundle_producer_request_not_found`，exit code 为 `2`
+- request 不是合法 JSON 时返回 `bundle_producer_request_invalid_json`，exit code 为 `2`
+- request schema 不支持时返回 `bundle_producer_request_schema_invalid`，exit code 为 `2`
+- command 为空或无法解析时返回 `bundle_producer_command_invalid`，exit code 为 `2`
+- 外部 command 非零退出时返回 `bundle_producer_command_failed`，exit code 为 `2`
+- 外部 command 超时时返回 `bundle_producer_timeout`，exit code 为 `2`
+- stdout 不是合法 bundle JSON 时返回 `bundle_producer_invalid_output`，exit code 为 `2`
+- stdout 为空且 suggested bundle 文件不存在时返回 `bundle_producer_no_bundle_output`，exit code 为 `2`
+- bundle preflight 失败时沿用 `patch_*` code，exit code 为 `2`，`details.phase` 为 `preflight`
+
+安全规则：`produce-bundle` 只调用用户显式提供的外部 command，不内置 provider，不选择模型，不读取 API key，不重试 provider，不直接应用正文修改。正文修改仍然只能由 `apply` 或 `run-task` 在 bundle preflight 通过后执行。
+
 ### `apply`
 推荐用作 agent-generated patch bundle 的 deterministic apply 入口。
 
@@ -807,6 +904,8 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - `run-task --id agent-task-1 --dry-run`
 - `run-task --id agent-task-1`
 - `run-task --id agent-task-1 --bundle-path sorted/graph-patch-bundles/custom.json`
+- `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py"`
+- `run-task --id agent-task-1`
 
 默认行为：
 - 读取 `sorted/graph-agent-tasks.json`
@@ -816,6 +915,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - 查找 patch bundle，默认路径为 `sorted/graph-patch-bundles/<task-id>.json`
 - bundle 缺失时写入 `sorted/graph-patch-bundle-requests/<task-id>.json`
 - bundle 缺失时返回 `waiting_for_patch_bundle` 和 `next_actions: ["generate_patch_bundle"]`
+- 上层 agent 可调用 `produce-bundle` 执行显式外部 command 生成 bundle，再重试 `run-task`
 - bundle 存在时通过 deterministic `apply` 合约应用
 - apply 成功后通过 lifecycle 标记 task 为 `done`
 
@@ -854,7 +954,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 
 状态：
 - `waiting_for_patch_bundle`
-  - runner 已尽可能推进，并已写入 patch bundle request；下一步由 agent 读取 request 并生成 patch bundle
+  - runner 已尽可能推进，并已写入 patch bundle request；下一步由 agent 读取 request 生成 patch bundle，或调用 `produce-bundle` 委托显式外部 command 生成 patch bundle
 - `ready_to_apply`
   - dry-run 已确认 proposal 和 bundle 可用于后续非 dry-run
 - `completed`
@@ -868,7 +968,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - apply 阶段错误沿用 `patch_*` code，exit code 为 `2`
 - lifecycle 阶段错误沿用 `invalid_agent_task_transition` 等 code，exit code 为 `2`
 
-安全规则：`run-task` 只编排现有 audited primitives。它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批；缺 bundle 是正常等待状态，应交给上层 agent 继续。
+安全规则：`run-task` 只编排现有 audited primitives。它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批；缺 bundle 是正常等待状态，应交给上层 agent 或 `produce-bundle` 继续。
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。
