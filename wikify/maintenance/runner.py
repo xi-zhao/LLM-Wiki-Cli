@@ -6,6 +6,7 @@ from wikify.maintenance.executor import apply_plan
 from wikify.maintenance.findings import build_findings, summarize_findings
 from wikify.maintenance.history import append_run, write_json
 from wikify.maintenance.planner import build_plan
+from wikify.maintenance.task_queue import build_task_queue
 
 
 FINDINGS_SCHEMA_VERSION = 'wikify.graph-findings.v1'
@@ -41,11 +42,14 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
     findings_document = _build_findings_document(graph, findings, findings_summary)
     plan = build_plan(findings, policy=policy)
     execution = apply_plan(plan, dry_run=dry_run)
+    task_execution = apply_plan(plan, dry_run=False) if dry_run else execution
+    task_queue = build_task_queue(plan, task_execution, findings)
 
     sorted_dir = root / 'sorted'
     findings_path = sorted_dir / 'graph-findings.json'
     plan_path = sorted_dir / 'graph-maintenance-plan.json'
     history_path = sorted_dir / 'graph-maintenance-history.json'
+    task_queue_path = sorted_dir / 'graph-agent-tasks.json'
     artifacts = {
         'graph_json': graph_result['artifacts']['json'],
         'graph_report': graph_result['artifacts']['report'],
@@ -53,6 +57,7 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
         'findings': None if dry_run else str(findings_path),
         'plan': None if dry_run else str(plan_path),
         'history': None if dry_run else str(history_path),
+        'agent_tasks': None if dry_run else str(task_queue_path),
     }
 
     plan_summary = plan.get('summary', {})
@@ -64,6 +69,7 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
         'queued_count': execution_summary.get('queued_count', 0),
         'dry_run_count': execution_summary.get('dry_run_count', 0),
         'skipped_count': execution_summary.get('skipped_count', 0),
+        'task_count': task_queue.get('summary', {}).get('task_count', 0),
     }
     generated_at = _utc_now()
     run_record = {
@@ -77,6 +83,7 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
     if not dry_run:
         write_json(findings_path, findings_document)
         write_json(plan_path, plan)
+        write_json(task_queue_path, task_queue)
         append_run(root, run_record, dry_run=False)
 
     return {
@@ -89,6 +96,7 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
         'findings': findings_document,
         'plan': plan,
         'execution': execution,
+        'task_queue': task_queue,
         'summary': summary,
         'next_commands': _next_commands(dry_run),
         'completion': {

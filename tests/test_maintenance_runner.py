@@ -22,6 +22,9 @@ class MaintenanceRunnerTests(unittest.TestCase):
             self.assertTrue((kb / 'sorted' / 'graph-findings.json').exists())
             self.assertTrue((kb / 'sorted' / 'graph-maintenance-plan.json').exists())
             self.assertTrue((kb / 'sorted' / 'graph-maintenance-history.json').exists())
+            self.assertTrue((kb / 'sorted' / 'graph-agent-tasks.json').exists())
+            self.assertIn('task_count', result['summary'])
+            self.assertIn('task_queue', result)
             self.assertIsInstance(result['next_commands'], list)
 
     def test_dry_run_writes_graph_but_not_maintenance_artifacts(self):
@@ -39,6 +42,8 @@ class MaintenanceRunnerTests(unittest.TestCase):
             self.assertFalse((kb / 'sorted' / 'graph-findings.json').exists())
             self.assertFalse((kb / 'sorted' / 'graph-maintenance-plan.json').exists())
             self.assertFalse((kb / 'sorted' / 'graph-maintenance-history.json').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-agent-tasks.json').exists())
+            self.assertIn('task_queue', result)
 
 
 if __name__ == '__main__':
