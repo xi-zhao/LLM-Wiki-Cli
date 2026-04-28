@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 5 planning: graph relevance scoring.
+**Current focus:** Phase 5 execution: graph relevance scoring.
 
 ## Current Position
 
 Phase: 5 of 6 (Graph Relevance Scoring)
-Plan: 0 of 0 in current phase
-Status: Phase 4 complete; Phase 5 ready to plan
-Last activity: 2026-04-28 - Implemented graph agent task lifecycle actions, documented protocol, and verified 141 unit tests plus lifecycle smoke.
+Plan: 1 of 1 in current phase
+Status: Planned and ready to execute
+Last activity: 2026-04-28 - Planned Phase 5 graph relevance scoring.
 
 Progress: ███████░░░ 67%
 
@@ -31,7 +31,7 @@ Progress: ███████░░░ 67%
 | 2. Agent Task Reader | 1/1 | 1 session | 1 session |
 | 3. Scoped Patch Proposal | 1/1 | 1 session | 1 session |
 | 4. Agent Task Lifecycle | 1/1 | 1 session | 1 session |
-| 5. Graph Relevance Scoring | 0/0 | Not started | - |
+| 5. Graph Relevance Scoring | 0/1 | Not started | - |
 | 6. Purpose-Aware Proposals | 0/0 | Not started | - |
 
 **Recent Trend:**
@@ -62,7 +62,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 5: graph relevance scoring from direct links, source overlap, common neighbors, and type affinity.
+- Execute Phase 5 plan: graph relevance scoring from direct links, source overlap, common neighbors, and type affinity.
 
 ### Blockers/Concerns
 
@@ -80,5 +80,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 4 complete and verified; Phase 5 ready to plan.
+Stopped at: Phase 5 planned and ready to execute.
 Resume file: None

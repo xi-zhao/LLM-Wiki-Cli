@@ -96,7 +96,10 @@ Plans:
   3. Findings/tasks include relevance metadata.
   4. Scores affect priority and explanation only, not automatic writes.
   5. Low-confidence signals remain informational.
-**Plans**: Ready to plan.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 05-01: Build graph relevance scoring
 
 ### Phase 6: Purpose-Aware Proposals
 **Goal**: Let proposal generation include optional purpose context so edits are meaningful for the wiki's stated goals.
@@ -118,5 +121,5 @@ Plans:
 | 2. Agent Task Reader | 1/1 | Complete | 2026-04-28 |
 | 3. Scoped Patch Proposal | 1/1 | Complete | 2026-04-28 |
 | 4. Agent Task Lifecycle | 1/1 | Complete | 2026-04-28 |
-| 5. Graph Relevance Scoring | 0/0 | Ready to plan | - |
+| 5. Graph Relevance Scoring | 0/1 | Ready to execute | - |
 | 6. Purpose-Aware Proposals | 0/0 | Planned | - |
