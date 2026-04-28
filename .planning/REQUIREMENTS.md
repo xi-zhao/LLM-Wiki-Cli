@@ -59,11 +59,22 @@
 - [x] **PUR-03**: Missing purpose context is non-blocking and explicitly reported in proposal metadata.
 - [x] **PUR-04**: Purpose context influences proposal rationale, not path safety rules.
 
+## v1.2 Requirements
+
+### Patch Apply And Rollback Contract
+
+- [ ] **APP-01**: `wikify apply` reads one patch proposal and one agent-generated patch bundle, then returns a stable JSON envelope.
+- [ ] **APP-02**: Patch bundle operations are validated against the proposal `write_scope` and wiki-root path safety rules.
+- [ ] **APP-03**: `wikify apply --dry-run` performs preflight validation without writing content or audit records.
+- [ ] **APP-04**: Non-dry-run apply supports deterministic text replacement only when the expected source text matches exactly once.
+- [ ] **APP-05**: Successful apply writes an audit record with task id, proposal path, bundle path, affected paths, before/after hashes, and rollback metadata.
+- [ ] **APP-06**: `wikify rollback` restores an application only when current content still matches the recorded post-apply hash.
+
 ## v2 Requirements
 
 ### Agent Consumer
 
-- **AGT-01**: A future command can consume proposal artifacts and apply deterministic, preflighted repairs under explicit policy.
+- **AGT-01**: A future command can run multi-step agent policy over proposal selection, patch bundle generation, apply, lifecycle, and verification.
 - **AGT-02**: A future command can run provider-backed semantic generation with explicit provider/key/retry semantics.
 - **AGT-03**: A future command can roll back applied repairs from recorded patch artifacts.
 
@@ -112,13 +123,20 @@
 | PUR-02 | Phase 6 | Complete |
 | PUR-03 | Phase 6 | Complete |
 | PUR-04 | Phase 6 | Complete |
+| APP-01 | Phase 7 | Planned |
+| APP-02 | Phase 7 | Planned |
+| APP-03 | Phase 7 | Planned |
+| APP-04 | Phase 7 | Planned |
+| APP-05 | Phase 7 | Planned |
+| APP-06 | Phase 7 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
 - v1.1 requirements: 19 total
-- Mapped to phases: 31
+- v1.2 requirements: 6 total
+- Mapped to phases: 37
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 6 completion*
+*Last updated: 2026-04-28 after Phase 7 planning start*

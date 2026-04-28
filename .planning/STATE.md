@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Milestone complete: graph maintenance can queue, explain, propose, track, prioritize, and purpose-align agent work.
+**Current focus:** Phase 7 planning: deterministic patch apply and rollback contract.
 
 ## Current Position
 
-Phase: 6 of 6 (Purpose-Aware Proposals)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 6 purpose-aware proposals.
+Phase: 7 of 7 (Patch Apply And Rollback Contract)
+Plan: 0 of 1 in current phase
+Status: Added and ready to plan
+Last activity: 2026-04-28 - Added Phase 7 patch apply and rollback contract.
 
-Progress: ██████████ 100%
+Progress: ████████░░ 86%
 
 ## Performance Metrics
 
@@ -33,6 +33,7 @@ Progress: ██████████ 100%
 | 4. Agent Task Lifecycle | 1/1 | 1 session | 1 session |
 | 5. Graph Relevance Scoring | 1/1 | 1 session | 1 session |
 | 6. Purpose-Aware Proposals | 1/1 | 1 session | 1 session |
+| 7. Patch Apply And Rollback Contract | 0/1 | Not started | - |
 
 **Recent Trend:**
 - Last 5 plans: 02-01, 03-01, 04-01, 05-01, 06-01
@@ -67,12 +68,16 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- None for this milestone.
+- Plan and execute Phase 7 deterministic apply/rollback contract.
 
 ### Blockers/Concerns
 
 - `gsd-sdk` is not available in PATH; GSD files are maintained manually in this session.
 - Task lifecycle must remain content-read-only until a later apply contract exists.
+
+### Roadmap Evolution
+
+- Phase 7 added: Patch Apply And Rollback Contract.
 
 ## Deferred Items
 
@@ -85,5 +90,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 6 complete and milestone ready for next planning decision.
+Stopped at: Phase 7 added and ready to plan.
 Resume file: None

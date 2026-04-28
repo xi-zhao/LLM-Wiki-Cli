@@ -24,14 +24,18 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] Graph relevance scoring explains node/task priority with direct links, source overlap, common neighbors, and type affinity.
 - [x] Purpose-aware proposals include optional wiki goal context and rationale without weakening path safety.
 
+### Active
+
+- [ ] Add a deterministic patch apply and rollback contract for agent-generated patch bundles.
+
 ### Out of Scope
 
 - Hidden LLM calls inside the CLI — provider/key/retry semantics should be explicit in a later phase.
-- Automatic content rewrites during `wikify maintain` V1 — semantic repairs require a separate agent consumer.
+- Hidden content generation during `wikify maintain` V1 — semantic repairs require explicit patch bundles and audit records.
 - Interactive user approval during maintenance runs — unsafe work should be queued, not prompted.
 - Copying GPLv3 code from `nashsu/llm_wiki`; only product ideas and architecture lessons may be borrowed.
 - Desktop/Tauri UI work from `llm_wiki`; Wikify remains a CLI-first agent surface.
-- Automatic patch application before proposal, lifecycle, and apply contracts are designed and tested.
+- Provider-backed semantic patch generation before explicit provider/key/retry semantics are designed and tested.
 
 ## Context
 
@@ -63,6 +67,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Make lifecycle mutation explicit | Default task reads stay safe while `--mark-*`, `--retry`, `--restore`, and `--cancel` provide durable automation state | ✓ Good |
 | Keep graph relevance advisory | Relevance improves explanation and prioritization without becoming an automatic write trigger | ✓ Good |
 | Keep purpose context explanatory | Purpose files should enrich proposal rationale, not expand write scope or apply content changes | ✓ Good |
+| Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Active |
 
 ---
-*Last updated: 2026-04-28 after Phase 6 completion*
+*Last updated: 2026-04-28 after Phase 7 planning start*
