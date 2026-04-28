@@ -77,6 +77,47 @@ Default output remains a JSON envelope:
 }
 ```
 
+## Functional Design
+
+`wikify` has two product loops.
+
+Loop 1 is the wiki maintenance loop:
+
+```text
+source material
+  -> ingest
+  -> parsed article / brief / topic / timeline / digest
+  -> maintenance verdict
+  -> decision plan
+  -> optional execution
+  -> history and state
+```
+
+Loop 2 is the structural intelligence loop:
+
+```text
+compiled Markdown wiki
+  -> markdown object index
+  -> extracted graph nodes and edges
+  -> graph analytics
+  -> graph artifacts
+  -> agent navigation and maintenance hints
+```
+
+The two loops meet through files, not hidden runtime state. The maintenance loop writes Markdown and JSON state. The graph loop reads Markdown and emits graph artifacts. Later versions can feed graph findings back into maintenance, but V1 keeps that as an explicit command result instead of implicit side effects.
+
+### Command Responsibilities
+
+- `wikify ingest`: turn external sources into wiki objects, then emit maintenance and completion data.
+- `wikify search/query/show/list`: expose existing wiki objects to agents.
+- `wikify digest/writeback/synthesize`: create durable Markdown outputs from current wiki context.
+- `wikify maintenance`: expose recent incremental health verdicts.
+- `wikify decide`: turn a maintenance verdict into executable or non-executable next steps.
+- `wikify graph`: rebuild the structural map from compiled Markdown and write graph artifacts.
+- `fokb`: compatibility entrypoint that calls the same command implementation.
+
+`wikify graph` is intentionally read-mostly. It should create/update only the `graph/` output directory. It should not mutate topics, parsed articles, review queue, maintenance history, or source files in V1.
+
 ## Architecture
 
 The implementation should move toward a real Python package while keeping current scripts working.
@@ -113,6 +154,63 @@ V1 may migrate only the parts needed for `wikify graph` plus shared config/envel
 - `graph.report` and `graph.html` render existing graph data only.
 
 This keeps future vibe-coded feature additions from becoming a single everything-file. A new capability should usually mean a new extractor or analytics function, not a new pile of conditions in the CLI.
+
+## Data Flow
+
+The graph build data flow is:
+
+```text
+KB root
+  -> config.resolve_paths()
+  -> markdown_index.scan_objects()
+  -> graph.extractors.extract_nodes()
+  -> graph.extractors.extract_edges()
+  -> graph.analytics.analyze()
+  -> graph.builder.assemble_graph()
+  -> graph.report.render_report()
+  -> graph.html.render_html()
+  -> graph.builder.write_artifacts()
+  -> envelope.result
+```
+
+Each stage has one input shape and one output shape:
+
+1. `config.resolve_paths()`
+   - Input: environment variables and current package location.
+   - Output: resolved app root, KB base, script directory, graph output directory.
+2. `markdown_index.scan_objects()`
+   - Input: KB base and scope.
+   - Output: `WikiObject[]`, where each object has type, path, relative path, title, text, and line metadata.
+3. `extract_nodes()`
+   - Input: `WikiObject[]`.
+   - Output: `GraphNode[]`.
+4. `extract_edges()`
+   - Input: `WikiObject[]` and node lookup.
+   - Output: `GraphEdge[]` plus broken-link findings encoded as `AMBIGUOUS` edges.
+5. `analytics.analyze()`
+   - Input: nodes and edges.
+   - Output: degree counts, connected components, central nodes, orphans, relation counts, and suggested questions.
+6. `builder.assemble_graph()`
+   - Input: nodes, edges, analytics.
+   - Output: graph document matching `wikify.graph.v1`.
+7. `report.render_report()` and `html.render_html()`
+   - Input: graph document only.
+   - Output: text artifacts. They do not read Markdown files.
+8. `builder.write_artifacts()`
+   - Input: graph document and rendered artifact strings.
+   - Output: artifact paths and summary counts for the command envelope.
+
+This gives the product a clean conveyor belt: raw wiki files go in, explicit graph artifacts come out, and every transformation can be tested without invoking the whole CLI.
+
+### Runtime Data Ownership
+
+- Markdown wiki objects are owned by ingest, digest, writeback, synthesize, and promote commands.
+- Review queue, maintenance history, and system state are owned by the maintenance/control loop.
+- Graph artifacts are owned by `wikify graph`.
+- Renderers own strings only.
+- Analytics owns derived facts only.
+
+No layer should reach backwards to mutate a previous layer's state.
 
 ## Data Model
 
@@ -264,4 +362,3 @@ Once V1 is stable:
 - Add graph-informed maintenance signals, such as isolated topic warnings.
 
 Each extension must enter through an extractor, analytics, or query module, not by modifying renderer or CLI internals.
-
