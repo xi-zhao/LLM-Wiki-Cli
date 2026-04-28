@@ -20,6 +20,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
 - [x] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
 - [x] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
+- [ ] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
 
 ## Phase Details
 
@@ -154,6 +155,25 @@ Plans:
 Plans:
 - [x] 08-01: Build agent task workflow runner
 
+### Phase 9: Patch Bundle Request Contract
+**Goal**: `wikify bundle-request --task-id <id>` generates an agent-facing request artifact with proposal context, write scope, target snapshots, hashes, and the allowed patch bundle operation contract.
+**Depends on**: Phase 8
+**Requirements**: BND-01, BND-02, BND-03, BND-04, BND-05, BND-06
+**Why after Phase 8**: The runner can already stop at `waiting_for_patch_bundle`; this phase turns that waiting state into a deterministic handoff for an external agent.
+**Success Criteria** (what must be TRUE):
+  1. A request can be generated for one existing task id.
+  2. The request artifact path is `sorted/graph-patch-bundle-requests/<task-id>.json`.
+  3. The request includes proposal/task evidence, target file snapshots, hashes, write scope, and allowed `replace_text` contract.
+  4. `--dry-run` returns the request but writes no request or proposal artifacts.
+  5. Request generation never mutates content pages or task lifecycle state.
+  6. Structured errors cover missing queue, missing task, invalid paths, and missing target files.
+  7. Docs describe how an external agent should write `sorted/graph-patch-bundles/<task-id>.json`.
+  8. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 09-01: Build patch bundle request contract
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -166,3 +186,4 @@ Plans:
 | 6. Purpose-Aware Proposals | 1/1 | Complete | 2026-04-28 |
 | 7. Patch Apply And Rollback Contract | 1/1 | Complete | 2026-04-28 |
 | 8. Agent Task Workflow Runner | 1/1 | Complete | 2026-04-28 |
+| 9. Patch Bundle Request Contract | 0/1 | Planned | |

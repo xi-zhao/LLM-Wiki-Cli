@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 8 complete: low-interruption agent task workflow runner.
+**Current focus:** Phase 9 planning: stable patch bundle request artifacts for external agents.
 
 ## Current Position
 
-Phase: 8 of 8 (Agent Task Workflow Runner)
+Phase: 9 of 9 (Patch Bundle Request Contract)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 8 agent task workflow runner.
+Status: Planning
+Last activity: 2026-04-28 - Added Phase 9 patch bundle request contract.
 
-Progress: ██████████ 100%
+Progress: █████████░ 89%
 
 ## Performance Metrics
 
@@ -35,6 +35,7 @@ Progress: ██████████ 100%
 | 6. Purpose-Aware Proposals | 1/1 | 1 session | 1 session |
 | 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
 | 8. Agent Task Workflow Runner | 1/1 | 1 session | 1 session |
+| 9. Patch Bundle Request Contract | 0/1 | In progress | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 04-01, 05-01, 06-01, 07-01, 08-01
@@ -71,10 +72,11 @@ Recent decisions affecting current work:
 - [Phase 7]: Rollback is hash-guarded and refuses drifted content.
 - [Phase 8]: `run-task` composes audited primitives and stops at `waiting_for_patch_bundle` when semantic patch content is missing.
 - [Phase 8]: Successful run-task apply marks tasks done through lifecycle events.
+- [Planning]: Generate patch bundle requests as explicit handoff artifacts before any provider-backed consumer work.
 
 ### Pending Todos
 
-- None for this milestone.
+- Execute Phase 9: Build patch bundle request contract.
 
 ### Blockers/Concerns
 
@@ -85,6 +87,7 @@ Recent decisions affecting current work:
 
 - Phase 7 added: Patch Apply And Rollback Contract.
 - Phase 8 added: Agent Task Workflow Runner.
+- Phase 9 added: Patch Bundle Request Contract.
 
 ## Deferred Items
 

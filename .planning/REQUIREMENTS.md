@@ -82,6 +82,15 @@
 - [x] **RUN-06**: `run-task --dry-run` writes no proposals, task events, content changes, or application records.
 - [x] **RUN-07**: Workflow errors are structured and preserve already-auditable intermediate state.
 
+### Patch Bundle Request Contract
+
+- [ ] **BND-01**: `wikify bundle-request --task-id <id>` reads one graph agent task, creates or reuses its proposal context, and returns a stable request envelope.
+- [ ] **BND-02**: Non-dry-run writes `sorted/graph-patch-bundle-requests/<task-id>.json`; `--dry-run` writes nothing.
+- [ ] **BND-03**: Request artifacts include task/proposal evidence, intended write scope, allowed operation contract, target file snapshots, and content hashes.
+- [ ] **BND-04**: Request generation never edits content pages and never mutates task lifecycle state.
+- [ ] **BND-05**: Missing task queue, missing task, unsafe paths, and missing target files return structured errors with exit code 2.
+- [ ] **BND-06**: Docs define how an external agent should turn a request into a `wikify.patch-bundle.v1` artifact.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -146,15 +155,22 @@
 | RUN-05 | Phase 8 | Complete |
 | RUN-06 | Phase 8 | Complete |
 | RUN-07 | Phase 8 | Complete |
+| BND-01 | Phase 9 | Planned |
+| BND-02 | Phase 9 | Planned |
+| BND-03 | Phase 9 | Planned |
+| BND-04 | Phase 9 | Planned |
+| BND-05 | Phase 9 | Planned |
+| BND-06 | Phase 9 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
 - v1.1 requirements: 19 total
 - v1.2 requirements: 6 total
 - v2 runner requirements: 7 total
-- Mapped to phases: 44
+- v2 bundle request requirements: 6 total
+- Mapped to phases: 50
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 8 completion*
+*Last updated: 2026-04-28 during Phase 9 planning*
