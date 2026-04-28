@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 9 complete: stable patch bundle request artifacts for external agents.
+**Current focus:** Phase 10 planning: runner automatically prepares bundle request handoffs.
 
 ## Current Position
 
-Phase: 9 of 9 (Patch Bundle Request Contract)
+Phase: 10 of 10 (Runner Bundle Request Handoff)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 9 patch bundle request contract.
+Status: Planning
+Last activity: 2026-04-28 - Added Phase 10 runner bundle request handoff.
 
-Progress: ██████████ 100%
+Progress: █████████░ 90%
 
 ## Performance Metrics
 
@@ -36,6 +36,7 @@ Progress: ██████████ 100%
 | 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
 | 8. Agent Task Workflow Runner | 1/1 | 1 session | 1 session |
 | 9. Patch Bundle Request Contract | 1/1 | 1 session | 1 session |
+| 10. Runner Bundle Request Handoff | 0/1 | In progress | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 05-01, 06-01, 07-01, 08-01, 09-01
@@ -75,10 +76,11 @@ Recent decisions affecting current work:
 - [Planning]: Generate patch bundle requests as explicit handoff artifacts before any provider-backed consumer work.
 - [Phase 9]: `bundle-request` packages target snapshots, hashes, proposal context, and bundle schema instructions for external agents.
 - [Phase 9]: Bundle request generation does not mutate content pages or lifecycle state.
+- [Planning]: `run-task` should prepare the request handoff automatically when bundle content is missing.
 
 ### Pending Todos
 
-- None for this milestone.
+- Execute Phase 10: Build runner bundle request handoff.
 
 ### Blockers/Concerns
 
@@ -90,6 +92,7 @@ Recent decisions affecting current work:
 - Phase 7 added: Patch Apply And Rollback Contract.
 - Phase 8 added: Agent Task Workflow Runner.
 - Phase 9 added: Patch Bundle Request Contract.
+- Phase 10 added: Runner Bundle Request Handoff.
 
 ## Deferred Items
 

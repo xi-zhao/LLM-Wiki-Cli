@@ -21,6 +21,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
 - [x] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
 - [x] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
+- [ ] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
 
 ## Phase Details
 
@@ -174,6 +175,24 @@ Plans:
 Plans:
 - [x] 09-01: Build patch bundle request contract
 
+### Phase 10: Runner Bundle Request Handoff
+**Goal**: `wikify run-task --id <id>` automatically writes or previews the patch bundle request artifact when no patch bundle exists, so normal automation has one fewer manual orchestration step.
+**Depends on**: Phase 9
+**Requirements**: HND-01, HND-02, HND-03, HND-04, HND-05
+**Why after Phase 9**: The request artifact contract is stable. The runner can now compose it safely without generating semantic content.
+**Success Criteria** (what must be TRUE):
+  1. Missing bundle in non-dry-run writes `sorted/graph-patch-bundle-requests/<task-id>.json`.
+  2. Missing bundle in dry-run reports the request path but writes no request/proposal/lifecycle/content/application artifacts.
+  3. `run-task` results expose request and suggested bundle paths.
+  4. Existing bundle flow still applies patch and marks task done.
+  5. Request-generation failures surface as structured `bundle_request_*` errors with `phase: bundle_request`.
+  6. Docs describe `run-task` as the preferred automation entrypoint and `bundle-request` as explicit refresh/manual handoff.
+  7. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 10-01: Build runner bundle request handoff
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -187,3 +206,4 @@ Plans:
 | 7. Patch Apply And Rollback Contract | 1/1 | Complete | 2026-04-28 |
 | 8. Agent Task Workflow Runner | 1/1 | Complete | 2026-04-28 |
 | 9. Patch Bundle Request Contract | 1/1 | Complete | 2026-04-28 |
+| 10. Runner Bundle Request Handoff | 0/1 | Planned | |

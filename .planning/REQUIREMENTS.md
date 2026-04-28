@@ -91,6 +91,14 @@
 - [x] **BND-05**: Missing task queue, missing task, unsafe paths, and missing target files return structured errors with exit code 2.
 - [x] **BND-06**: Docs define how an external agent should turn a request into a `wikify.patch-bundle.v1` artifact.
 
+### Runner Bundle Request Handoff
+
+- [ ] **HND-01**: `wikify run-task --id <id>` writes or refreshes a patch bundle request artifact when the patch bundle is missing.
+- [ ] **HND-02**: `run-task --dry-run` previews bundle request handoff without writing proposal, request, lifecycle events, content changes, or application records.
+- [ ] **HND-03**: `run-task` results expose `artifacts.patch_bundle_request`, `summary.bundle_request_path`, and `summary.suggested_bundle_path`.
+- [ ] **HND-04**: Bundle request generation errors inside `run-task` are structured with `details.phase = "bundle_request"` and preserve already-auditable intermediate state.
+- [ ] **HND-05**: Docs explain that normal automation can call `run-task` first; a separate `bundle-request` command remains available for explicit handoff refreshes.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -161,6 +169,11 @@
 | BND-04 | Phase 9 | Complete |
 | BND-05 | Phase 9 | Complete |
 | BND-06 | Phase 9 | Complete |
+| HND-01 | Phase 10 | Planned |
+| HND-02 | Phase 10 | Planned |
+| HND-03 | Phase 10 | Planned |
+| HND-04 | Phase 10 | Planned |
+| HND-05 | Phase 10 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -168,9 +181,10 @@
 - v1.2 requirements: 6 total
 - v2 runner requirements: 7 total
 - v2 bundle request requirements: 6 total
-- Mapped to phases: 50
+- v2 handoff requirements: 5 total
+- Mapped to phases: 55
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 9 completion*
+*Last updated: 2026-04-28 during Phase 10 planning*
