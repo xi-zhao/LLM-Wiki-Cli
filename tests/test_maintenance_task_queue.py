@@ -18,6 +18,13 @@ class MaintenanceTaskQueueTests(unittest.TestCase):
                 'recommended_action': 'queue_link_repair',
                 'can_auto_apply': False,
                 'policy_minimum': 'conservative',
+                'relevance': {
+                    'schema_version': 'wikify.graph-relevance.v1',
+                    'max_score': 7.5,
+                    'max_confidence': 'high',
+                    'priority_signal': True,
+                    'top_related': [{'id': 'articles/parsed/a.md', 'score': 7.5}],
+                },
             },
             {
                 'id': 'thin-graph',
@@ -46,6 +53,7 @@ class MaintenanceTaskQueueTests(unittest.TestCase):
         self.assertEqual(task['priority'], 'high')
         self.assertEqual(task['target'], 'topics/a.md')
         self.assertEqual(task['evidence']['target'], 'Missing')
+        self.assertEqual(task['relevance']['max_confidence'], 'high')
         self.assertEqual(task['write_scope'], ['topics/a.md'])
         self.assertFalse(task['requires_user'])
         self.assertEqual(task['status'], 'queued')
@@ -66,6 +74,39 @@ class MaintenanceTaskQueueTests(unittest.TestCase):
             self.assertIn(key, task)
         self.assertGreaterEqual(len(task['agent_instructions']), 1)
         self.assertGreaterEqual(len(task['acceptance_checks']), 1)
+
+    def test_low_confidence_relevance_does_not_escalate_priority(self):
+        from wikify.maintenance.executor import apply_plan
+        from wikify.maintenance.planner import build_plan
+        from wikify.maintenance.task_queue import build_task_queue
+
+        findings = [
+            {
+                'id': 'orphan-node:topics/a.md',
+                'type': 'orphan_node',
+                'severity': 'info',
+                'title': 'Orphan',
+                'subject': 'topics/a.md',
+                'evidence': {},
+                'recommended_action': 'queue_orphan_attachment',
+                'can_auto_apply': False,
+                'policy_minimum': 'conservative',
+                'relevance': {
+                    'schema_version': 'wikify.graph-relevance.v1',
+                    'max_score': 1.0,
+                    'max_confidence': 'low',
+                    'priority_signal': False,
+                    'top_related': [{'id': 'topics/b.md', 'score': 1.0}],
+                },
+            }
+        ]
+        plan = build_plan(findings, policy='balanced')
+        execution = apply_plan(plan, dry_run=False)
+
+        queue = build_task_queue(plan, execution, findings)
+
+        self.assertEqual(queue['tasks'][0]['priority'], 'normal')
+        self.assertEqual(queue['tasks'][0]['relevance']['max_confidence'], 'low')
 
 
 if __name__ == '__main__':

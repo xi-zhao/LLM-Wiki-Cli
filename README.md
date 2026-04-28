@@ -103,6 +103,8 @@ wikify maintain
 - `graph/GRAPH_REPORT.md` for human-readable structure review
 - `graph/graph.html` unless `--no-html` is passed
 
+Graph analytics include advisory graph relevance scoring. Signals are direct links, source overlap, common neighbors, and type affinity. Relevance metadata appears in `graph.json`, related findings, and graph agent tasks so agents can prioritize with evidence.
+
 `wikify maintain` runs the autonomous graph maintenance loop:
 - rebuilds graph artifacts without HTML
 - writes `sorted/graph-findings.json`
@@ -153,6 +155,7 @@ V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not e
 - Maintenance should be incremental, not only full-library rescans
 - Obsidian-facing notes and agent-facing contracts can coexist cleanly
 - Graph understanding should be derived from explicit wiki structure with provenance-rich edges
+- Graph relevance should explain priority with source overlap, common neighbors, and type affinity, not silently trigger writes
 
 ## Current status
 

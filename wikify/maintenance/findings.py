@@ -25,6 +25,28 @@ def _finding(
     }
 
 
+def _relevance_for_subject(analytics: dict, subject: str) -> dict | None:
+    node_relevance = analytics.get('relevance', {}).get('by_node', {}).get(subject)
+    if not node_relevance:
+        return None
+    confidence = node_relevance.get('max_confidence', 'low')
+    return {
+        'schema_version': analytics.get('relevance', {}).get('schema_version'),
+        'max_score': node_relevance.get('max_score', 0),
+        'max_confidence': confidence,
+        'priority_signal': confidence in {'medium', 'high'},
+        'top_related': list(node_relevance.get('top_related', [])),
+    }
+
+
+def _attach_relevance(finding: dict, analytics: dict) -> dict:
+    relevance = _relevance_for_subject(analytics, finding.get('subject'))
+    if relevance:
+        finding = dict(finding)
+        finding['relevance'] = relevance
+    return finding
+
+
 def build_findings(graph: dict) -> list[dict]:
     analytics = graph.get('analytics', {})
     findings = []
@@ -34,15 +56,18 @@ def build_findings(graph: dict) -> list[dict]:
         target = link.get('target') or link.get('label') or 'unknown'
         line = link.get('line', 0)
         findings.append(
-            _finding(
-                f'broken-link:{source}:{line}:{target}',
-                'broken_link',
-                'warning',
-                'Broken link',
-                source,
-                dict(link),
-                'queue_link_repair',
-                False,
+            _attach_relevance(
+                _finding(
+                    f'broken-link:{source}:{line}:{target}',
+                    'broken_link',
+                    'warning',
+                    'Broken link',
+                    source,
+                    dict(link),
+                    'queue_link_repair',
+                    False,
+                ),
+                analytics,
             )
         )
 
@@ -50,15 +75,18 @@ def build_findings(graph: dict) -> list[dict]:
         subject = orphan.get('id') or orphan.get('path') or 'unknown'
         title = orphan.get('title') or subject
         findings.append(
-            _finding(
-                f'orphan-node:{subject}',
-                'orphan_node',
-                'info',
-                f'Orphan wiki object: {title}',
-                subject,
-                dict(orphan),
-                'queue_orphan_attachment',
-                False,
+            _attach_relevance(
+                _finding(
+                    f'orphan-node:{subject}',
+                    'orphan_node',
+                    'info',
+                    f'Orphan wiki object: {title}',
+                    subject,
+                    dict(orphan),
+                    'queue_orphan_attachment',
+                    False,
+                ),
+                analytics,
             )
         )
 
@@ -70,15 +98,18 @@ def build_findings(graph: dict) -> list[dict]:
             continue
         subject = node.get('id') or 'unknown'
         findings.append(
-            _finding(
-                f'god-node:{subject}',
-                'god_node',
-                'info',
-                'High-degree central node',
-                subject,
-                dict(node),
-                'queue_digest_refresh',
-                False,
+            _attach_relevance(
+                _finding(
+                    f'god-node:{subject}',
+                    'god_node',
+                    'info',
+                    'High-degree central node',
+                    subject,
+                    dict(node),
+                    'queue_digest_refresh',
+                    False,
+                ),
+                analytics,
             )
         )
 
@@ -88,15 +119,18 @@ def build_findings(graph: dict) -> list[dict]:
             continue
         subject = community.get('id') or 'community'
         findings.append(
-            _finding(
-                f'mature-community:{subject}',
-                'mature_community',
-                'info',
-                'Community ready for synthesis',
-                subject,
-                dict(community),
-                'queue_community_synthesis',
-                False,
+            _attach_relevance(
+                _finding(
+                    f'mature-community:{subject}',
+                    'mature_community',
+                    'info',
+                    'Community ready for synthesis',
+                    subject,
+                    dict(community),
+                    'queue_community_synthesis',
+                    False,
+                ),
+                analytics,
             )
         )
 

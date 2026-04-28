@@ -187,6 +187,7 @@ CLI 输出里可直接读取：
 - 提取 `[[wikilink]]`、Markdown 链接和 topic/article/source 结构关系
 - 输出 `graph/graph.json`、`graph/GRAPH_REPORT.md` 和可选 `graph/graph.html`
 - 帮 agent 发现中心节点、社区、孤立对象、断链和下一步维护问题
+- 计算 advisory graph relevance：direct links、source overlap、common neighbors、type affinity
 
 默认命令：
 
@@ -198,6 +199,8 @@ wikify graph --scope topics
 
 `graph` 在 V1 中是 read-mostly 命令：只写 `graph/` 目录，不修改 topic、parsed、review queue 或 maintenance history。
 
+`graph.analytics.relevance` 会输出结构相关性分数和 signal-level evidence。该分数只用于解释和排序，不会直接触发正文写入。
+
 ## 3.7 自动图谱维护层
 
 - `maintain`
@@ -205,6 +208,7 @@ wikify graph --scope topics
 作用：
 - 自动执行 `graph --no-html`
 - 基于 `graph.analytics` 生成断链、孤立对象、中心节点、成熟社区和薄图谱 findings
+- 把 graph relevance metadata 附加到相关 findings 和 agent tasks
 - 根据 `--policy conservative|balanced|aggressive` 生成维护计划
 - 把可安全执行的确定性动作标记为 executed，把语义修复和生成内容动作交给 agent 队列
 - 把 queued plan step 转成 `graph-agent-tasks.json`，让后续 agent 可直接消费

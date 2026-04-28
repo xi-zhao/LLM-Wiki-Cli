@@ -28,8 +28,9 @@ class GraphBuilderTests(unittest.TestCase):
             self.assertIn('nodes', graph)
             self.assertIn('edges', graph)
             self.assertIn('analytics', graph)
-            for key in ['node_count', 'edge_count', 'community_count', 'orphan_count', 'central_nodes']:
+            for key in ['node_count', 'edge_count', 'community_count', 'orphan_count', 'central_nodes', 'relevance']:
                 self.assertIn(key, graph['analytics'])
+            self.assertEqual(graph['analytics']['relevance']['schema_version'], 'wikify.graph-relevance.v1')
 
             report_text = report.read_text(encoding='utf-8')
             self.assertIn('# Wikify Graph Report', report_text)

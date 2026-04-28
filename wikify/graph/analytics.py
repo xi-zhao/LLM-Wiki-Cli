@@ -1,5 +1,6 @@
 from collections import Counter, defaultdict, deque
 
+from wikify.graph.relevance import compute_relevance
 from wikify.graph.model import GraphEdge, GraphNode
 
 
@@ -74,6 +75,7 @@ def analyze(nodes: list[GraphNode], edges: list[GraphEdge]) -> dict:
         for index, component in enumerate(components)
     ]
     suggestions = suggested_questions(central_nodes, orphans, broken_links)
+    relevance = compute_relevance(nodes, edges)
     return {
         'node_count': len(nodes),
         'edge_count': len(edges),
@@ -87,6 +89,7 @@ def analyze(nodes: list[GraphNode], edges: list[GraphEdge]) -> dict:
         'suggested_questions': suggestions,
         'communities': communities,
         'degree_by_node': dict(sorted(degree.items())),
+        'relevance': relevance,
     }
 
 

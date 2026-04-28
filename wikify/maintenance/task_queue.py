@@ -90,22 +90,23 @@ def build_task_queue(plan: dict, execution: dict, findings: list[dict]) -> dict:
         target = finding.get('subject') or step.get('subject')
         write_scope = [target] if target else []
         task_index = len(tasks) + 1
-        tasks.append(
-            {
-                'id': f'agent-task-{task_index}',
-                'source_finding_id': finding_id,
-                'source_step_id': result.get('step_id'),
-                'action': action,
-                'priority': _priority(finding),
-                'target': target,
-                'evidence': dict(finding.get('evidence', {})),
-                'write_scope': write_scope,
-                'agent_instructions': INSTRUCTIONS.get(action, ['Review the finding and propose a safe next action.']),
-                'acceptance_checks': ACCEPTANCE_CHECKS.get(action, ['The proposed action is justified by the finding evidence.']),
-                'requires_user': False,
-                'status': 'queued',
-            }
-        )
+        task = {
+            'id': f'agent-task-{task_index}',
+            'source_finding_id': finding_id,
+            'source_step_id': result.get('step_id'),
+            'action': action,
+            'priority': _priority(finding),
+            'target': target,
+            'evidence': dict(finding.get('evidence', {})),
+            'write_scope': write_scope,
+            'agent_instructions': INSTRUCTIONS.get(action, ['Review the finding and propose a safe next action.']),
+            'acceptance_checks': ACCEPTANCE_CHECKS.get(action, ['The proposed action is justified by the finding evidence.']),
+            'requires_user': False,
+            'status': 'queued',
+        }
+        if finding.get('relevance'):
+            task['relevance'] = dict(finding['relevance'])
+        tasks.append(task)
 
     return {
         'schema_version': SCHEMA_VERSION,

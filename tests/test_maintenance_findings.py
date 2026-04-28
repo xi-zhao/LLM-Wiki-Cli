@@ -31,6 +31,45 @@ class MaintenanceFindingsTests(unittest.TestCase):
                         'size': 3,
                     }
                 ],
+                'relevance': {
+                    'schema_version': 'wikify.graph-relevance.v1',
+                    'by_node': {
+                        'topics/a.md': {
+                            'max_score': 8.5,
+                            'max_confidence': 'high',
+                            'top_related': [
+                                {
+                                    'id': 'articles/parsed/a.md',
+                                    'score': 8.5,
+                                    'confidence': 'high',
+                                    'signals': {
+                                        'direct_link': 1,
+                                        'source_overlap': 1,
+                                        'common_neighbors': 1,
+                                        'type_affinity': 1.0,
+                                    },
+                                }
+                            ],
+                        },
+                        'sources/index.md': {
+                            'max_score': 1.0,
+                            'max_confidence': 'low',
+                            'top_related': [
+                                {
+                                    'id': 'topics/a.md',
+                                    'score': 1.0,
+                                    'confidence': 'low',
+                                    'signals': {
+                                        'direct_link': 0,
+                                        'source_overlap': 0,
+                                        'common_neighbors': 0,
+                                        'type_affinity': 1.0,
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                },
             },
         }
 
@@ -53,6 +92,11 @@ class MaintenanceFindingsTests(unittest.TestCase):
                 'policy_minimum',
             ]:
                 self.assertIn(key, finding)
+
+        by_subject = {finding['subject']: finding for finding in findings}
+        self.assertEqual(by_subject['topics/a.md']['relevance']['max_confidence'], 'high')
+        self.assertEqual(by_subject['sources/index.md']['relevance']['max_confidence'], 'low')
+        self.assertFalse(by_subject['sources/index.md']['relevance']['priority_signal'])
 
         summary = summarize_findings(findings)
 
