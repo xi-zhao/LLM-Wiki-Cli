@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 14 complete: maintenance run automation.
+**Current focus:** Phase 15 planned: agent profile configuration.
 
 ## Current Position
 
-Phase: 14 of 14 (Maintenance Run Automation)
+Phase: 15 of 15 (Agent Profile Configuration)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-28 - Completed Phase 14 maintenance run automation.
+Status: Planned
+Last activity: 2026-04-28 - Planned Phase 15 agent profile configuration.
 
-Progress: ██████████ 100%
+Progress: █████████░ 93%
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: ██████████ 100%
 | 12. Run Task Inline Producer Automation | 1/1 | 1 session | 1 session |
 | 13. Batch Task Automation | 1/1 | 1 session | 1 session |
 | 14. Maintenance Run Automation | 1/1 | 1 session | 1 session |
+| 15. Agent Profile Configuration | 0/1 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: 10-01, 11-01, 12-01, 13-01, 14-01
@@ -95,6 +96,7 @@ Recent decisions affecting current work:
 - [Planning]: Maintenance run automation should compose `maintain` and `run-tasks` without introducing hidden provider execution.
 - [Phase 14]: `maintain-run` refreshes maintenance artifacts before selecting tasks and uses the bounded batch runner.
 - [Phase 14]: Dry-run previews from the fresh in-memory maintenance task queue instead of stale on-disk queues.
+- [Planning]: Agent profile configuration should reduce repeated command entry without hiding provider behavior.
 
 ### Pending Todos
 
@@ -119,6 +121,7 @@ Recent decisions affecting current work:
 - Phase 13 completed: Batch Task Automation.
 - Phase 14 added: Maintenance Run Automation.
 - Phase 14 completed: Maintenance Run Automation.
+- Phase 15 added: Agent Profile Configuration.
 
 ## Deferred Items
 

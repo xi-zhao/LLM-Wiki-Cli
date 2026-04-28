@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, and a bounded maintenance automation entrypoint.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, and explicit agent command profiles.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -26,6 +26,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
 - [x] **Phase 13: Batch Task Automation** - Process bounded batches of graph agent tasks through the audited task runner with structured per-task results.
 - [x] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
+- [ ] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
 
 ## Phase Details
 
@@ -271,6 +272,25 @@ Plans:
 Plans:
 - [x] 14-01: Build maintenance run automation command
 
+### Phase 15: Agent Profile Configuration
+**Goal**: `wikify agent-profile` stores named external agent command profiles, and producer/run commands can use `--agent-profile <name>` instead of repeating long command strings.
+**Depends on**: Phase 14
+**Requirements**: AGP-01, AGP-02, AGP-03, AGP-04, AGP-05, AGP-06, AGP-07, AGP-08
+**Why after Phase 14**: One-command automation exists, but every run still requires a long explicit command. Profiles reduce friction while preserving the explicit external-agent boundary.
+**Success Criteria** (what must be TRUE):
+  1. Profiles are persisted in a visible, versioned project config artifact.
+  2. A caller can set, list, show, and unset profiles through JSON envelopes.
+  3. Profiles store command, optional timeout, and metadata, but not hidden keys, models, retries, or provider defaults.
+  4. `produce-bundle`, `run-task`, `run-tasks`, and `maintain-run` accept `--agent-profile`.
+  5. Passing both `--agent-command` and `--agent-profile` returns a structured ambiguity error.
+  6. Missing profiles return structured errors without running producers.
+  7. Docs explain the profile boundary and safe usage.
+  8. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 15-01: Build explicit agent command profiles
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -289,3 +309,4 @@ Plans:
 | 12. Run Task Inline Producer Automation | 1/1 | Complete | 2026-04-28 |
 | 13. Batch Task Automation | 1/1 | Complete | 2026-04-28 |
 | 14. Maintenance Run Automation | 1/1 | Complete | 2026-04-28 |
+| 15. Agent Profile Configuration | 0/1 | Planned | - |

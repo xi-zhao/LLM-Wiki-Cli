@@ -140,6 +140,17 @@
 - [x] **MRA-06**: Results use a stable `wikify.maintenance-run.v1` schema with maintenance summary, batch summary or preview, artifacts, and next actions.
 - [x] **MRA-07**: Structured errors preserve phase context for maintenance refresh and batch execution failures.
 
+### Agent Profile Configuration
+
+- [ ] **AGP-01**: `wikify agent-profile --set <name>` persists a named external agent command profile in a versioned project config artifact.
+- [ ] **AGP-02**: `wikify agent-profile --list`, `--show <name>`, and `--unset <name>` return stable JSON envelopes.
+- [ ] **AGP-03**: Profiles store command, optional timeout, description, and timestamps, but do not store provider secrets or hidden retry/model defaults.
+- [ ] **AGP-04**: `produce-bundle`, `run-task`, `run-tasks`, and `maintain-run` accept `--agent-profile <name>`.
+- [ ] **AGP-05**: Profile resolution passes the explicit stored command into the existing producer flow without changing preflight/apply/lifecycle semantics.
+- [ ] **AGP-06**: Passing both `--agent-command` and `--agent-profile` returns a structured non-retryable ambiguity error.
+- [ ] **AGP-07**: Missing profile/config cases return structured errors without executing producer commands.
+- [ ] **AGP-08**: Docs describe the profile artifact, command usage, and explicit external-agent safety boundary.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -244,6 +255,14 @@
 | MRA-05 | Phase 14 | Complete |
 | MRA-06 | Phase 14 | Complete |
 | MRA-07 | Phase 14 | Complete |
+| AGP-01 | Phase 15 | Planned |
+| AGP-02 | Phase 15 | Planned |
+| AGP-03 | Phase 15 | Planned |
+| AGP-04 | Phase 15 | Planned |
+| AGP-05 | Phase 15 | Planned |
+| AGP-06 | Phase 15 | Planned |
+| AGP-07 | Phase 15 | Planned |
+| AGP-08 | Phase 15 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -256,9 +275,10 @@
 - v2 run-task producer automation requirements: 7 total
 - v2 batch automation requirements: 8 total
 - v2 maintenance run automation requirements: 7 total
-- Mapped to phases: 84
+- v2 agent profile requirements: 8 total
+- Mapped to phases: 92
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 14 completion*
+*Last updated: 2026-04-28 after Phase 15 planning*
