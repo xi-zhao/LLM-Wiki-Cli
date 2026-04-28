@@ -10,6 +10,11 @@ from wikify.maintenance.bundle_request import (
     request_path,
     write_bundle_request,
 )
+from wikify.maintenance.bundle_producer import (
+    DEFAULT_TIMEOUT_SECONDS,
+    BundleProducerError,
+    produce_patch_bundle,
+)
 from wikify.maintenance.patch_apply import (
     PatchApplyError,
     apply_patch_bundle,
@@ -392,6 +397,45 @@ def cmd_bundle_request(args):
     return envelope_ok('bundle-request', result)
 
 
+def cmd_produce_bundle(args):
+    base = discover_base()
+    try:
+        result = produce_patch_bundle(
+            base,
+            args.request_path,
+            args.agent_command,
+            timeout_seconds=args.timeout,
+            dry_run=args.dry_run,
+        )
+    except BundleProducerError as exc:
+        return envelope_error(
+            'produce-bundle',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'produce-bundle',
+            'bundle_producer_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'patch bundle production completed',
+        'artifacts': artifacts,
+        'next_actions': ['run_task'] if result.get('status') == 'bundle_ready' else [],
+        'user_message': 'patch bundle production completed',
+    }
+    return envelope_ok('produce-bundle', result)
+
+
 def cmd_apply(args):
     base = discover_base()
     try:
@@ -558,6 +602,14 @@ def build_parser() -> argparse.ArgumentParser:
         p_bundle_request.add_argument('--task-id', required=True)
         p_bundle_request.add_argument('--dry-run', action='store_true')
         p_bundle_request.set_defaults(func=cmd_bundle_request)
+
+    if 'produce-bundle' not in sub.choices:
+        p_produce_bundle = sub.add_parser('produce-bundle', help='Invoke an explicit external agent command to produce a patch bundle')
+        p_produce_bundle.add_argument('--request-path', required=True)
+        p_produce_bundle.add_argument('--agent-command', required=True)
+        p_produce_bundle.add_argument('--timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_produce_bundle.add_argument('--dry-run', action='store_true')
+        p_produce_bundle.set_defaults(func=cmd_produce_bundle)
 
     if 'apply' not in sub.choices:
         p_apply = sub.add_parser('apply', help='Validate and apply an agent-generated patch bundle')

@@ -3,6 +3,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -81,6 +82,46 @@ class WikifyCliTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(queue), encoding='utf-8')
         return path
+
+    def _write_bundle_request_fixture(self, kb: Path):
+        from wikify.maintenance.bundle_request import build_bundle_request, write_bundle_request
+        from wikify.maintenance.proposal import write_patch_proposal
+
+        self._write_run_task_queue(kb)
+        (kb / 'topics').mkdir()
+        target = kb / 'topics' / 'a.md'
+        target.write_text('See [[Missing]].\n', encoding='utf-8')
+        request = build_bundle_request(kb, 'agent-task-1')
+        write_patch_proposal(kb, request['proposal'])
+        request_path = write_bundle_request(kb, request)
+        return request_path, target
+
+    def _write_stdout_bundle_agent(self, kb: Path):
+        script = kb / 'stdout_bundle_agent.py'
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'bundle = {',
+                '    "schema_version": "wikify.patch-bundle.v1",',
+                '    "proposal_task_id": request["task_id"],',
+                '    "proposal_path": "sorted/graph-patch-proposals/agent-task-1.json",',
+                '    "operations": [',
+                '        {',
+                '            "operation": "replace_text",',
+                '            "path": "topics/a.md",',
+                '            "find": "[[Missing]]",',
+                '            "replace": "[[Existing]]",',
+                '            "rationale": "resolve broken wikilink"',
+                '        }',
+                '    ]',
+                '}',
+                'print(json.dumps(bundle))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
 
     def test_discover_base_prefers_wikify_base(self):
         original_wikify = os.environ.get('WIKIFY_BASE')
@@ -175,6 +216,27 @@ class WikifyCliTests(unittest.TestCase):
 
         self.assertEqual(args.command, 'bundle-request')
         self.assertEqual(args.task_id, 'agent-task-1')
+        self.assertTrue(args.dry_run)
+
+    def test_build_parser_accepts_produce_bundle_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'produce-bundle',
+            '--request-path',
+            'sorted/graph-patch-bundle-requests/agent-task-1.json',
+            '--agent-command',
+            'python3 agent.py',
+            '--timeout',
+            '30',
+            '--dry-run',
+        ])
+
+        self.assertEqual(args.command, 'produce-bundle')
+        self.assertEqual(args.request_path, 'sorted/graph-patch-bundle-requests/agent-task-1.json')
+        self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.timeout, 30.0)
         self.assertTrue(args.dry_run)
 
     def test_build_parser_accepts_apply_and_rollback_commands(self):
@@ -892,6 +954,129 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'bundle-request')
                 self.assertEqual(payload['error']['code'], 'agent_task_queue_missing')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_produce_bundle_command_writes_stdout_bundle(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                request_path, target = self._write_bundle_request_fixture(kb)
+                script = self._write_stdout_bundle_agent(kb)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'produce-bundle',
+                        '--request-path',
+                        str(request_path),
+                        '--agent-command',
+                        f'{sys.executable} {script}',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                bundle_path = kb.resolve() / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'produce-bundle')
+                self.assertEqual(payload['result']['status'], 'bundle_ready')
+                self.assertEqual(payload['result']['artifacts']['patch_bundle'], str(bundle_path))
+                self.assertTrue(bundle_path.exists())
+                self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_produce_bundle_command_dry_run_does_not_execute(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                request_path, _ = self._write_bundle_request_fixture(kb)
+                sentinel = kb / 'sentinel.txt'
+                script = kb / 'sentinel_agent.py'
+                script.write_text(f'from pathlib import Path\nPath({str(sentinel)!r}).write_text("ran")\n', encoding='utf-8')
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'produce-bundle',
+                        '--request-path',
+                        str(request_path),
+                        '--agent-command',
+                        f'{sys.executable} {script}',
+                        '--dry-run',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertEqual(payload['result']['status'], 'dry_run')
+                self.assertFalse(payload['result']['executed'])
+                self.assertFalse(sentinel.exists())
+                self.assertFalse((kb / 'sorted' / 'graph-patch-bundles').exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_produce_bundle_command_errors_are_structured(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'produce-bundle',
+                        '--request-path',
+                        'sorted/graph-patch-bundle-requests/missing.json',
+                        '--agent-command',
+                        f'{sys.executable} missing_agent.py',
+                    ])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'produce-bundle')
+                self.assertEqual(payload['error']['code'], 'bundle_producer_request_not_found')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
