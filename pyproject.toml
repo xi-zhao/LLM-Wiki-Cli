@@ -14,7 +14,8 @@ authors = [
 license = { file = "LICENSE" }
 
 [project.scripts]
+wikify = "wikify.cli:main"
 fokb = "scripts.fokb:main"
 
 [tool.setuptools]
-py-modules = []
+packages = ["wikify"]
