@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 15 planned: agent profile configuration.
+**Current focus:** Phase 15 complete: agent profile configuration.
 
 ## Current Position
 
 Phase: 15 of 15 (Agent Profile Configuration)
 Plan: 1 of 1 in current phase
-Status: Planned
-Last activity: 2026-04-28 - Planned Phase 15 agent profile configuration.
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 15 agent profile configuration.
 
-Progress: █████████░ 93%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 1 session
-- Total execution time: 14 sessions
+- Total execution time: 15 sessions
 
 **By Phase:**
 
@@ -41,10 +41,10 @@ Progress: █████████░ 93%
 | 12. Run Task Inline Producer Automation | 1/1 | 1 session | 1 session |
 | 13. Batch Task Automation | 1/1 | 1 session | 1 session |
 | 14. Maintenance Run Automation | 1/1 | 1 session | 1 session |
-| 15. Agent Profile Configuration | 0/1 | - | - |
+| 15. Agent Profile Configuration | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 10-01, 11-01, 12-01, 13-01, 14-01
+- Last 5 plans: 11-01, 12-01, 13-01, 14-01, 15-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -97,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 14]: `maintain-run` refreshes maintenance artifacts before selecting tasks and uses the bounded batch runner.
 - [Phase 14]: Dry-run previews from the fresh in-memory maintenance task queue instead of stale on-disk queues.
 - [Planning]: Agent profile configuration should reduce repeated command entry without hiding provider behavior.
+- [Phase 15]: `agent-profile` stores visible project-level external command aliases in `wikify-agent-profiles.json`.
+- [Phase 15]: `--agent-profile` is explicit and mutually exclusive with `--agent-command`.
 
 ### Pending Todos
 
@@ -122,6 +124,7 @@ Recent decisions affecting current work:
 - Phase 14 added: Maintenance Run Automation.
 - Phase 14 completed: Maintenance Run Automation.
 - Phase 15 added: Agent Profile Configuration.
+- Phase 15 completed: Agent Profile Configuration.
 
 ## Deferred Items
 

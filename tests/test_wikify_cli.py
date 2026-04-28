@@ -383,6 +383,54 @@ class WikifyCliTests(unittest.TestCase):
         self.assertTrue(args.continue_on_error)
         self.assertTrue(args.dry_run)
 
+    def test_build_parser_accepts_agent_profile_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        set_args = parser.parse_args([
+            'agent-profile',
+            '--set',
+            'default',
+            '--agent-command',
+            'python3 agent.py',
+            '--producer-timeout',
+            '30',
+            '--description',
+            'local adapter',
+        ])
+        list_args = parser.parse_args(['agent-profile', '--list'])
+        show_args = parser.parse_args(['agent-profile', '--show', 'default'])
+        unset_args = parser.parse_args(['agent-profile', '--unset', 'default'])
+
+        self.assertEqual(set_args.command, 'agent-profile')
+        self.assertEqual(set_args.set, 'default')
+        self.assertEqual(set_args.agent_command, 'python3 agent.py')
+        self.assertEqual(set_args.producer_timeout, 30.0)
+        self.assertEqual(set_args.description, 'local adapter')
+        self.assertTrue(list_args.list)
+        self.assertEqual(show_args.show, 'default')
+        self.assertEqual(unset_args.unset, 'default')
+
+    def test_build_parser_accepts_agent_profile_on_automation_commands(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        produce_args = parser.parse_args([
+            'produce-bundle',
+            '--request-path',
+            'sorted/graph-patch-bundle-requests/agent-task-1.json',
+            '--agent-profile',
+            'default',
+        ])
+        run_task_args = parser.parse_args(['run-task', '--id', 'agent-task-1', '--agent-profile', 'default'])
+        run_tasks_args = parser.parse_args(['run-tasks', '--agent-profile', 'default'])
+        maintain_run_args = parser.parse_args(['maintain-run', '--agent-profile', 'default'])
+
+        self.assertEqual(produce_args.agent_profile, 'default')
+        self.assertEqual(run_task_args.agent_profile, 'default')
+        self.assertEqual(run_tasks_args.agent_profile, 'default')
+        self.assertEqual(maintain_run_args.agent_profile, 'default')
+
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')
         repo = Path(__file__).resolve().parents[1]
@@ -1064,6 +1112,105 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(payload['result']['batch']['summary']['completed_count'], 1)
                 self.assertEqual(queue['tasks'][0]['status'], 'done')
                 self.assertIn('[[agent-knowledge-loops]]', target.read_text(encoding='utf-8'))
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_profile_command_sets_profile_and_maintain_run_uses_it(self):
+        cli = importlib.import_module('wikify.cli')
+        repo = Path(__file__).resolve().parents[1]
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir) / 'sample-kb'
+                shutil.copytree(repo / 'sample-kb', kb)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                script = self._write_sample_link_repair_agent(kb)
+                set_stdout = io.StringIO()
+                run_stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(set_stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'agent-profile',
+                        '--set',
+                        'default',
+                        '--agent-command',
+                        f'{sys.executable} {script}',
+                        '--producer-timeout',
+                        '30',
+                    ])
+                self.assertEqual(raised.exception.code, 0)
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(run_stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'maintain-run',
+                        '--action',
+                        'queue_link_repair',
+                        '--limit',
+                        '1',
+                        '--agent-profile',
+                        'default',
+                    ])
+
+                set_payload = json.loads(set_stdout.getvalue())
+                run_payload = json.loads(run_stdout.getvalue())
+                queue = json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+                self.assertTrue(set_payload['ok'])
+                self.assertEqual(set_payload['result']['profile']['name'], 'default')
+                self.assertEqual(run_payload['result']['status'], 'completed')
+                self.assertEqual(run_payload['result']['execution']['agent_profile'], 'default')
+                self.assertEqual(queue['tasks'][0]['status'], 'done')
+                self.assertTrue((kb / 'wikify-agent-profiles.json').exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_command_and_profile_conflict_is_structured(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.environ['WIKIFY_BASE'] = tmpdir
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'produce-bundle',
+                        '--request-path',
+                        'missing.json',
+                        '--agent-command',
+                        'python3 agent.py',
+                        '--agent-profile',
+                        'default',
+                    ])
+
+                payload = json.loads(stdout.getvalue())
+                self.assertEqual(raised.exception.code, 2)
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'produce-bundle')
+                self.assertEqual(payload['error']['code'], 'agent_profile_ambiguous')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

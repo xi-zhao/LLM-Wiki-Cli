@@ -153,6 +153,10 @@
 - `maintain-run`
 - `maintain-run --dry-run`
 - `maintain-run --agent-command <command>`
+- `agent-profile --set <name> --agent-command <command>`
+- `agent-profile --list`
+- `agent-profile --show <name>`
+- `agent-profile --unset <name>`
 - `tasks`
 - `tasks --refresh`
 - `tasks --id <id> --mark-proposed`
@@ -163,6 +167,7 @@
 - `bundle-request --task-id <id>`
 - `bundle-request --task-id <id> --dry-run`
 - `produce-bundle --request-path <path> --agent-command <command>`
+- `produce-bundle --request-path <path> --agent-profile <name>`
 - `produce-bundle --request-path <path> --agent-command <command> --dry-run`
 - `apply --proposal-path <path> --bundle-path <path>`
 - `apply --proposal-path <path> --bundle-path <path> --dry-run`
@@ -172,10 +177,12 @@
 - `run-task --id <id> --dry-run`
 - `run-task --id <id> --bundle-path <path>`
 - `run-task --id <id> --agent-command <command>`
+- `run-task --id <id> --agent-profile <name>`
 - `run-task --id <id> --agent-command <command> --producer-timeout <seconds>`
 - `run-tasks`
 - `run-tasks --status <status> --action <action> --limit <n>`
 - `run-tasks --agent-command <command>`
+- `run-tasks --agent-profile <name>`
 - `run-tasks --continue-on-error --agent-command <command>`
 
 ### 巡检层
@@ -795,11 +802,12 @@ Purpose-aware 行为：
 常用：
 - `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py" --dry-run`
 - `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py"`
+- `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-profile default`
 - `produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-command "python3 agent.py" --timeout 120`
 
 默认行为：
 - 读取 `wikify.patch-bundle-request.v1`
-- 解析调用方显式传入的 `--agent-command`
+- 解析调用方显式传入的 `--agent-command` 或 `--agent-profile`
 - 非 dry-run 时以 `shell=false` 执行外部 command
 - 通过 stdin 向外部 command 传入完整 request JSON
 - 向外部 command 暴露 `WIKIFY_BASE`、`WIKIFY_PATCH_BUNDLE_REQUEST`、`WIKIFY_PATCH_BUNDLE`
@@ -873,7 +881,48 @@ Purpose-aware 行为：
 - stdout 为空且 suggested bundle 文件不存在时返回 `bundle_producer_no_bundle_output`，exit code 为 `2`
 - bundle preflight 失败时沿用 `patch_*` code，exit code 为 `2`，`details.phase` 为 `preflight`
 
-安全规则：`produce-bundle` 只调用用户显式提供的外部 command，不内置 provider，不选择模型，不读取 API key，不重试 provider，不直接应用正文修改。正文修改仍然只能由 `apply` 或 `run-task` 在 bundle preflight 通过后执行。
+安全规则：`produce-bundle` 只调用用户显式提供的外部 command 或显式 profile，不内置 provider，不选择模型，不读取 API key，不重试 provider，不直接应用正文修改。正文修改仍然只能由 `apply` 或 `run-task` 在 bundle preflight 通过后执行。
+
+### `agent-profile`
+推荐用作显式外部 command 的项目级别别名管理。
+
+常用：
+- `agent-profile --set default --agent-command "python3 agent.py" --producer-timeout 120`
+- `agent-profile --list`
+- `agent-profile --show default`
+- `agent-profile --unset default`
+
+profile artifact 写在 wiki root 的 `wikify-agent-profiles.json`：
+
+```json
+{
+  "schema_version": "wikify.agent-profiles.v1",
+  "profiles": {
+    "default": {
+      "name": "default",
+      "agent_command": "python3 agent.py",
+      "producer_timeout_seconds": 120.0,
+      "description": null,
+      "created_at": "2026-04-28T00:00:00Z",
+      "updated_at": "2026-04-28T00:00:00Z"
+    }
+  }
+}
+```
+
+支持 profile 的命令：
+- `produce-bundle --agent-profile <name>`
+- `run-task --agent-profile <name>`
+- `run-tasks --agent-profile <name>`
+- `maintain-run --agent-profile <name>`
+
+错误：
+- 同时传入 `--agent-command` 和 `--agent-profile` 返回 `agent_profile_ambiguous`
+- profile config 缺失返回 `agent_profile_config_missing`
+- 指定 profile 不存在返回 `agent_profile_missing`
+- `--set` 缺少 command 返回 `agent_profile_command_required`
+
+安全规则：profile 只是显式 command 的别名。不要把 API key、token 或私密 provider 配置写进 `wikify-agent-profiles.json`；需要密钥时，应让外部 command 自己从环境变量或安全配置读取。
 
 ### `apply`
 推荐用作 agent-generated patch bundle 的 deterministic apply 入口。

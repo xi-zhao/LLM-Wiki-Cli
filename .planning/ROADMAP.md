@@ -26,7 +26,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
 - [x] **Phase 13: Batch Task Automation** - Process bounded batches of graph agent tasks through the audited task runner with structured per-task results.
 - [x] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
-- [ ] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
+- [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
 
 ## Phase Details
 
@@ -289,7 +289,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 15-01: Build explicit agent command profiles
+- [x] 15-01: Build explicit agent command profiles
 
 ## Progress
 
@@ -309,4 +309,4 @@ Plans:
 | 12. Run Task Inline Producer Automation | 1/1 | Complete | 2026-04-28 |
 | 13. Batch Task Automation | 1/1 | Complete | 2026-04-28 |
 | 14. Maintenance Run Automation | 1/1 | Complete | 2026-04-28 |
-| 15. Agent Profile Configuration | 0/1 | Planned | - |
+| 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |

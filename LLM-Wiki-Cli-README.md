@@ -171,6 +171,7 @@ CLI 输出里可直接读取：
 - `maintenance`
 - `maintain`
 - `maintain-run`
+- `agent-profile`
 - `decide`
 
 作用：
@@ -178,6 +179,7 @@ CLI 输出里可直接读取：
 - 查询 maintenance history
 - 基于 graph 自动生成 findings、plan 和 history，不打断用户
 - 一条命令刷新维护产物并推进有界 agent task batch
+- 管理显式外部 agent command profile，减少重复输入
 - 根据 maintenance verdict 产出下一步 decision plan
 
 ## 3.6 图谱结构层
@@ -650,6 +652,53 @@ wikify maintain-run --status queued --limit 5 --continue-on-error --agent-comman
 - `next_actions`
 
 安全规则：`maintain-run` 是组合层。它只组合 `maintain` 和 `run-tasks`，不会隐藏调用 provider、不会选择模型、不会读取 API key、不会绕过 proposal/write_scope/preflight/apply/rollback/lifecycle 规则。只有调用方显式传入 `--agent-command` 时，后续 batch task 才可能执行外部 command。
+
+## 3.17 Agent Profile Configuration
+
+- `agent-profile`
+
+作用：
+- 把外部 agent command 保存为命名 profile
+- 避免每次 `run-task`、`run-tasks`、`maintain-run` 或 `produce-bundle` 都重复输入长命令
+- profile 解析后仍然走现有 producer/preflight/apply/lifecycle 流程
+- 不保存 API key，不选择模型，不内置 retry，不隐藏 provider 行为
+
+默认命令：
+
+```bash
+wikify agent-profile --set default --agent-command "python3 agent.py" --producer-timeout 120
+wikify agent-profile --list
+wikify agent-profile --show default
+wikify agent-profile --unset default
+wikify maintain-run --limit 5 --agent-profile default
+wikify run-task --id agent-task-1 --agent-profile default
+wikify produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-profile default
+```
+
+profile artifact 写在 wiki root：
+
+```json
+{
+  "schema_version": "wikify.agent-profiles.v1",
+  "profiles": {
+    "default": {
+      "name": "default",
+      "agent_command": "python3 agent.py",
+      "producer_timeout_seconds": 120.0,
+      "description": null,
+      "created_at": "2026-04-28T00:00:00Z",
+      "updated_at": "2026-04-28T00:00:00Z"
+    }
+  }
+}
+```
+
+错误：
+- 同时传入 `--agent-command` 和 `--agent-profile` 返回 `agent_profile_ambiguous`
+- profile config 缺失返回 `agent_profile_config_missing`
+- 指定 profile 不存在返回 `agent_profile_missing`
+
+安全规则：profile 是显式命令的项目级别别名，不是 provider adapter。不要把 API key 或 token 直接写进 `wikify-agent-profiles.json`；如果外部 agent 需要密钥，应由外部 command 自己从环境变量或它自己的安全配置读取。
 
 ---
 

@@ -21,6 +21,14 @@ from wikify.maintenance.batch_runner import (
     BatchTaskRunError,
     run_agent_tasks,
 )
+from wikify.maintenance.agent_profile import (
+    AgentProfileError,
+    list_agent_profiles,
+    resolve_agent_execution,
+    set_agent_profile,
+    show_agent_profile,
+    unset_agent_profile,
+)
 from wikify.maintenance.maintain_run import (
     DEFAULT_POLICY as DEFAULT_MAINTAIN_RUN_POLICY,
     MaintenanceRunError,
@@ -113,6 +121,113 @@ def cmd_maintain(args):
         'user_message': 'maintenance completed',
     }
     return envelope_ok('maintain', result)
+
+
+def _agent_profile_action(args):
+    actions = [
+        ('set', args.set),
+        ('list', args.list),
+        ('show', args.show),
+        ('unset', args.unset),
+    ]
+    selected = [(action, value) for action, value in actions if value]
+    if len(selected) > 1:
+        raise ValueError('only one agent-profile action can be used at a time')
+    if not selected:
+        return ('list', True)
+    return selected[0]
+
+
+def cmd_agent_profile(args):
+    base = discover_base()
+    try:
+        action, value = _agent_profile_action(args)
+        if action == 'set':
+            result = set_agent_profile(
+                base,
+                value,
+                args.agent_command,
+                producer_timeout_seconds=args.producer_timeout,
+                description=args.description,
+            )
+        elif action == 'show':
+            result = show_agent_profile(base, value)
+        elif action == 'unset':
+            result = unset_agent_profile(base, value)
+        else:
+            result = list_agent_profiles(base)
+    except AgentProfileError as exc:
+        return envelope_error(
+            'agent-profile',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except ValueError as exc:
+        return envelope_error(
+            'agent-profile',
+            'agent_profile_action_invalid',
+            str(exc),
+            2,
+            retryable=False,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'agent-profile',
+            'agent_profile_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'agent profile action completed',
+        'artifacts': artifacts,
+        'next_actions': [],
+        'user_message': 'agent profile action completed',
+    }
+    return envelope_ok('agent-profile', result)
+
+
+def _resolve_agent_execution_or_error(command: str, base, args, *, require_command: bool = False):
+    try:
+        timeout = getattr(args, 'producer_timeout', getattr(args, 'timeout', DEFAULT_TIMEOUT_SECONDS))
+        execution = resolve_agent_execution(
+            base,
+            agent_command=getattr(args, 'agent_command', None),
+            agent_profile=getattr(args, 'agent_profile', None),
+            producer_timeout_seconds=timeout,
+        )
+    except AgentProfileError as exc:
+        return None, envelope_error(
+            command,
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    if require_command and not execution['agent_command']:
+        return None, envelope_error(
+            command,
+            'agent_command_required',
+            'agent command or agent profile is required',
+            2,
+            retryable=False,
+        )
+    return execution, None
+
+
+def _attach_agent_execution(result: dict, execution: dict):
+    result.setdefault('execution', {})
+    result['execution']['agent_command_source'] = execution.get('source')
+    result['execution']['agent_profile'] = execution.get('profile')
+    if execution.get('profile_path'):
+        result['execution']['agent_profile_path'] = execution.get('profile_path')
 
 
 def _tasks_lifecycle_action(args):
@@ -410,12 +525,15 @@ def cmd_bundle_request(args):
 
 def cmd_produce_bundle(args):
     base = discover_base()
+    agent_execution, error = _resolve_agent_execution_or_error('produce-bundle', base, args, require_command=True)
+    if error:
+        return error
     try:
         result = produce_patch_bundle(
             base,
             args.request_path,
-            args.agent_command,
-            timeout_seconds=args.timeout,
+            agent_execution['agent_command'],
+            timeout_seconds=agent_execution['producer_timeout_seconds'],
             dry_run=args.dry_run,
         )
     except BundleProducerError as exc:
@@ -437,6 +555,7 @@ def cmd_produce_bundle(args):
         )
 
     artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    _attach_agent_execution(result, agent_execution)
     result['completion'] = {
         'status': result.get('status'),
         'summary': 'patch bundle production completed',
@@ -521,14 +640,17 @@ def cmd_rollback(args):
 
 def cmd_run_task(args):
     base = discover_base()
+    agent_execution, error = _resolve_agent_execution_or_error('run-task', base, args)
+    if error:
+        return error
     try:
         result = run_agent_task(
             base,
             args.id,
             bundle_path=args.bundle_path,
             dry_run=args.dry_run,
-            agent_command=args.agent_command,
-            producer_timeout_seconds=args.producer_timeout,
+            agent_command=agent_execution['agent_command'],
+            producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
         )
     except TaskRunError as exc:
         return envelope_error(
@@ -549,6 +671,7 @@ def cmd_run_task(args):
         )
 
     artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    _attach_agent_execution(result, agent_execution)
     result['completion'] = {
         'status': result.get('status'),
         'summary': 'agent task workflow advanced',
@@ -561,6 +684,9 @@ def cmd_run_task(args):
 
 def cmd_run_tasks(args):
     base = discover_base()
+    agent_execution, error = _resolve_agent_execution_or_error('run-tasks', base, args)
+    if error:
+        return error
     try:
         result = run_agent_tasks(
             base,
@@ -569,8 +695,8 @@ def cmd_run_tasks(args):
             task_id=args.id,
             limit=args.limit,
             dry_run=args.dry_run,
-            agent_command=args.agent_command,
-            producer_timeout_seconds=args.producer_timeout,
+            agent_command=agent_execution['agent_command'],
+            producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
             continue_on_error=args.continue_on_error,
         )
     except BatchTaskRunError as exc:
@@ -592,6 +718,7 @@ def cmd_run_tasks(args):
         )
 
     artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    _attach_agent_execution(result, agent_execution)
     result['completion'] = {
         'status': result.get('status'),
         'summary': 'agent task batch workflow advanced',
@@ -604,6 +731,9 @@ def cmd_run_tasks(args):
 
 def cmd_maintain_run(args):
     base = discover_base()
+    agent_execution, error = _resolve_agent_execution_or_error('maintain-run', base, args)
+    if error:
+        return error
     try:
         result = run_maintenance_workflow(
             base,
@@ -613,8 +743,8 @@ def cmd_maintain_run(args):
             task_id=args.id,
             limit=args.limit,
             dry_run=args.dry_run,
-            agent_command=args.agent_command,
-            producer_timeout_seconds=args.producer_timeout,
+            agent_command=agent_execution['agent_command'],
+            producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
             continue_on_error=args.continue_on_error,
         )
     except MaintenanceRunError as exc:
@@ -636,6 +766,7 @@ def cmd_maintain_run(args):
         )
 
     artifacts = []
+    _attach_agent_execution(result, agent_execution)
     for group in result.get('artifacts', {}).values():
         if isinstance(group, dict):
             artifacts.extend(path for path in group.values() if path)
@@ -676,6 +807,17 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain.add_argument('--dry-run', action='store_true')
         p_maintain.set_defaults(func=cmd_maintain)
 
+    if 'agent-profile' not in sub.choices:
+        p_agent_profile = sub.add_parser('agent-profile', help='Manage explicit external agent command profiles')
+        p_agent_profile.add_argument('--set')
+        p_agent_profile.add_argument('--list', action='store_true')
+        p_agent_profile.add_argument('--show')
+        p_agent_profile.add_argument('--unset')
+        p_agent_profile.add_argument('--agent-command')
+        p_agent_profile.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_agent_profile.add_argument('--description')
+        p_agent_profile.set_defaults(func=cmd_agent_profile)
+
     if 'tasks' not in sub.choices:
         p_tasks = sub.add_parser('tasks', help='Read queued graph agent tasks')
         p_tasks.add_argument('--status', choices=['queued', 'proposed', 'in_progress', 'done', 'failed', 'blocked', 'rejected'])
@@ -711,7 +853,8 @@ def build_parser() -> argparse.ArgumentParser:
     if 'produce-bundle' not in sub.choices:
         p_produce_bundle = sub.add_parser('produce-bundle', help='Invoke an explicit external agent command to produce a patch bundle')
         p_produce_bundle.add_argument('--request-path', required=True)
-        p_produce_bundle.add_argument('--agent-command', required=True)
+        p_produce_bundle.add_argument('--agent-command')
+        p_produce_bundle.add_argument('--agent-profile')
         p_produce_bundle.add_argument('--timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_produce_bundle.add_argument('--dry-run', action='store_true')
         p_produce_bundle.set_defaults(func=cmd_produce_bundle)
@@ -734,6 +877,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_task.add_argument('--id', required=True)
         p_run_task.add_argument('--bundle-path')
         p_run_task.add_argument('--agent-command')
+        p_run_task.add_argument('--agent-profile')
         p_run_task.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_task.add_argument('--dry-run', action='store_true')
         p_run_task.set_defaults(func=cmd_run_task)
@@ -745,6 +889,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_tasks.add_argument('--id')
         p_run_tasks.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
         p_run_tasks.add_argument('--agent-command')
+        p_run_tasks.add_argument('--agent-profile')
         p_run_tasks.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_tasks.add_argument('--continue-on-error', action='store_true')
         p_run_tasks.add_argument('--dry-run', action='store_true')
@@ -758,6 +903,7 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain_run.add_argument('--id')
         p_maintain_run.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
         p_maintain_run.add_argument('--agent-command')
+        p_maintain_run.add_argument('--agent-profile')
         p_maintain_run.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_maintain_run.add_argument('--continue-on-error', action='store_true')
         p_maintain_run.add_argument('--dry-run', action='store_true')
