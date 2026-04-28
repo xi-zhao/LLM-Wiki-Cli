@@ -846,6 +846,8 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(payload['command'], 'bundle-request')
                 self.assertFalse(payload['result']['dry_run'])
                 self.assertTrue(payload['result']['summary']['written'])
+                self.assertEqual(payload['result']['suggested_bundle_path'], str(kb.resolve() / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'))
+                self.assertNotIn('suggested_patch_bundle', payload['result']['artifacts'])
                 self.assertTrue(request_path.exists())
                 self.assertTrue(proposal_path.exists())
                 self.assertEqual(queue['tasks'][0]['status'], 'queued')

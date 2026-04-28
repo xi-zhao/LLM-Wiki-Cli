@@ -366,12 +366,12 @@ def cmd_bundle_request(args):
     artifacts = {
         'patch_bundle_request': str(written_request_path) if written_request_path else None,
         'patch_proposal': str(written_proposal_path) if written_proposal_path else (str(proposal_file) if proposal_file.exists() and not args.dry_run else None),
-        'suggested_patch_bundle': request.get('suggested_bundle_path'),
     }
     result = {
         'base': str(base),
         'dry_run': args.dry_run,
         'artifact_path': str(expected_path),
+        'suggested_bundle_path': request.get('suggested_bundle_path'),
         'artifacts': artifacts,
         'summary': {
             'task_id': request.get('task_id'),
