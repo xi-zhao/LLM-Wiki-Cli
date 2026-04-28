@@ -320,6 +320,59 @@ wikify tasks --id agent-task-1 --cancel
 
 安全规则：lifecycle action 只修改 agent task artifact 和 event artifact，不修改正文页面、不改 proposal artifact、不应用 patch。
 
+## 3.11 Patch Apply And Rollback
+
+- `apply`
+- `rollback`
+
+作用：
+- 读取一个 patch proposal artifact
+- 读取一个下游 agent 生成的 patch bundle
+- 对 bundle 做 deterministic preflight
+- 在非 dry-run 模式下应用受限文本替换
+- 写入 `sorted/graph-patch-applications/<application-id>.json`
+- 在需要撤销时用 application record 做 hash-guarded rollback
+
+默认命令：
+
+```bash
+wikify apply --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json --dry-run
+wikify apply --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json
+wikify rollback --application-path sorted/graph-patch-applications/<application-id>.json --dry-run
+wikify rollback --application-path sorted/graph-patch-applications/<application-id>.json
+```
+
+patch bundle 是 agent 生成的结构化补丁，不是 Wikify 在 CLI 内隐藏生成的内容。V1.2 只支持 `replace_text`：
+
+```json
+{
+  "schema_version": "wikify.patch-bundle.v1",
+  "proposal_task_id": "agent-task-1",
+  "proposal_path": "sorted/graph-patch-proposals/agent-task-1.json",
+  "operations": [
+    {
+      "operation": "replace_text",
+      "path": "topics/a.md",
+      "find": "[[Missing]]",
+      "replace": "[[Existing]]"
+    }
+  ]
+}
+```
+
+apply preflight 会检查：
+- proposal 和 bundle 的 task id 一致
+- 每个 operation path 都在 proposal `write_scope` 内
+- path 是 wiki-root 内的相对路径
+- `find` 文本在目标文件中恰好出现一次
+- 每个文件在当前 phase 只允许一个 operation，避免半应用和顺序 hash 混乱
+
+`apply --dry-run` 不写正文、不写 application record。非 dry-run apply 会写正文，并把 before/after hash、affected paths、proposal path、bundle path 和 rollback guard 写进 `graph-patch-applications`。
+
+rollback 不重新读取 proposal 或 bundle，而是读取 application record。只有当前文件 hash 仍等于记录里的 `after_hash` 时，rollback 才会把 `replace` 还原为 `find`；如果文件已经漂移，则返回 `patch_rollback_hash_mismatch`。
+
+安全规则：Wikify 只应用显式 patch bundle，不在 apply 过程中调用 LLM、不自行生成语义内容、不扩大 proposal `write_scope`。task status 仍由 `tasks --mark-done` 等 lifecycle 命令显式推进。
+
 ---
 
 # 4. 知识库对象模型

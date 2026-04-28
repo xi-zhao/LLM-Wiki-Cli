@@ -73,6 +73,17 @@
 - `proposal_out_of_scope`
 - `proposal_path_invalid`
 - `patch_proposal_failed`
+- `patch_bundle_not_found`
+- `patch_bundle_schema_invalid`
+- `patch_bundle_task_mismatch`
+- `patch_operation_out_of_scope`
+- `patch_operation_unsupported`
+- `patch_operation_conflict`
+- `patch_preflight_failed`
+- `patch_apply_failed`
+- `patch_application_not_found`
+- `patch_rollback_hash_mismatch`
+- `patch_rollback_failed`
 
 ### review / reingest / resolve
 - `review_item_not_found`
@@ -133,6 +144,10 @@
 - `tasks --id <id> --mark-done`
 - `propose --task-id <id>`
 - `propose --task-id <id> --dry-run`
+- `apply --proposal-path <path> --bundle-path <path>`
+- `apply --proposal-path <path> --bundle-path <path> --dry-run`
+- `rollback --application-path <path>`
+- `rollback --application-path <path> --dry-run`
 
 ### 巡检层
 - `lint`
@@ -579,6 +594,113 @@ Purpose-aware 行为：
 - planned edit path 超出 write scope 时返回 `proposal_out_of_scope`，exit code 为 `2`
 
 目的文件缺失不是错误，不影响 exit code。调用方应读取 `purpose_context.present` 和 `rationale.purpose_aware`，而不是把目的缺失当作失败。
+
+### `apply`
+推荐用作 agent-generated patch bundle 的 deterministic apply 入口。
+
+常用：
+- `apply --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json --dry-run`
+- `apply --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json`
+
+默认行为：
+- 读取 patch proposal
+- 读取 patch bundle
+- 校验 bundle task id 与 proposal task id 一致
+- 校验 operation path 在 proposal `write_scope` 内
+- 校验 operation path 是 wiki-root 内的相对路径
+- 校验 `replace_text.find` 在目标文件里恰好出现一次
+- 返回 `wikify.patch-application-preflight.v1` 或 `wikify.patch-application.v1`
+- 非 dry-run 写入 `sorted/graph-patch-applications/<application-id>.json`
+
+`apply --dry-run` 不修改正文页面，不写 application record。
+
+patch bundle schema:
+
+```json
+{
+  "schema_version": "wikify.patch-bundle.v1",
+  "proposal_task_id": "agent-task-1",
+  "proposal_path": "sorted/graph-patch-proposals/agent-task-1.json",
+  "operations": [
+    {
+      "operation": "replace_text",
+      "path": "topics/a.md",
+      "find": "[[Missing]]",
+      "replace": "[[Existing]]",
+      "rationale": "resolve broken wikilink"
+    }
+  ]
+}
+```
+
+V1.2 operation 限制：
+- 只支持 `replace_text`
+- `find` 必须非空
+- `replace` 必须是字符串
+- `find` 和 `replace` 不能相同
+- 每个文件当前只允许一个 operation
+- `find` 必须在当前文件中恰好出现一次
+
+application record schema:
+
+```json
+{
+  "schema_version": "wikify.patch-application.v1",
+  "application_id": "agent-task-1-20260428T061700Z",
+  "created_at": "2026-04-28T06:17:00Z",
+  "status": "applied",
+  "task_id": "agent-task-1",
+  "proposal_path": "/abs/kb/sorted/graph-patch-proposals/agent-task-1.json",
+  "bundle_path": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json",
+  "affected_paths": ["topics/a.md"],
+  "operations": [
+    {
+      "operation": "replace_text",
+      "path": "topics/a.md",
+      "find": "[[Missing]]",
+      "replace": "[[Existing]]",
+      "before_hash": "<sha256>",
+      "after_hash": "<sha256>",
+      "occurrences": 1
+    }
+  ],
+  "rollback": {
+    "status": "available",
+    "guard": "current file hash must match operation after_hash"
+  }
+}
+```
+
+错误：
+- proposal 不存在时返回 `patch_proposal_not_found`，exit code 为 `2`
+- bundle 不存在时返回 `patch_bundle_not_found`，exit code 为 `2`
+- bundle task id 与 proposal 不一致时返回 `patch_bundle_task_mismatch`，exit code 为 `2`
+- operation path 超出 proposal write scope 时返回 `patch_operation_out_of_scope`，exit code 为 `2`
+- 同一 path 多个 operation 时返回 `patch_operation_conflict`，exit code 为 `2`
+- `find` 不是恰好出现一次时返回 `patch_preflight_failed`，exit code 为 `2`
+
+安全规则：`apply` 只消费显式 patch bundle，不生成语义内容，不调用隐藏 LLM，不改变 task status。task 状态仍由 `tasks` lifecycle 命令显式推进。
+
+### `rollback`
+推荐用作 patch application 的 hash-guarded rollback 入口。
+
+常用：
+- `rollback --application-path sorted/graph-patch-applications/<application-id>.json --dry-run`
+- `rollback --application-path sorted/graph-patch-applications/<application-id>.json`
+
+默认行为：
+- 读取 application record
+- 按 operation 反向顺序检查当前文件 hash
+- 只有当前内容 hash 等于 recorded `after_hash` 时才执行恢复
+- dry-run 只做校验，不写正文，不更新 application record
+- 非 dry-run 写回原文本，并把 application record 标记为 `rolled_back`
+
+rollback 成功返回 `wikify.patch-rollback.v1`。
+
+错误：
+- application record 不存在时返回 `patch_application_not_found`，exit code 为 `2`
+- 当前文件内容与 recorded `after_hash` 不一致时返回 `patch_rollback_hash_mismatch`，exit code 为 `2`
+- rollback 目标文本不再唯一时返回 `patch_rollback_preflight_failed`，exit code 为 `2`
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。

@@ -124,6 +124,10 @@ wikify tasks --status queued --limit 5
 wikify tasks --refresh --id agent-task-1
 wikify propose --task-id agent-task-1
 wikify propose --task-id agent-task-1 --dry-run
+wikify apply --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json --dry-run
+wikify apply --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json
+wikify rollback --application-path sorted/graph-patch-applications/<application-id>.json --dry-run
+wikify rollback --application-path sorted/graph-patch-applications/<application-id>.json
 wikify tasks --id agent-task-1 --mark-proposed --proposal-path sorted/graph-patch-proposals/agent-task-1.json
 wikify tasks --id agent-task-1 --start
 wikify tasks --id agent-task-1 --mark-done
@@ -137,9 +141,11 @@ wikify tasks --id agent-task-1 --mark-done
 
 Patch proposals are purpose-aware when the wiki root contains `purpose.md` or `wikify-purpose.md`. The proposal includes `purpose_context` and `rationale` so downstream agents can explain why the repair matters. Missing purpose context is explicit and non-blocking; it never expands `write_scope` or weakens path validation.
 
+`wikify apply` consumes a proposal plus an agent-generated patch bundle. V1.2 supports deterministic `replace_text` operations only: each source text must match exactly once, each path must stay inside the proposal `write_scope`, and `--dry-run` writes nothing. A real apply writes `sorted/graph-patch-applications/<application-id>.json` with before/after hashes. `wikify rollback` restores from that application record only when the current file hash still matches the recorded post-apply hash.
+
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
-V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not edit content pages or call hidden LLMs. Semantic repairs and generated-content work are queued as plan steps, agent tasks, and scoped patch proposals; only deterministic maintenance bookkeeping can be marked executed.
+Safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not edit content pages or call hidden LLMs. `wikify apply` is the explicit content mutation path, and it only applies deterministic patch bundle operations supplied by a downstream agent.
 
 ## Documentation map
 
@@ -159,6 +165,7 @@ V1 safety rule: `wikify maintain`, `wikify tasks`, and `wikify propose` do not e
 - Graph understanding should be derived from explicit wiki structure with provenance-rich edges
 - Graph relevance should explain priority with source overlap, common neighbors, and type affinity, not silently trigger writes
 - Purpose-aware proposals should explain alignment when `purpose.md` or `wikify-purpose.md` exists, without changing safety rules
+- Patch application should require explicit patch bundle input, exact preflight, audit records, and hash-guarded rollback
 
 ## Current status
 
@@ -171,6 +178,7 @@ Implemented areas include:
 - autonomous graph maintenance loop
 - scoped patch proposal generation from graph agent tasks
 - purpose-aware patch proposal rationale
+- deterministic patch bundle apply and rollback
 - completion contract for write actions
 - Obsidian-friendly topic, digest, article, brief, and navigation outputs
 - local graph artifact generation with JSON, Markdown report, and optional HTML
