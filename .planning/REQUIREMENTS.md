@@ -39,11 +39,11 @@
 
 ### Agent Task Lifecycle
 
-- [ ] **LIF-01**: Task state supports explicit transitions among queued, proposed, in_progress, done, failed, blocked, and rejected.
-- [ ] **LIF-02**: Lifecycle commands support retry, cancel, restore, and mark-done semantics without content edits.
-- [ ] **LIF-03**: Every task state transition appends an event to an audit artifact.
-- [ ] **LIF-04**: Invalid transitions return structured non-retryable errors.
-- [ ] **LIF-05**: Existing read-only `wikify tasks` behavior remains backward compatible.
+- [x] **LIF-01**: Task state supports explicit transitions among queued, proposed, in_progress, done, failed, blocked, and rejected.
+- [x] **LIF-02**: Lifecycle commands support retry, cancel, restore, and mark-done semantics without content edits.
+- [x] **LIF-03**: Every task state transition appends an event to an audit artifact.
+- [x] **LIF-04**: Invalid transitions return structured non-retryable errors.
+- [x] **LIF-05**: Existing read-only `wikify tasks` behavior remains backward compatible.
 
 ### Graph Relevance Scoring
 
@@ -99,11 +99,11 @@
 | PRP-04 | Phase 3 | Complete |
 | PRP-05 | Phase 3 | Complete |
 | PRP-06 | Phase 3 | Complete |
-| LIF-01 | Phase 4 | Planned |
-| LIF-02 | Phase 4 | Planned |
-| LIF-03 | Phase 4 | Planned |
-| LIF-04 | Phase 4 | Planned |
-| LIF-05 | Phase 4 | Planned |
+| LIF-01 | Phase 4 | Complete |
+| LIF-02 | Phase 4 | Complete |
+| LIF-03 | Phase 4 | Complete |
+| LIF-04 | Phase 4 | Complete |
+| LIF-05 | Phase 4 | Complete |
 | REL-01 | Phase 5 | Planned |
 | REL-02 | Phase 5 | Planned |
 | REL-03 | Phase 5 | Planned |
@@ -121,4 +121,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 3 completion*
+*Last updated: 2026-04-28 after Phase 4 completion*

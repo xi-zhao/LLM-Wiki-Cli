@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 4 execution: durable graph agent task lifecycle.
+**Current focus:** Phase 5 planning: graph relevance scoring.
 
 ## Current Position
 
-Phase: 4 of 6 (Agent Task Lifecycle)
-Plan: 1 of 1 in current phase
-Status: Planned and ready to execute
-Last activity: 2026-04-28 - Planned Phase 4 lifecycle commands and event audit trail.
+Phase: 5 of 6 (Graph Relevance Scoring)
+Plan: 0 of 0 in current phase
+Status: Phase 4 complete; Phase 5 ready to plan
+Last activity: 2026-04-28 - Implemented graph agent task lifecycle actions, documented protocol, and verified 141 unit tests plus lifecycle smoke.
 
-Progress: █████░░░░░ 50%
+Progress: ███████░░░ 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 1 session
-- Total execution time: 3 sessions
+- Total execution time: 4 sessions
 
 **By Phase:**
 
@@ -30,12 +30,12 @@ Progress: █████░░░░░ 50%
 | 1. Graph Agent Task Queue | 1/1 | 1 session | 1 session |
 | 2. Agent Task Reader | 1/1 | 1 session | 1 session |
 | 3. Scoped Patch Proposal | 1/1 | 1 session | 1 session |
-| 4. Agent Task Lifecycle | 0/1 | Not started | - |
+| 4. Agent Task Lifecycle | 1/1 | 1 session | 1 session |
 | 5. Graph Relevance Scoring | 0/0 | Not started | - |
 | 6. Purpose-Aware Proposals | 0/0 | Not started | - |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 02-01, 03-01
+- Last 5 plans: 01-01, 02-01, 03-01, 04-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -56,10 +56,13 @@ Recent decisions affecting current work:
 - [Phase 3]: `wikify propose` is read-only with respect to content pages and task status.
 - [Phase 3]: Proposal paths must pass task `write_scope` validation before artifact write.
 - [Phase 3]: `--dry-run` returns proposal JSON without writing `graph-patch-proposals`.
+- [Phase 4]: Default `wikify tasks` remains read-only; lifecycle writes require explicit action flags.
+- [Phase 4]: Lifecycle state changes append `graph-agent-task-events.json`.
+- [Phase 4]: Invalid lifecycle transitions return structured exit-code-2 errors.
 
 ### Pending Todos
 
-- Execute Phase 4 plan: add explicit task lifecycle actions and event log.
+- Plan Phase 5: graph relevance scoring from direct links, source overlap, common neighbors, and type affinity.
 
 ### Blockers/Concerns
 
@@ -77,5 +80,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 4 planned and ready to execute.
+Stopped at: Phase 4 complete and verified; Phase 5 ready to plan.
 Resume file: None
