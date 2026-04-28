@@ -63,12 +63,12 @@
 
 ### Patch Apply And Rollback Contract
 
-- [ ] **APP-01**: `wikify apply` reads one patch proposal and one agent-generated patch bundle, then returns a stable JSON envelope.
-- [ ] **APP-02**: Patch bundle operations are validated against the proposal `write_scope` and wiki-root path safety rules.
-- [ ] **APP-03**: `wikify apply --dry-run` performs preflight validation without writing content or audit records.
-- [ ] **APP-04**: Non-dry-run apply supports deterministic text replacement only when the expected source text matches exactly once.
-- [ ] **APP-05**: Successful apply writes an audit record with task id, proposal path, bundle path, affected paths, before/after hashes, and rollback metadata.
-- [ ] **APP-06**: `wikify rollback` restores an application only when current content still matches the recorded post-apply hash.
+- [x] **APP-01**: `wikify apply` reads one patch proposal and one agent-generated patch bundle, then returns a stable JSON envelope.
+- [x] **APP-02**: Patch bundle operations are validated against the proposal `write_scope` and wiki-root path safety rules.
+- [x] **APP-03**: `wikify apply --dry-run` performs preflight validation without writing content or audit records.
+- [x] **APP-04**: Non-dry-run apply supports deterministic text replacement only when the expected source text matches exactly once.
+- [x] **APP-05**: Successful apply writes an audit record with task id, proposal path, bundle path, affected paths, before/after hashes, and rollback metadata.
+- [x] **APP-06**: `wikify rollback` restores an application only when current content still matches the recorded post-apply hash.
 
 ## v2 Requirements
 
@@ -76,7 +76,7 @@
 
 - **AGT-01**: A future command can run multi-step agent policy over proposal selection, patch bundle generation, apply, lifecycle, and verification.
 - **AGT-02**: A future command can run provider-backed semantic generation with explicit provider/key/retry semantics.
-- **AGT-03**: A future command can roll back applied repairs from recorded patch artifacts.
+- **AGT-03**: A future command can support richer multi-operation patch bundles after sequential hash semantics are designed.
 
 ## Out of Scope
 
@@ -123,12 +123,12 @@
 | PUR-02 | Phase 6 | Complete |
 | PUR-03 | Phase 6 | Complete |
 | PUR-04 | Phase 6 | Complete |
-| APP-01 | Phase 7 | Planned |
-| APP-02 | Phase 7 | Planned |
-| APP-03 | Phase 7 | Planned |
-| APP-04 | Phase 7 | Planned |
-| APP-05 | Phase 7 | Planned |
-| APP-06 | Phase 7 | Planned |
+| APP-01 | Phase 7 | Complete |
+| APP-02 | Phase 7 | Complete |
+| APP-03 | Phase 7 | Complete |
+| APP-04 | Phase 7 | Complete |
+| APP-05 | Phase 7 | Complete |
+| APP-06 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -139,4 +139,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 7 planning start*
+*Last updated: 2026-04-28 after Phase 7 completion*

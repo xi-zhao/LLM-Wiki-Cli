@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, and purpose-aware proposal rationale. The next layer makes agent-generated patch bundles executable through deterministic preflight, audit records, and rollback.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, and deterministic patch bundle apply/rollback.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -18,7 +18,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 4: Agent Task Lifecycle** - Add durable task state transitions, retry/cancel/restore, and append-only lifecycle events.
 - [x] **Phase 5: Graph Relevance Scoring** - Rank findings and tasks using explainable graph relevance signals.
 - [x] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
-- [ ] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
+- [x] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
 
 ## Phase Details
 
@@ -133,7 +133,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 07-01: Build deterministic patch apply and rollback
+- [x] 07-01: Build deterministic patch apply and rollback
 
 ## Progress
 
@@ -145,4 +145,4 @@ Plans:
 | 4. Agent Task Lifecycle | 1/1 | Complete | 2026-04-28 |
 | 5. Graph Relevance Scoring | 1/1 | Complete | 2026-04-28 |
 | 6. Purpose-Aware Proposals | 1/1 | Complete | 2026-04-28 |
-| 7. Patch Apply And Rollback Contract | 0/1 | Ready to plan | - |
+| 7. Patch Apply And Rollback Contract | 1/1 | Complete | 2026-04-28 |

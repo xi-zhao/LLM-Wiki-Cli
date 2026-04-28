@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 7 planning: deterministic patch apply and rollback contract.
+**Current focus:** Phase 7 complete: deterministic patch apply and rollback contract.
 
 ## Current Position
 
 Phase: 7 of 7 (Patch Apply And Rollback Contract)
-Plan: 0 of 1 in current phase
-Status: Added and ready to plan
-Last activity: 2026-04-28 - Added Phase 7 patch apply and rollback contract.
+Plan: 1 of 1 in current phase
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 7 patch apply and rollback contract.
 
-Progress: ████████░░ 86%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 1 session
-- Total execution time: 6 sessions
+- Total execution time: 7 sessions
 
 **By Phase:**
 
@@ -33,10 +33,10 @@ Progress: ████████░░ 86%
 | 4. Agent Task Lifecycle | 1/1 | 1 session | 1 session |
 | 5. Graph Relevance Scoring | 1/1 | 1 session | 1 session |
 | 6. Purpose-Aware Proposals | 1/1 | 1 session | 1 session |
-| 7. Patch Apply And Rollback Contract | 0/1 | Not started | - |
+| 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 02-01, 03-01, 04-01, 05-01, 06-01
+- Last 5 plans: 03-01, 04-01, 05-01, 06-01, 07-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -65,15 +65,18 @@ Recent decisions affecting current work:
 - [Phase 5]: Low-confidence relevance remains informational and does not escalate task priority.
 - [Phase 6]: Purpose context is optional and prefers `purpose.md` over `wikify-purpose.md`.
 - [Phase 6]: Purpose context enriches proposal rationale only; write-scope validation remains independent.
+- [Phase 7]: Patch content must arrive as an explicit agent-generated patch bundle.
+- [Phase 7]: Apply supports deterministic `replace_text` only, with exact-once source matching and one operation per path.
+- [Phase 7]: Rollback is hash-guarded and refuses drifted content.
 
 ### Pending Todos
 
-- Plan and execute Phase 7 deterministic apply/rollback contract.
+- None for this milestone.
 
 ### Blockers/Concerns
 
 - `gsd-sdk` is not available in PATH; GSD files are maintained manually in this session.
-- Task lifecycle must remain content-read-only until a later apply contract exists.
+- Task lifecycle remains separate from content mutation; apply/rollback handles content changes and lifecycle commands handle task status.
 
 ### Roadmap Evolution
 
@@ -84,11 +87,11 @@ Recent decisions affecting current work:
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Agent execution | Built-in LLM task consumer | Deferred | Phase 1 planning |
-| Content mutation | Automatic patch application | Deferred | Phase 3 planning |
+| Content generation | Provider-backed semantic patch generation | Deferred | Phase 7 completion |
 | UI | Desktop/Tauri parity with `llm_wiki` | Out of scope | llm_wiki reference planning |
 
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 7 added and ready to plan.
+Stopped at: Phase 7 complete.
 Resume file: None

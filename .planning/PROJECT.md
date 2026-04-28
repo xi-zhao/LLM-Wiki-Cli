@@ -23,10 +23,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify tasks` explicit lifecycle actions persist task status and append audit events.
 - [x] Graph relevance scoring explains node/task priority with direct links, source overlap, common neighbors, and type affinity.
 - [x] Purpose-aware proposals include optional wiki goal context and rationale without weakening path safety.
-
-### Active
-
-- [ ] Add a deterministic patch apply and rollback contract for agent-generated patch bundles.
+- [x] `wikify apply` and `wikify rollback` support deterministic agent-generated patch bundles with audit and hash-guarded rollback.
 
 ### Out of Scope
 
@@ -67,7 +64,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Make lifecycle mutation explicit | Default task reads stay safe while `--mark-*`, `--retry`, `--restore`, and `--cancel` provide durable automation state | ✓ Good |
 | Keep graph relevance advisory | Relevance improves explanation and prioritization without becoming an automatic write trigger | ✓ Good |
 | Keep purpose context explanatory | Purpose files should enrich proposal rationale, not expand write scope or apply content changes | ✓ Good |
-| Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Active |
+| Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 after Phase 7 planning start*
+*Last updated: 2026-04-28 after Phase 7 completion*
