@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 11 planning: explicit external agent command adapter for patch bundle production.
+**Current focus:** Phase 11 complete: explicit external agent command adapter for patch bundle production.
 
 ## Current Position
 
 Phase: 11 of 11 (External Patch Bundle Producer)
 Plan: 1 of 1 in current phase
-Status: Planning
-Last activity: 2026-04-28 - Added Phase 11 external patch bundle producer.
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 11 external patch bundle producer.
 
-Progress: █████████░ 91%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 1 session
-- Total execution time: 10 sessions
+- Total execution time: 11 sessions
 
 **By Phase:**
 
@@ -37,10 +37,10 @@ Progress: █████████░ 91%
 | 8. Agent Task Workflow Runner | 1/1 | 1 session | 1 session |
 | 9. Patch Bundle Request Contract | 1/1 | 1 session | 1 session |
 | 10. Runner Bundle Request Handoff | 1/1 | 1 session | 1 session |
-| 11. External Patch Bundle Producer | 0/1 | In progress | TBD |
+| 11. External Patch Bundle Producer | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 06-01, 07-01, 08-01, 09-01, 10-01
+- Last 5 plans: 07-01, 08-01, 09-01, 10-01, 11-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -81,10 +81,12 @@ Recent decisions affecting current work:
 - [Phase 10]: `run-task` writes a patch bundle request artifact automatically when it reaches `waiting_for_patch_bundle`.
 - [Phase 10]: `run-task --dry-run` reports request paths but remains zero-write.
 - [Planning]: Use an explicit external command adapter before any provider-specific SDK integration.
+- [Phase 11]: `produce-bundle` uses an explicit external command adapter, not hidden provider execution.
+- [Phase 11]: Produced bundles are preflighted before success and do not mutate content.
 
 ### Pending Todos
 
-- Execute Phase 11: Build external patch bundle producer.
+- None.
 
 ### Blockers/Concerns
 
@@ -98,6 +100,7 @@ Recent decisions affecting current work:
 - Phase 9 added: Patch Bundle Request Contract.
 - Phase 10 added: Runner Bundle Request Handoff.
 - Phase 11 added: External Patch Bundle Producer.
+- Phase 11 completed: External Patch Bundle Producer.
 
 ## Deferred Items
 
@@ -110,5 +113,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 8 complete.
+Stopped at: Phase 11 complete.
 Resume file: None

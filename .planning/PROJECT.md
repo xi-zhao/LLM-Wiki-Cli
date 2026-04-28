@@ -27,7 +27,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify run-task` orchestrates proposal, bundle detection, apply, and lifecycle completion with low user interruption.
 - [x] `wikify bundle-request` generates a stable agent-facing request artifact for producing explicit patch bundles.
 - [x] `wikify run-task` automatically prepares a patch bundle request when no bundle exists.
-- [ ] `wikify produce-bundle` invokes an explicit external agent command to produce and preflight a patch bundle.
+- [x] `wikify produce-bundle` invokes an explicit external agent command to produce and preflight a patch bundle.
 
 ### Out of Scope
 
@@ -72,7 +72,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Stop at missing patch bundles | Workflow automation should return an agent action instead of prompting the user or inventing content | ✓ Good |
 | Generate patch bundle requests before provider execution | A stable request artifact lets any external agent generate bundle content without hidden CLI LLM calls | ✓ Good |
 | Let runner prepare bundle requests | The main workflow should create the agent handoff artifact automatically when it reaches `waiting_for_patch_bundle` | ✓ Good |
-| Add external agent adapter before provider SDKs | A command adapter lets users bring Codex/Claude/other agents explicitly while Wikify keeps audit and validation boundaries | ✓ Active |
+| Add external agent adapter before provider SDKs | A command adapter lets users bring Codex/Claude/other agents explicitly while Wikify keeps audit and validation boundaries | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 during Phase 11 planning*
+*Last updated: 2026-04-28 after Phase 11 completion*

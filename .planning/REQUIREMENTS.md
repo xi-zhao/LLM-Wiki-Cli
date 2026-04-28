@@ -101,13 +101,13 @@
 
 ### External Patch Bundle Producer
 
-- [ ] **EBP-01**: `wikify produce-bundle --request-path <path> --agent-command <command>` invokes an explicit external command to generate a patch bundle.
-- [ ] **EBP-02**: The producer passes the request JSON on stdin and exposes request/bundle paths through environment variables.
-- [ ] **EBP-03**: The producer writes valid stdout JSON to the request's `suggested_bundle_path`, or accepts a command-written bundle at that path.
-- [ ] **EBP-04**: Produced bundles are validated with the deterministic apply preflight before returning success.
-- [ ] **EBP-05**: `produce-bundle --dry-run` does not execute the external command and writes no bundle.
-- [ ] **EBP-06**: Command failures, timeouts, missing requests, invalid output, and patch preflight failures return structured errors.
-- [ ] **EBP-07**: Docs define the external command contract and make clear that provider/key/retry semantics stay outside hidden CLI defaults.
+- [x] **EBP-01**: `wikify produce-bundle --request-path <path> --agent-command <command>` invokes an explicit external command to generate a patch bundle.
+- [x] **EBP-02**: The producer passes the request JSON on stdin and exposes request/bundle paths through environment variables.
+- [x] **EBP-03**: The producer writes valid stdout JSON to the request's `suggested_bundle_path`, or accepts a command-written bundle at that path.
+- [x] **EBP-04**: Produced bundles are validated with the deterministic apply preflight before returning success.
+- [x] **EBP-05**: `produce-bundle --dry-run` does not execute the external command and writes no bundle.
+- [x] **EBP-06**: Command failures, timeouts, missing requests, invalid output, and patch preflight failures return structured errors.
+- [x] **EBP-07**: Docs define the external command contract and make clear that provider/key/retry semantics stay outside hidden CLI defaults.
 
 ### Agent Consumer
 
@@ -184,13 +184,13 @@
 | HND-03 | Phase 10 | Complete |
 | HND-04 | Phase 10 | Complete |
 | HND-05 | Phase 10 | Complete |
-| EBP-01 | Phase 11 | Planned |
-| EBP-02 | Phase 11 | Planned |
-| EBP-03 | Phase 11 | Planned |
-| EBP-04 | Phase 11 | Planned |
-| EBP-05 | Phase 11 | Planned |
-| EBP-06 | Phase 11 | Planned |
-| EBP-07 | Phase 11 | Planned |
+| EBP-01 | Phase 11 | Complete |
+| EBP-02 | Phase 11 | Complete |
+| EBP-03 | Phase 11 | Complete |
+| EBP-04 | Phase 11 | Complete |
+| EBP-05 | Phase 11 | Complete |
+| EBP-06 | Phase 11 | Complete |
+| EBP-07 | Phase 11 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -205,4 +205,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 during Phase 11 planning*
+*Last updated: 2026-04-28 after Phase 11 completion*
