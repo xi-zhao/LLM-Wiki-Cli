@@ -73,6 +73,9 @@
 - `proposal_out_of_scope`
 - `proposal_path_invalid`
 - `patch_proposal_failed`
+- `bundle_request_failed`
+- `bundle_request_path_invalid`
+- `bundle_request_target_not_found`
 - `patch_bundle_not_found`
 - `patch_bundle_schema_invalid`
 - `patch_bundle_task_mismatch`
@@ -145,6 +148,8 @@
 - `tasks --id <id> --mark-done`
 - `propose --task-id <id>`
 - `propose --task-id <id> --dry-run`
+- `bundle-request --task-id <id>`
+- `bundle-request --task-id <id> --dry-run`
 - `apply --proposal-path <path> --bundle-path <path>`
 - `apply --proposal-path <path> --bundle-path <path> --dry-run`
 - `rollback --application-path <path>`
@@ -599,6 +604,93 @@ Purpose-aware 行为：
 
 目的文件缺失不是错误，不影响 exit code。调用方应读取 `purpose_context.present` 和 `rationale.purpose_aware`，而不是把目的缺失当作失败。
 
+### `bundle-request`
+推荐用作外部 agent 生成 patch bundle 前的 deterministic request 入口。
+
+常用：
+- `bundle-request --task-id agent-task-1 --dry-run`
+- `bundle-request --task-id agent-task-1`
+
+默认行为：
+- 读取 `sorted/graph-agent-tasks.json`
+- 构建 task 对应的 scoped patch proposal context
+- 校验 proposal `write_scope`
+- 读取 write scope 内目标文件当前内容
+- 返回 `wikify.patch-bundle-request.v1`
+- 非 dry-run 写入 `sorted/graph-patch-bundle-requests/<task-id>.json`
+- 非 dry-run 且 proposal artifact 缺失时，写入 `sorted/graph-patch-proposals/<task-id>.json`
+- 不修改 task status
+- 不修改 topic、parsed、sorted 等正文页面
+
+`bundle-request --dry-run` 只返回 request JSON，不写 request artifact，不写 proposal artifact。
+
+`graph-patch-bundle-requests/<task-id>.json` schema:
+
+```json
+{
+  "schema_version": "wikify.patch-bundle-request.v1",
+  "task_id": "agent-task-1",
+  "proposal_path": "/abs/kb/sorted/graph-patch-proposals/agent-task-1.json",
+  "request_path": "/abs/kb/sorted/graph-patch-bundle-requests/agent-task-1.json",
+  "suggested_bundle_path": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json",
+  "proposal": {
+    "schema_version": "wikify.patch-proposal.v1",
+    "task_id": "agent-task-1",
+    "write_scope": ["topics/a.md"]
+  },
+  "targets": [
+    {
+      "path": "topics/a.md",
+      "absolute_path": "/abs/kb/topics/a.md",
+      "sha256": "<sha256>",
+      "content": "See [[Missing]].\n",
+      "truncated": false,
+      "content_length": 17
+    }
+  ],
+  "allowed_operations": [
+    {
+      "operation": "replace_text",
+      "constraints": [
+        "path must be inside proposal.write_scope",
+        "find must be non-empty and match exactly once in the current target file",
+        "replace must be a string and must differ from find",
+        "only one operation per path is supported"
+      ]
+    }
+  ],
+  "expected_bundle_schema": {
+    "schema_version": "wikify.patch-bundle.v1",
+    "proposal_task_id": "agent-task-1",
+    "proposal_path": "sorted/graph-patch-proposals/agent-task-1.json",
+    "operations": [
+      {
+        "operation": "replace_text",
+        "path": "topics/a.md",
+        "find": "<exact current text>",
+        "replace": "<replacement text>",
+        "rationale": "<why this change satisfies the proposal>"
+      }
+    ]
+  },
+  "safety": {
+    "content_mutation": false,
+    "task_status_mutation": false,
+    "hidden_llm_call": false
+  }
+}
+```
+
+外部 agent 应读取 request，写入 `suggested_bundle_path` 指向的 `wikify.patch-bundle.v1` artifact，然后重新调用 `run-task --id <id>` 或显式调用 `apply`。
+
+错误：
+- 缺少任务队列时返回 `agent_task_queue_missing`，exit code 为 `2`
+- 找不到指定 task id 时返回 `agent_task_not_found`，exit code 为 `2`
+- request path 不安全时返回 `bundle_request_path_invalid`，exit code 为 `2`
+- target file 缺失时返回 `bundle_request_target_not_found`，exit code 为 `2`
+
+安全规则：`bundle-request` 只生成 agent handoff artifact，不生成语义内容，不调用隐藏 LLM，不修改 task status，不修改正文页面。
+
 ### `apply`
 推荐用作 agent-generated patch bundle 的 deterministic apply 入口。
 
@@ -756,7 +848,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 
 状态：
 - `waiting_for_patch_bundle`
-  - runner 已尽可能推进，下一步由 agent 生成 patch bundle
+  - runner 已尽可能推进，下一步由 agent 调用 `bundle-request --task-id <id>` 并生成 patch bundle
 - `ready_to_apply`
   - dry-run 已确认 proposal 和 bundle 可用于后续非 dry-run
 - `completed`
