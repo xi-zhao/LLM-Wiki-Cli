@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 4 planning: durable graph agent task lifecycle.
+**Current focus:** Phase 4 execution: durable graph agent task lifecycle.
 
 ## Current Position
 
 Phase: 4 of 6 (Agent Task Lifecycle)
-Plan: 0 of 0 in current phase
-Status: Phase 3 complete; Phase 4 ready to plan
-Last activity: 2026-04-28 - Implemented `wikify propose`, documented protocol, and verified 135 unit tests plus proposal smoke.
+Plan: 1 of 1 in current phase
+Status: Planned and ready to execute
+Last activity: 2026-04-28 - Planned Phase 4 lifecycle commands and event audit trail.
 
 Progress: █████░░░░░ 50%
 
@@ -30,7 +30,7 @@ Progress: █████░░░░░ 50%
 | 1. Graph Agent Task Queue | 1/1 | 1 session | 1 session |
 | 2. Agent Task Reader | 1/1 | 1 session | 1 session |
 | 3. Scoped Patch Proposal | 1/1 | 1 session | 1 session |
-| 4. Agent Task Lifecycle | 0/0 | Not started | - |
+| 4. Agent Task Lifecycle | 0/1 | Not started | - |
 | 5. Graph Relevance Scoring | 0/0 | Not started | - |
 | 6. Purpose-Aware Proposals | 0/0 | Not started | - |
 
@@ -59,7 +59,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 4 after proposal artifacts exist.
+- Execute Phase 4 plan: add explicit task lifecycle actions and event log.
 
 ### Blockers/Concerns
 
@@ -77,5 +77,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 3 complete and verified; Phase 4 ready to plan.
+Stopped at: Phase 4 planned and ready to execute.
 Resume file: None

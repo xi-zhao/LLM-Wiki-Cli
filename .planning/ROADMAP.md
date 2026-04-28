@@ -80,7 +80,10 @@ Plans:
   3. Every transition appends an audit event.
   4. Read-only `wikify tasks` remains backward compatible.
   5. No lifecycle command rewrites content pages.
-**Plans**: Ready to plan.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 04-01: Build graph agent task lifecycle commands
 
 ### Phase 5: Graph Relevance Scoring
 **Goal**: Improve maintenance priority by computing direct-link, source-overlap, common-neighbor, and type-affinity relevance signals.
@@ -114,6 +117,6 @@ Plans:
 | 1. Graph Agent Task Queue | 1/1 | Complete | 2026-04-28 |
 | 2. Agent Task Reader | 1/1 | Complete | 2026-04-28 |
 | 3. Scoped Patch Proposal | 1/1 | Complete | 2026-04-28 |
-| 4. Agent Task Lifecycle | 0/0 | Ready to plan | - |
+| 4. Agent Task Lifecycle | 0/1 | Ready to execute | - |
 | 5. Graph Relevance Scoring | 0/0 | Planned | - |
 | 6. Purpose-Aware Proposals | 0/0 | Planned | - |
