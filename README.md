@@ -145,11 +145,11 @@ wikify tasks --id agent-task-1 --mark-done
 
 Patch proposals are purpose-aware when the wiki root contains `purpose.md` or `wikify-purpose.md`. The proposal includes `purpose_context` and `rationale` so downstream agents can explain why the repair matters. Missing purpose context is explicit and non-blocking; it never expands `write_scope` or weakens path validation.
 
-`wikify bundle-request` turns one task and its proposal context into `sorted/graph-patch-bundle-requests/<task-id>.json`. The request includes target file snapshots, SHA-256 hashes, proposal evidence, the default bundle output path, and the allowed `wikify.patch-bundle.v1` `replace_text` contract. An external agent should read this request, write `sorted/graph-patch-bundles/<task-id>.json`, then call `wikify run-task --id <task-id>` again. `--dry-run` returns the request without writing request or proposal artifacts.
+`wikify bundle-request` turns one task and its proposal context into `sorted/graph-patch-bundle-requests/<task-id>.json`. The request includes target file snapshots, SHA-256 hashes, proposal evidence, the default bundle output path, and the allowed `wikify.patch-bundle.v1` `replace_text` contract. It remains useful as an explicit refresh or manual handoff command; `--dry-run` returns the request without writing request or proposal artifacts.
 
 `wikify apply` consumes a proposal plus an agent-generated patch bundle. V1.2 supports deterministic `replace_text` operations only: each source text must match exactly once, each path must stay inside the proposal `write_scope`, and `--dry-run` writes nothing. A real apply writes `sorted/graph-patch-applications/<application-id>.json` with before/after hashes. `wikify rollback` restores from that application record only when the current file hash still matches the recorded post-apply hash.
 
-`wikify run-task` is the low-interruption workflow runner. It creates or reuses a proposal, looks for `sorted/graph-patch-bundles/<task-id>.json`, applies it when present, and marks the task done after a successful apply. If the patch bundle is missing, it returns `waiting_for_patch_bundle` with `next_actions: ["generate_patch_bundle"]`; the next deterministic command is `wikify bundle-request --task-id <task-id>`. It does not ask the user or invent content.
+`wikify run-task` is the low-interruption workflow runner. It creates or reuses a proposal, looks for `sorted/graph-patch-bundles/<task-id>.json`, applies it when present, and marks the task done after a successful apply. If the patch bundle is missing, it now writes `sorted/graph-patch-bundle-requests/<task-id>.json`, returns `waiting_for_patch_bundle`, and exposes both `artifacts.patch_bundle_request` and `summary.suggested_bundle_path`. An external agent should read that request, write the suggested bundle, then call `wikify run-task --id <task-id>` again. It does not ask the user or invent content.
 
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. Invalid transitions return `invalid_agent_task_transition`.
 
@@ -175,7 +175,7 @@ Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, and `wikify bu
 - Purpose-aware proposals should explain alignment when `purpose.md` or `wikify-purpose.md` exists, without changing safety rules
 - Patch bundle requests should package target snapshots and bundle instructions for external agents instead of hiding provider calls in the CLI
 - Patch application should require explicit patch bundle input, exact preflight, audit records, and hash-guarded rollback
-- Agent task runners should stop at `waiting_for_patch_bundle` instead of prompting users or generating hidden content
+- Agent task runners should prepare a patch bundle request at `waiting_for_patch_bundle` instead of prompting users or generating hidden content
 
 ## Current status
 
