@@ -161,6 +161,17 @@
 - [x] **DFP-06**: Missing default profile cases return structured errors without executing producer commands.
 - [x] **DFP-07**: Docs clarify that default profiles do not trigger external execution unless `--agent-profile` is explicitly present.
 
+### Maintenance Loop Automation
+
+- [ ] **MLP-01**: `wikify maintain-loop` repeats `maintain-run` rounds with bounded defaults.
+- [ ] **MLP-02**: The loop enforces positive `--max-rounds`, `--task-budget`, and per-round `--limit` values.
+- [ ] **MLP-03**: The loop stops on no selected tasks, waiting states, batch failures, task budget exhaustion, max rounds, or dry-run preview.
+- [ ] **MLP-04**: The loop forwards explicit `--agent-command` or `--agent-profile` execution into each round without introducing hidden provider behavior.
+- [ ] **MLP-05**: Dry-run executes one preview round only and does not execute producer commands or mutate task/content artifacts.
+- [ ] **MLP-06**: Results include aggregate summary counts, stop reason, per-round outcomes, artifacts, and next actions.
+- [ ] **MLP-07**: Docs describe loop automation, stop conditions, default bounds, and explicit external-agent safety.
+- [ ] **MLP-08**: Full unittest and compile verification pass.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -280,6 +291,14 @@
 | DFP-05 | Phase 16 | Complete |
 | DFP-06 | Phase 16 | Complete |
 | DFP-07 | Phase 16 | Complete |
+| MLP-01 | Phase 17 | Planned |
+| MLP-02 | Phase 17 | Planned |
+| MLP-03 | Phase 17 | Planned |
+| MLP-04 | Phase 17 | Planned |
+| MLP-05 | Phase 17 | Planned |
+| MLP-06 | Phase 17 | Planned |
+| MLP-07 | Phase 17 | Planned |
+| MLP-08 | Phase 17 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -294,9 +313,10 @@
 - v2 maintenance run automation requirements: 7 total
 - v2 agent profile requirements: 8 total
 - v2 default profile requirements: 7 total
-- Mapped to phases: 99
+- v2 maintenance loop requirements: 8 total
+- Mapped to phases: 107
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 after Phase 16 completion*
+*Last updated: 2026-04-29 for Phase 17 planning*

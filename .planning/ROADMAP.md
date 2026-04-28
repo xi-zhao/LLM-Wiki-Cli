@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, and an explicit default-profile shorthand.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, and bounded maintenance loop automation.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -28,6 +28,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 14: Maintenance Run Automation** - Compose graph maintenance refresh and bounded task execution behind one explicit automation command.
 - [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
 - [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
+- [ ] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
 
 ## Phase Details
 
@@ -310,6 +311,25 @@ Plans:
 Plans:
 - [x] 16-01: Build explicit default profile shorthand
 
+### Phase 17: Maintenance Loop Automation
+**Goal**: `wikify maintain-loop` repeats graph maintenance refresh and bounded task execution until no tasks remain or a visible stop condition is reached.
+**Depends on**: Phase 14, Phase 16
+**Requirements**: MLP-01, MLP-02, MLP-03, MLP-04, MLP-05, MLP-06, MLP-07, MLP-08
+**Why after Phase 16**: Single maintenance runs and explicit default profiles are stable. The next low-interruption step is a bounded loop that can keep working without repeatedly asking the user to rerun commands.
+**Success Criteria** (what must be TRUE):
+  1. A single command can run multiple maintenance-run rounds.
+  2. The loop stops on no tasks, waiting states, errors, max rounds, task budget exhaustion, or dry-run preview.
+  3. Defaults are conservative: balanced policy, queued status, per-round limit 5, max rounds 3, task budget 15, sequential execution.
+  4. `--agent-command` and `--agent-profile` remain explicit and are forwarded into each round only when provided.
+  5. Dry-run executes one preview round and performs no repeated writes or external execution.
+  6. Results include aggregate counts, stop reason, per-round summaries, artifacts, and next actions.
+  7. Docs describe bounded automation and when to use it instead of `maintain-run`.
+  8. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 17-01: Build bounded maintenance loop automation
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -330,3 +350,4 @@ Plans:
 | 14. Maintenance Run Automation | 1/1 | Complete | 2026-04-28 |
 | 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |
 | 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |
+| 17. Maintenance Loop Automation | 0/1 | Planned | - |

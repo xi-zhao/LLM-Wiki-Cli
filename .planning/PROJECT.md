@@ -33,6 +33,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify maintain-run` refreshes maintenance artifacts and advances a bounded queued task batch in one explicit automation flow.
 - [x] `wikify agent-profile` stores named external command profiles that automation commands can use explicitly.
 - [x] `wikify agent-profile --set-default` lets bare `--agent-profile` resolve a default while preserving explicit execution intent.
+- [ ] `wikify maintain-loop` repeats bounded maintenance runs until no work remains or a configured stop condition is reached.
 
 ### Out of Scope
 
@@ -83,6 +84,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Maintenance run automation composes existing primitives | The low-interruption entrypoint should refresh maintenance and run bounded batches without hidden provider behavior or new apply semantics | ✓ Good |
 | Agent profiles are aliases, not providers | Reduces repeated command input while keeping provider/model/key/retry behavior outside hidden Wikify defaults | ✓ Good |
 | Default profiles require explicit flags | A default profile reduces typing only when `--agent-profile` is present; it must not silently trigger external execution | ✓ Good |
+| Maintenance loop composes maintain-run | Repeating the audited primitive keeps automation useful without broadening patch or provider semantics | Planned |
 
 ---
-*Last updated: 2026-04-29 after Phase 16 completion*
+*Last updated: 2026-04-29 for Phase 17 planning*
