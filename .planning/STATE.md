@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 12 planning: run-task inline producer automation.
+**Current focus:** Phase 12 complete: run-task inline producer automation.
 
 ## Current Position
 
 Phase: 12 of 12 (Run Task Inline Producer Automation)
 Plan: 1 of 1 in current phase
-Status: Planning
-Last activity: 2026-04-28 - Added Phase 12 run-task inline producer automation.
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 12 run-task inline producer automation.
 
-Progress: █████████░ 92%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 1 session
-- Total execution time: 11 sessions
+- Total execution time: 12 sessions
 
 **By Phase:**
 
@@ -38,10 +38,10 @@ Progress: █████████░ 92%
 | 9. Patch Bundle Request Contract | 1/1 | 1 session | 1 session |
 | 10. Runner Bundle Request Handoff | 1/1 | 1 session | 1 session |
 | 11. External Patch Bundle Producer | 1/1 | 1 session | 1 session |
-| 12. Run Task Inline Producer Automation | 0/1 | In progress | TBD |
+| 12. Run Task Inline Producer Automation | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 07-01, 08-01, 09-01, 10-01, 11-01
+- Last 5 plans: 08-01, 09-01, 10-01, 11-01, 12-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -85,10 +85,12 @@ Recent decisions affecting current work:
 - [Phase 11]: `produce-bundle` uses an explicit external command adapter, not hidden provider execution.
 - [Phase 11]: Produced bundles are preflighted before success and do not mutate content.
 - [Planning]: `run-task --agent-command` should compose producer automation only when the command is explicit.
+- [Phase 12]: `run-task --agent-command` composes request, external production, deterministic apply, and mark-done in one command.
+- [Phase 12]: Existing bundles and dry-run paths do not execute the producer command.
 
 ### Pending Todos
 
-- Execute Phase 12: Build run-task inline producer automation.
+- None.
 
 ### Blockers/Concerns
 
@@ -104,6 +106,7 @@ Recent decisions affecting current work:
 - Phase 11 added: External Patch Bundle Producer.
 - Phase 11 completed: External Patch Bundle Producer.
 - Phase 12 added: Run Task Inline Producer Automation.
+- Phase 12 completed: Run Task Inline Producer Automation.
 
 ## Deferred Items
 
@@ -116,5 +119,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 12 planning.
+Stopped at: Phase 12 complete.
 Resume file: None

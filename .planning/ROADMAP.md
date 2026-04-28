@@ -23,7 +23,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 9: Patch Bundle Request Contract** - Generate stable request artifacts that external agents can turn into deterministic patch bundles.
 - [x] **Phase 10: Runner Bundle Request Handoff** - Let `run-task` automatically prepare the external-agent bundle request when a bundle is missing.
 - [x] **Phase 11: External Patch Bundle Producer** - Invoke explicit external agent commands to produce and preflight patch bundles from request artifacts.
-- [ ] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
+- [x] **Phase 12: Run Task Inline Producer Automation** - Let `run-task` explicitly invoke an external producer command and finish the task in one low-interruption flow.
 
 ## Phase Details
 
@@ -230,7 +230,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 12-01: Build run-task inline producer automation
+- [x] 12-01: Build run-task inline producer automation
 
 ## Progress
 
@@ -247,4 +247,4 @@ Plans:
 | 9. Patch Bundle Request Contract | 1/1 | Complete | 2026-04-28 |
 | 10. Runner Bundle Request Handoff | 1/1 | Complete | 2026-04-28 |
 | 11. External Patch Bundle Producer | 1/1 | Complete | 2026-04-28 |
-| 12. Run Task Inline Producer Automation | 0/1 | Planned | |
+| 12. Run Task Inline Producer Automation | 1/1 | Complete | 2026-04-28 |

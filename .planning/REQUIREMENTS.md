@@ -111,13 +111,13 @@
 
 ### Run Task Producer Automation
 
-- [ ] **RTP-01**: `wikify run-task --id <id> --agent-command <command>` invokes the explicit producer when no patch bundle exists.
-- [ ] **RTP-02**: A non-dry-run command can complete proposal, lifecycle proposed state, bundle request, bundle production, deterministic apply, and mark-done in one flow.
-- [ ] **RTP-03**: Existing patch bundles are applied without executing the producer command.
-- [ ] **RTP-04**: `run-task --dry-run --agent-command <command>` does not execute the command and writes no proposal, request, lifecycle event, bundle, content, or application record.
-- [ ] **RTP-05**: Producer failures inside `run-task` return structured errors with `details.phase = "bundle_producer"` and preserve already-auditable intermediate artifacts.
-- [ ] **RTP-06**: The CLI exposes producer timeout control without introducing hidden provider/key/retry defaults.
-- [ ] **RTP-07**: Docs describe the one-command automation flow and its explicit external-command safety boundary.
+- [x] **RTP-01**: `wikify run-task --id <id> --agent-command <command>` invokes the explicit producer when no patch bundle exists.
+- [x] **RTP-02**: A non-dry-run command can complete proposal, lifecycle proposed state, bundle request, bundle production, deterministic apply, and mark-done in one flow.
+- [x] **RTP-03**: Existing patch bundles are applied without executing the producer command.
+- [x] **RTP-04**: `run-task --dry-run --agent-command <command>` does not execute the command and writes no proposal, request, lifecycle event, bundle, content, or application record.
+- [x] **RTP-05**: Producer failures inside `run-task` return structured errors with `details.phase = "bundle_producer"` and preserve already-auditable intermediate artifacts.
+- [x] **RTP-06**: The CLI exposes producer timeout control without introducing hidden provider/key/retry defaults.
+- [x] **RTP-07**: Docs describe the one-command automation flow and its explicit external-command safety boundary.
 
 ### Agent Consumer
 
@@ -201,13 +201,13 @@
 | EBP-05 | Phase 11 | Complete |
 | EBP-06 | Phase 11 | Complete |
 | EBP-07 | Phase 11 | Complete |
-| RTP-01 | Phase 12 | Planned |
-| RTP-02 | Phase 12 | Planned |
-| RTP-03 | Phase 12 | Planned |
-| RTP-04 | Phase 12 | Planned |
-| RTP-05 | Phase 12 | Planned |
-| RTP-06 | Phase 12 | Planned |
-| RTP-07 | Phase 12 | Planned |
+| RTP-01 | Phase 12 | Complete |
+| RTP-02 | Phase 12 | Complete |
+| RTP-03 | Phase 12 | Complete |
+| RTP-04 | Phase 12 | Complete |
+| RTP-05 | Phase 12 | Complete |
+| RTP-06 | Phase 12 | Complete |
+| RTP-07 | Phase 12 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -223,4 +223,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 during Phase 12 planning*
+*Last updated: 2026-04-28 after Phase 12 completion*
