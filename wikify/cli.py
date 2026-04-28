@@ -4,6 +4,12 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.maintenance.bundle_request import (
+    BundleRequestError,
+    build_bundle_request,
+    request_path,
+    write_bundle_request,
+)
 from wikify.maintenance.patch_apply import (
     PatchApplyError,
     apply_patch_bundle,
@@ -300,6 +306,92 @@ def cmd_propose(args):
     return envelope_ok('propose', result)
 
 
+def cmd_bundle_request(args):
+    base = discover_base()
+    try:
+        request = build_bundle_request(base, args.task_id)
+        expected_path = request_path(base, args.task_id)
+        proposal_file = proposal_path(base, args.task_id)
+        written_request_path = None
+        written_proposal_path = None
+        if not args.dry_run:
+            if not proposal_file.exists():
+                written_proposal_path = write_patch_proposal(base, request['proposal'])
+            written_request_path = write_bundle_request(base, request)
+    except TaskQueueNotFound as exc:
+        return envelope_error(
+            'bundle-request',
+            'agent_task_queue_missing',
+            'agent task queue not found; run wikify maintain first',
+            2,
+            retryable=False,
+            details={'path': str(exc.path)},
+        )
+    except TaskNotFound as exc:
+        return envelope_error(
+            'bundle-request',
+            'agent_task_not_found',
+            'agent task not found',
+            2,
+            retryable=False,
+            details={'id': exc.task_id},
+        )
+    except ProposalError as exc:
+        return envelope_error(
+            'bundle-request',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except BundleRequestError as exc:
+        return envelope_error(
+            'bundle-request',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'bundle-request',
+            'bundle_request_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = {
+        'patch_bundle_request': str(written_request_path) if written_request_path else None,
+        'patch_proposal': str(written_proposal_path) if written_proposal_path else (str(proposal_file) if proposal_file.exists() and not args.dry_run else None),
+        'suggested_patch_bundle': request.get('suggested_bundle_path'),
+    }
+    result = {
+        'base': str(base),
+        'dry_run': args.dry_run,
+        'artifact_path': str(expected_path),
+        'artifacts': artifacts,
+        'summary': {
+            'task_id': request.get('task_id'),
+            'target_count': len(request.get('targets', [])),
+            'written': written_request_path is not None,
+            'proposal_written': written_proposal_path is not None,
+            'suggested_bundle_path': request.get('suggested_bundle_path'),
+        },
+        'request': request,
+        'completion': {
+            'status': 'completed',
+            'summary': 'patch bundle request generated',
+            'artifacts': [path for path in artifacts.values() if path],
+            'next_actions': ['generate_patch_bundle'],
+            'user_message': 'patch bundle request generated',
+        },
+    }
+    return envelope_ok('bundle-request', result)
+
+
 def cmd_apply(args):
     base = discover_base()
     try:
@@ -460,6 +552,12 @@ def build_parser() -> argparse.ArgumentParser:
         p_propose.add_argument('--task-id', required=True)
         p_propose.add_argument('--dry-run', action='store_true')
         p_propose.set_defaults(func=cmd_propose)
+
+    if 'bundle-request' not in sub.choices:
+        p_bundle_request = sub.add_parser('bundle-request', help='Generate an agent-facing patch bundle request')
+        p_bundle_request.add_argument('--task-id', required=True)
+        p_bundle_request.add_argument('--dry-run', action='store_true')
+        p_bundle_request.set_defaults(func=cmd_bundle_request)
 
     if 'apply' not in sub.choices:
         p_apply = sub.add_parser('apply', help='Validate and apply an agent-generated patch bundle')
