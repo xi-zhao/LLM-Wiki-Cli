@@ -1,4 +1,5 @@
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -50,6 +51,33 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps(bundle), encoding='utf-8')
         return path
+
+    def _write_stdout_bundle_agent(self, kb: Path):
+        script = kb / 'stdout_bundle_agent.py'
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'bundle = {',
+                '    "schema_version": "wikify.patch-bundle.v1",',
+                '    "proposal_task_id": request["task_id"],',
+                '    "proposal_path": request["proposal_path"],',
+                '    "operations": [',
+                '        {',
+                '            "operation": "replace_text",',
+                '            "path": "topics/a.md",',
+                '            "find": "[[Missing]]",',
+                '            "replace": "[[Existing]]",',
+                '            "rationale": "resolve broken wikilink"',
+                '        }',
+                '    ]',
+                '}',
+                'print(json.dumps(bundle))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
 
     def _read_queue(self, kb: Path):
         return json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
@@ -154,6 +182,102 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
             self.assertTrue(application_path.exists())
             self.assertEqual(task['status'], 'done')
             self.assertEqual([event['action'] for event in events['events']], ['mark_proposed', 'mark_done'])
+
+    def test_run_agent_task_with_agent_command_produces_bundle_applies_and_marks_done(self):
+        from wikify.maintenance.task_runner import run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            script = self._write_stdout_bundle_agent(kb)
+
+            result = run_agent_task(kb, 'agent-task-1', agent_command=[sys.executable, str(script)])
+
+            request_path = kb / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json'
+            bundle_path = kb / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'
+            events = json.loads((kb / 'sorted' / 'graph-agent-task-events.json').read_text(encoding='utf-8'))
+            task = self._read_queue(kb)['tasks'][0]
+            self.assertEqual(result['status'], 'completed')
+            self.assertIn('bundle_producer', [step['name'] for step in result['steps']])
+            self.assertEqual(result['artifacts']['patch_bundle_request'], str(request_path.resolve()))
+            self.assertEqual(result['artifacts']['bundle'], str(bundle_path.resolve()))
+            self.assertTrue(request_path.exists())
+            self.assertTrue(bundle_path.exists())
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+            self.assertEqual(task['status'], 'done')
+            self.assertEqual([event['action'] for event in events['events']], ['mark_proposed', 'mark_done'])
+
+    def test_run_agent_task_dry_run_with_agent_command_does_not_execute_or_write(self):
+        from wikify.maintenance.task_runner import run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            (kb / 'topics' / 'a.md').write_text('See [[Missing]].\n', encoding='utf-8')
+            sentinel = kb / 'sentinel.txt'
+            script = kb / 'sentinel_agent.py'
+            script.write_text(f'from pathlib import Path\nPath({str(sentinel)!r}).write_text("ran")\n', encoding='utf-8')
+
+            result = run_agent_task(kb, 'agent-task-1', dry_run=True, agent_command=[sys.executable, str(script)])
+
+            self.assertEqual(result['status'], 'waiting_for_patch_bundle')
+            self.assertIn('bundle_producer', [step['name'] for step in result['steps']])
+            self.assertFalse(sentinel.exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-proposals').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-bundle-requests').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-bundles').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-agent-task-events.json').exists())
+            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'queued')
+
+    def test_run_agent_task_with_existing_bundle_does_not_execute_agent_command(self):
+        from wikify.maintenance.task_runner import run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            self._write_bundle(kb)
+            sentinel = kb / 'sentinel.txt'
+            script = kb / 'sentinel_agent.py'
+            script.write_text(f'from pathlib import Path\nPath({str(sentinel)!r}).write_text("ran")\n', encoding='utf-8')
+
+            result = run_agent_task(kb, 'agent-task-1', agent_command=[sys.executable, str(script)])
+
+            self.assertEqual(result['status'], 'completed')
+            self.assertNotIn('bundle_producer', [step['name'] for step in result['steps']])
+            self.assertFalse(sentinel.exists())
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'done')
+
+    def test_run_agent_task_agent_command_failure_is_structured(self):
+        from wikify.maintenance.task_runner import TaskRunError, run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            script = kb / 'failing_agent.py'
+            script.write_text('import sys\nprint("nope", file=sys.stderr)\nsys.exit(7)\n', encoding='utf-8')
+
+            with self.assertRaises(TaskRunError) as raised:
+                run_agent_task(kb, 'agent-task-1', agent_command=[sys.executable, str(script)])
+
+            self.assertEqual(raised.exception.code, 'bundle_producer_command_failed')
+            self.assertEqual(raised.exception.details['phase'], 'bundle_producer')
+            self.assertEqual(raised.exception.details['returncode'], 7)
+            self.assertTrue((kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json').exists())
+            self.assertTrue((kb / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-bundles').exists())
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
+            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'proposed')
 
     def test_run_agent_task_apply_failure_keeps_proposed_state(self):
         from wikify.maintenance.task_runner import TaskRunError, run_agent_task

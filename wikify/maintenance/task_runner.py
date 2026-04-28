@@ -6,6 +6,11 @@ from wikify.maintenance.bundle_request import (
     request_path,
     write_bundle_request,
 )
+from wikify.maintenance.bundle_producer import (
+    DEFAULT_TIMEOUT_SECONDS,
+    BundleProducerError,
+    produce_patch_bundle,
+)
 from wikify.maintenance.patch_apply import PatchApplyError, apply_patch_bundle, preflight_patch_bundle
 from wikify.maintenance.proposal import ProposalError, build_patch_proposal, proposal_path, write_patch_proposal
 from wikify.maintenance.task_lifecycle import TaskLifecycleError, apply_lifecycle_action
@@ -107,6 +112,8 @@ def run_agent_task(
     task_id: str,
     bundle_path: Path | str | None = None,
     dry_run: bool = False,
+    agent_command: str | list[str] | None = None,
+    producer_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
 ) -> dict:
     root = Path(base).expanduser().resolve()
     proposal_file = proposal_path(root, task_id)
@@ -158,6 +165,8 @@ def run_agent_task(
         result['summary']['suggested_bundle_path'] = bundle_request.get('suggested_bundle_path')
         if dry_run:
             result['steps'].append(_step('bundle_request', 'would_write', path=str(bundle_request_file)))
+            if agent_command:
+                result['steps'].append(_step('bundle_producer', 'would_execute'))
         else:
             try:
                 written_request_path = write_bundle_request(root, bundle_request)
@@ -166,12 +175,27 @@ def run_agent_task(
             result['steps'].append(_step('bundle_request', 'written', path=str(written_request_path)))
             result['artifacts']['patch_bundle_request'] = str(written_request_path)
 
-        result['status'] = 'waiting_for_patch_bundle'
-        result['artifacts']['bundle'] = None
-        result['next_actions'] = ['generate_patch_bundle']
-        result['summary']['next_action'] = 'generate_patch_bundle'
-        result['summary']['bundle_path'] = str(bundle_file)
-        return result
+            if agent_command:
+                try:
+                    production = produce_patch_bundle(
+                        root,
+                        written_request_path,
+                        agent_command,
+                        timeout_seconds=producer_timeout_seconds,
+                    )
+                except BundleProducerError as exc:
+                    raise _wrap_error(exc, 'bundle_producer') from exc
+                result['steps'].append(_step('bundle_producer', 'bundle_ready', production=production))
+                bundle_file = Path(production['artifacts']['patch_bundle'])
+                result['artifacts']['bundle'] = str(bundle_file)
+
+        if not agent_command or dry_run:
+            result['status'] = 'waiting_for_patch_bundle'
+            result['artifacts']['bundle'] = None
+            result['next_actions'] = ['generate_patch_bundle']
+            result['summary']['next_action'] = 'generate_patch_bundle'
+            result['summary']['bundle_path'] = str(bundle_file)
+            return result
 
     result['artifacts']['bundle'] = str(bundle_file)
     if dry_run:

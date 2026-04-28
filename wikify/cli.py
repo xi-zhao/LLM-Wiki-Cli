@@ -516,6 +516,8 @@ def cmd_run_task(args):
             args.id,
             bundle_path=args.bundle_path,
             dry_run=args.dry_run,
+            agent_command=args.agent_command,
+            producer_timeout_seconds=args.producer_timeout,
         )
     except TaskRunError as exc:
         return envelope_error(
@@ -628,6 +630,8 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_task = sub.add_parser('run-task', help='Advance one graph agent task through proposal, apply, and lifecycle')
         p_run_task.add_argument('--id', required=True)
         p_run_task.add_argument('--bundle-path')
+        p_run_task.add_argument('--agent-command')
+        p_run_task.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_task.add_argument('--dry-run', action='store_true')
         p_run_task.set_defaults(func=cmd_run_task)
 
