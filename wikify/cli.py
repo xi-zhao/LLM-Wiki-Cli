@@ -4,6 +4,13 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.maintenance.task_reader import (
+    TaskNotFound,
+    TaskQueueNotFound,
+    load_task_queue,
+    select_tasks,
+    task_queue_path,
+)
 from wikify.maintenance.runner import run_maintenance
 
 
@@ -72,6 +79,88 @@ def cmd_maintain(args):
     return envelope_ok('maintain', result)
 
 
+def cmd_tasks(args):
+    base = discover_base()
+    try:
+        refreshed = False
+        refresh_result = None
+        if args.refresh:
+            refresh_result = run_maintenance(
+                base,
+                policy=args.policy,
+                dry_run=False,
+            )
+            queue = refresh_result['task_queue']
+            refreshed = True
+        else:
+            queue = load_task_queue(base)
+
+        selected = select_tasks(
+            queue,
+            status=args.status,
+            action=args.action,
+            task_id=args.id,
+            limit=args.limit,
+        )
+    except TaskQueueNotFound as exc:
+        return envelope_error(
+            'tasks',
+            'agent_task_queue_missing',
+            'agent task queue not found; run wikify maintain first or use --refresh',
+            2,
+            retryable=False,
+            details={'path': str(exc.path)},
+        )
+    except TaskNotFound as exc:
+        return envelope_error(
+            'tasks',
+            'agent_task_not_found',
+            'agent task not found',
+            2,
+            retryable=False,
+            details={'id': exc.task_id},
+        )
+    except ValueError as exc:
+        return envelope_error(
+            'tasks',
+            'invalid_agent_task_query',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'tasks',
+            'agent_task_query_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    result = {
+        'base': str(base),
+        'refreshed': refreshed,
+        'artifacts': {
+            'agent_tasks': str(task_queue_path(base)),
+        },
+        'summary': selected['summary'],
+        'task_queue': selected,
+        'completion': {
+            'status': 'completed',
+            'summary': 'agent task query completed',
+            'artifacts': [str(task_queue_path(base))],
+            'next_actions': [],
+            'user_message': 'agent task query completed',
+        },
+    }
+    if refresh_result:
+        result['refresh'] = {
+            'summary': refresh_result.get('summary', {}),
+            'artifacts': refresh_result.get('artifacts', {}),
+        }
+    return envelope_ok('tasks', result)
+
+
 def _subparsers_action(parser: argparse.ArgumentParser):
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -96,6 +185,16 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default='balanced')
         p_maintain.add_argument('--dry-run', action='store_true')
         p_maintain.set_defaults(func=cmd_maintain)
+
+    if 'tasks' not in sub.choices:
+        p_tasks = sub.add_parser('tasks', help='Read queued graph agent tasks')
+        p_tasks.add_argument('--status', choices=['queued', 'in_progress', 'done', 'blocked'])
+        p_tasks.add_argument('--action')
+        p_tasks.add_argument('--id')
+        p_tasks.add_argument('--limit', type=int)
+        p_tasks.add_argument('--refresh', action='store_true')
+        p_tasks.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default='balanced')
+        p_tasks.set_defaults(func=cmd_tasks)
 
     return parser
 
