@@ -16,7 +16,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 2: Agent Task Reader** - Add a stable CLI entrypoint for listing and inspecting queued graph agent tasks.
 - [x] **Phase 3: Scoped Patch Proposal** - Let agents generate auditable, scoped patch proposals from one queued task without applying edits.
 - [x] **Phase 4: Agent Task Lifecycle** - Add durable task state transitions, retry/cancel/restore, and append-only lifecycle events.
-- [ ] **Phase 5: Graph Relevance Scoring** - Rank findings and tasks using explainable graph relevance signals.
+- [x] **Phase 5: Graph Relevance Scoring** - Rank findings and tasks using explainable graph relevance signals.
 - [ ] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
 
 ## Phase Details
@@ -99,7 +99,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 05-01: Build graph relevance scoring
+- [x] 05-01: Build graph relevance scoring
 
 ### Phase 6: Purpose-Aware Proposals
 **Goal**: Let proposal generation include optional purpose context so edits are meaningful for the wiki's stated goals.
@@ -111,7 +111,7 @@ Plans:
   2. Missing purpose context is reported but non-blocking.
   3. Proposal rationale includes purpose evidence when present.
   4. Purpose context never weakens path/write safety rules.
-**Plans**: To plan after Phase 5.
+**Plans**: Ready to plan.
 
 ## Progress
 
@@ -121,5 +121,5 @@ Plans:
 | 2. Agent Task Reader | 1/1 | Complete | 2026-04-28 |
 | 3. Scoped Patch Proposal | 1/1 | Complete | 2026-04-28 |
 | 4. Agent Task Lifecycle | 1/1 | Complete | 2026-04-28 |
-| 5. Graph Relevance Scoring | 0/1 | Ready to execute | - |
-| 6. Purpose-Aware Proposals | 0/0 | Planned | - |
+| 5. Graph Relevance Scoring | 1/1 | Complete | 2026-04-28 |
+| 6. Purpose-Aware Proposals | 0/0 | Ready to plan | - |

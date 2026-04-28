@@ -47,10 +47,10 @@
 
 ### Graph Relevance Scoring
 
-- [ ] **REL-01**: Graph analysis computes explainable relevance signals for direct links, source overlap, common neighbors, and type affinity.
-- [ ] **REL-02**: Relevance scores are attached to findings and agent tasks with signal-level evidence.
-- [ ] **REL-03**: Relevance scores prioritize and explain suggestions but do not trigger automatic writes.
-- [ ] **REL-04**: Low-confidence relevance results are informational and do not generate high-priority tasks.
+- [x] **REL-01**: Graph analysis computes explainable relevance signals for direct links, source overlap, common neighbors, and type affinity.
+- [x] **REL-02**: Relevance scores are attached to findings and agent tasks with signal-level evidence.
+- [x] **REL-03**: Relevance scores prioritize and explain suggestions but do not trigger automatic writes.
+- [x] **REL-04**: Low-confidence relevance results are informational and do not generate high-priority tasks.
 
 ### Purpose-Aware Proposals
 
@@ -104,10 +104,10 @@
 | LIF-03 | Phase 4 | Complete |
 | LIF-04 | Phase 4 | Complete |
 | LIF-05 | Phase 4 | Complete |
-| REL-01 | Phase 5 | Planned |
-| REL-02 | Phase 5 | Planned |
-| REL-03 | Phase 5 | Planned |
-| REL-04 | Phase 5 | Planned |
+| REL-01 | Phase 5 | Complete |
+| REL-02 | Phase 5 | Complete |
+| REL-03 | Phase 5 | Complete |
+| REL-04 | Phase 5 | Complete |
 | PUR-01 | Phase 6 | Planned |
 | PUR-02 | Phase 6 | Planned |
 | PUR-03 | Phase 6 | Planned |
@@ -121,4 +121,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 4 completion*
+*Last updated: 2026-04-28 after Phase 5 completion*

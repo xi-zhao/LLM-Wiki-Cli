@@ -21,10 +21,10 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify tasks` lets agents read, filter, and inspect queued graph tasks without mutating task state.
 - [x] `wikify propose` generates scoped patch proposal artifacts from one graph agent task without applying edits.
 - [x] `wikify tasks` explicit lifecycle actions persist task status and append audit events.
+- [x] Graph relevance scoring explains node/task priority with direct links, source overlap, common neighbors, and type affinity.
 
 ### Active
 
-- [ ] Add graph relevance scores that prioritize findings/tasks using explainable graph signals.
 - [ ] Add optional purpose-aware context so proposals optimize for the wiki's goals, not just local graph shape.
 
 ### Out of Scope
@@ -64,6 +64,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Keep relevance scoring advisory first | Scores should improve prioritization before they drive automatic writes | ✓ Good |
 | Keep patch proposals read-only | Lets agents review planned edits while preserving V1 no-content-mutation safety | ✓ Good |
 | Make lifecycle mutation explicit | Default task reads stay safe while `--mark-*`, `--retry`, `--restore`, and `--cancel` provide durable automation state | ✓ Good |
+| Keep graph relevance advisory | Relevance improves explanation and prioritization without becoming an automatic write trigger | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 after Phase 4 completion*
+*Last updated: 2026-04-28 after Phase 5 completion*

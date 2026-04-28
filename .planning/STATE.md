@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 5 execution: graph relevance scoring.
+**Current focus:** Phase 6 planning: purpose-aware proposals.
 
 ## Current Position
 
-Phase: 5 of 6 (Graph Relevance Scoring)
-Plan: 1 of 1 in current phase
-Status: Planned and ready to execute
-Last activity: 2026-04-28 - Planned Phase 5 graph relevance scoring.
+Phase: 6 of 6 (Purpose-Aware Proposals)
+Plan: 0 of 0 in current phase
+Status: Phase 5 complete; Phase 6 ready to plan
+Last activity: 2026-04-28 - Implemented graph relevance scoring, documented protocol, and verified 143 unit tests plus graph/maintain smoke.
 
-Progress: ███████░░░ 67%
+Progress: ████████░░ 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 1 session
-- Total execution time: 4 sessions
+- Total execution time: 5 sessions
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: ███████░░░ 67%
 | 2. Agent Task Reader | 1/1 | 1 session | 1 session |
 | 3. Scoped Patch Proposal | 1/1 | 1 session | 1 session |
 | 4. Agent Task Lifecycle | 1/1 | 1 session | 1 session |
-| 5. Graph Relevance Scoring | 0/1 | Not started | - |
+| 5. Graph Relevance Scoring | 1/1 | 1 session | 1 session |
 | 6. Purpose-Aware Proposals | 0/0 | Not started | - |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 02-01, 03-01, 04-01
+- Last 5 plans: 01-01, 02-01, 03-01, 04-01, 05-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -59,10 +59,13 @@ Recent decisions affecting current work:
 - [Phase 4]: Default `wikify tasks` remains read-only; lifecycle writes require explicit action flags.
 - [Phase 4]: Lifecycle state changes append `graph-agent-task-events.json`.
 - [Phase 4]: Invalid lifecycle transitions return structured exit-code-2 errors.
+- [Phase 5]: Relevance scoring is stdlib-only and advisory.
+- [Phase 5]: Relevance signals are direct links, source overlap, common neighbors, and type affinity.
+- [Phase 5]: Low-confidence relevance remains informational and does not escalate task priority.
 
 ### Pending Todos
 
-- Execute Phase 5 plan: graph relevance scoring from direct links, source overlap, common neighbors, and type affinity.
+- Plan Phase 6: purpose-aware proposal context.
 
 ### Blockers/Concerns
 
@@ -80,5 +83,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 5 planned and ready to execute.
+Stopped at: Phase 5 complete and verified; Phase 6 ready to plan.
 Resume file: None
