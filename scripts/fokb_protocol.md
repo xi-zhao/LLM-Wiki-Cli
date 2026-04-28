@@ -84,6 +84,7 @@
 - `patch_application_not_found`
 - `patch_rollback_hash_mismatch`
 - `patch_rollback_failed`
+- `agent_task_run_failed`
 
 ### review / reingest / resolve
 - `review_item_not_found`
@@ -148,6 +149,9 @@
 - `apply --proposal-path <path> --bundle-path <path> --dry-run`
 - `rollback --application-path <path>`
 - `rollback --application-path <path> --dry-run`
+- `run-task --id <id>`
+- `run-task --id <id> --dry-run`
+- `run-task --id <id> --bundle-path <path>`
 
 ### 巡检层
 - `lint`
@@ -701,6 +705,71 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - application record 不存在时返回 `patch_application_not_found`，exit code 为 `2`
 - 当前文件内容与 recorded `after_hash` 不一致时返回 `patch_rollback_hash_mismatch`，exit code 为 `2`
 - rollback 目标文本不再唯一时返回 `patch_rollback_preflight_failed`，exit code 为 `2`
+
+### `run-task`
+推荐用作单个 graph agent task 的低打扰 workflow runner。
+
+常用：
+- `run-task --id agent-task-1 --dry-run`
+- `run-task --id agent-task-1`
+- `run-task --id agent-task-1 --bundle-path sorted/graph-patch-bundles/custom.json`
+
+默认行为：
+- 读取 `sorted/graph-agent-tasks.json`
+- 选择指定 task id
+- 创建或复用 `sorted/graph-patch-proposals/<task-id>.json`
+- 如果 task 仍是 `queued`，非 dry-run 会通过 lifecycle 标记为 `proposed`
+- 查找 patch bundle，默认路径为 `sorted/graph-patch-bundles/<task-id>.json`
+- bundle 缺失时返回 `waiting_for_patch_bundle` 和 `next_actions: ["generate_patch_bundle"]`
+- bundle 存在时通过 deterministic `apply` 合约应用
+- apply 成功后通过 lifecycle 标记 task 为 `done`
+
+`run-task --dry-run` 不写 proposal，不写 lifecycle event，不改正文，不写 application record。
+
+返回 schema:
+
+```json
+{
+  "schema_version": "wikify.agent-task-run.v1",
+  "task_id": "agent-task-1",
+  "dry_run": false,
+  "status": "waiting_for_patch_bundle",
+  "steps": [
+    {"name": "proposal", "status": "written"},
+    {"name": "lifecycle", "status": "marked_proposed"}
+  ],
+  "artifacts": {
+    "proposal": "/abs/kb/sorted/graph-patch-proposals/agent-task-1.json",
+    "bundle": null,
+    "application": null,
+    "agent_tasks": "/abs/kb/sorted/graph-agent-tasks.json",
+    "task_events": "/abs/kb/sorted/graph-agent-task-events.json"
+  },
+  "next_actions": ["generate_patch_bundle"],
+  "summary": {
+    "task_id": "agent-task-1",
+    "next_action": "generate_patch_bundle",
+    "bundle_path": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json"
+  }
+}
+```
+
+状态：
+- `waiting_for_patch_bundle`
+  - runner 已尽可能推进，下一步由 agent 生成 patch bundle
+- `ready_to_apply`
+  - dry-run 已确认 proposal 和 bundle 可用于后续非 dry-run
+- `completed`
+  - apply 已完成，task lifecycle 已 mark-done
+
+错误：
+- 缺少 task queue 时返回 `agent_task_queue_missing`，exit code 为 `2`
+- 找不到 task id 时返回 `agent_task_not_found`，exit code 为 `2`
+- proposal 阶段错误沿用 `proposal_*` code，exit code 为 `2`
+- apply 阶段错误沿用 `patch_*` code，exit code 为 `2`
+- lifecycle 阶段错误沿用 `invalid_agent_task_transition` 等 code，exit code 为 `2`
+
+安全规则：`run-task` 只编排现有 audited primitives。它不生成 patch bundle，不调用隐藏 LLM，不提示用户审批；缺 bundle 是正常等待状态，应交给上层 agent 继续。
 
 ### `decide`
 推荐用作 agent decision workflow 的最小接线入口。
