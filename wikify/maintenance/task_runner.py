@@ -1,5 +1,11 @@
 from pathlib import Path
 
+from wikify.maintenance.bundle_request import (
+    BundleRequestError,
+    build_bundle_request,
+    request_path,
+    write_bundle_request,
+)
 from wikify.maintenance.patch_apply import PatchApplyError, apply_patch_bundle, preflight_patch_bundle
 from wikify.maintenance.proposal import ProposalError, build_patch_proposal, proposal_path, write_patch_proposal
 from wikify.maintenance.task_lifecycle import TaskLifecycleError, apply_lifecycle_action
@@ -84,6 +90,7 @@ def _base_result(root: Path, task_id: str, dry_run: bool, proposal_file: Path, b
         'artifacts': {
             'proposal': str(proposal_file) if proposal_file.exists() else None,
             'bundle': str(bundle_file) if bundle_file.exists() else None,
+            'patch_bundle_request': None,
             'application': None,
             'agent_tasks': None,
             'task_events': None,
@@ -141,6 +148,24 @@ def run_agent_task(
             result['steps'].append(_step('lifecycle', 'proposal_state_already_set'))
 
     if not bundle_file.exists():
+        try:
+            bundle_request = build_bundle_request(root, task_id)
+        except BundleRequestError as exc:
+            raise _wrap_error(exc, 'bundle_request') from exc
+
+        bundle_request_file = request_path(root, task_id)
+        result['summary']['bundle_request_path'] = str(bundle_request_file)
+        result['summary']['suggested_bundle_path'] = bundle_request.get('suggested_bundle_path')
+        if dry_run:
+            result['steps'].append(_step('bundle_request', 'would_write', path=str(bundle_request_file)))
+        else:
+            try:
+                written_request_path = write_bundle_request(root, bundle_request)
+            except BundleRequestError as exc:
+                raise _wrap_error(exc, 'bundle_request') from exc
+            result['steps'].append(_step('bundle_request', 'written', path=str(written_request_path)))
+            result['artifacts']['patch_bundle_request'] = str(written_request_path)
+
         result['status'] = 'waiting_for_patch_bundle'
         result['artifacts']['bundle'] = None
         result['next_actions'] = ['generate_patch_bundle']

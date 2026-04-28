@@ -694,6 +694,8 @@ class WikifyCliTests(unittest.TestCase):
                 os.environ['WIKIFY_BASE'] = str(kb)
                 os.environ.pop('FOKB_BASE', None)
                 self._write_run_task_queue(kb)
+                (kb / 'topics').mkdir()
+                (kb / 'topics' / 'a.md').write_text('See [[Missing]].\n', encoding='utf-8')
                 stdout = io.StringIO()
 
                 with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
@@ -709,6 +711,15 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertIn('generate_patch_bundle', payload['result']['next_actions'])
                 self.assertEqual(queue['tasks'][0]['status'], 'proposed')
                 self.assertTrue((kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json').exists())
+                self.assertTrue((kb / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json').exists())
+                self.assertEqual(
+                    payload['result']['artifacts']['patch_bundle_request'],
+                    str(kb.resolve() / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json'),
+                )
+                self.assertEqual(
+                    payload['result']['summary']['suggested_bundle_path'],
+                    str(kb.resolve() / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'),
+                )
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

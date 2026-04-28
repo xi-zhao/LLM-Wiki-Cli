@@ -60,6 +60,8 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             kb = Path(tmpdir)
             self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            (kb / 'topics' / 'a.md').write_text('See [[Missing]].\n', encoding='utf-8')
 
             result = run_agent_task(kb, 'agent-task-1', dry_run=True)
 
@@ -67,20 +69,34 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
             self.assertTrue(result['dry_run'])
             self.assertEqual(result['status'], 'waiting_for_patch_bundle')
             self.assertIn('generate_patch_bundle', result['next_actions'])
+            self.assertEqual(result['artifacts']['patch_bundle_request'], None)
+            self.assertEqual(
+                result['summary']['bundle_request_path'],
+                str(kb.resolve() / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json'),
+            )
+            self.assertEqual(
+                result['summary']['suggested_bundle_path'],
+                str(kb.resolve() / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'),
+            )
             self.assertFalse((kb / 'sorted' / 'graph-patch-proposals').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-bundle-requests').exists())
             self.assertFalse((kb / 'sorted' / 'graph-agent-task-events.json').exists())
             self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'queued')
 
-    def test_run_agent_task_missing_bundle_writes_proposal_and_marks_proposed(self):
+    def test_run_agent_task_missing_bundle_writes_proposal_marks_proposed_and_writes_request(self):
         from wikify.maintenance.task_runner import run_agent_task
 
         with tempfile.TemporaryDirectory() as tmpdir:
             kb = Path(tmpdir)
             self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            (kb / 'topics' / 'a.md').write_text('See [[Missing]].\n', encoding='utf-8')
 
             result = run_agent_task(kb, 'agent-task-1')
 
             proposal_path = kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json'
+            request_path = kb / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json'
+            expected_request_path = kb.resolve() / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json'
             events = json.loads((kb / 'sorted' / 'graph-agent-task-events.json').read_text(encoding='utf-8'))
             task = self._read_queue(kb)['tasks'][0]
             self.assertEqual(result['status'], 'waiting_for_patch_bundle')
@@ -88,10 +104,33 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
             self.assertEqual(result['steps'][0]['status'], 'written')
             self.assertEqual(result['steps'][1]['name'], 'lifecycle')
             self.assertEqual(result['steps'][1]['status'], 'marked_proposed')
+            self.assertEqual(result['steps'][2]['name'], 'bundle_request')
+            self.assertEqual(result['steps'][2]['status'], 'written')
             self.assertTrue(proposal_path.exists())
+            self.assertTrue(request_path.exists())
+            self.assertEqual(result['artifacts']['patch_bundle_request'], str(expected_request_path))
+            self.assertEqual(result['summary']['bundle_request_path'], str(expected_request_path))
             self.assertEqual(task['status'], 'proposed')
             self.assertEqual(task['proposal_path'], 'sorted/graph-patch-proposals/agent-task-1.json')
             self.assertEqual(events['events'][0]['action'], 'mark_proposed')
+
+    def test_run_agent_task_bundle_request_failure_keeps_proposed_state(self):
+        from wikify.maintenance.task_runner import TaskRunError, run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+
+            with self.assertRaises(TaskRunError) as raised:
+                run_agent_task(kb, 'agent-task-1')
+
+            task = self._read_queue(kb)['tasks'][0]
+            self.assertEqual(raised.exception.code, 'bundle_request_target_not_found')
+            self.assertEqual(raised.exception.details['phase'], 'bundle_request')
+            self.assertEqual(raised.exception.details['path'], 'topics/a.md')
+            self.assertEqual(task['status'], 'proposed')
+            self.assertTrue((kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json').exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-bundle-requests').exists())
 
     def test_run_agent_task_with_bundle_applies_patch_and_marks_done(self):
         from wikify.maintenance.task_runner import run_agent_task
