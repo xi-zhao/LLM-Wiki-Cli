@@ -24,10 +24,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] Graph relevance scoring explains node/task priority with direct links, source overlap, common neighbors, and type affinity.
 - [x] Purpose-aware proposals include optional wiki goal context and rationale without weakening path safety.
 - [x] `wikify apply` and `wikify rollback` support deterministic agent-generated patch bundles with audit and hash-guarded rollback.
-
-### Active
-
-- [ ] `wikify run-task` can orchestrate proposal, bundle detection, apply, and lifecycle completion with low user interruption.
+- [x] `wikify run-task` orchestrates proposal, bundle detection, apply, and lifecycle completion with low user interruption.
 
 ### Out of Scope
 
@@ -69,7 +66,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Keep graph relevance advisory | Relevance improves explanation and prioritization without becoming an automatic write trigger | ✓ Good |
 | Keep purpose context explanatory | Purpose files should enrich proposal rationale, not expand write scope or apply content changes | ✓ Good |
 | Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Good |
-| Stop at missing patch bundles | Workflow automation should return an agent action instead of prompting the user or inventing content | ✓ Active |
+| Stop at missing patch bundles | Workflow automation should return an agent action instead of prompting the user or inventing content | ✓ Good |
 
 ---
-*Last updated: 2026-04-28 after Phase 8 planning start*
+*Last updated: 2026-04-28 after Phase 8 completion*

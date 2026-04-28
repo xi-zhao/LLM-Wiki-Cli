@@ -74,13 +74,13 @@
 
 ### Agent Task Workflow Runner
 
-- [ ] **RUN-01**: `wikify run-task --id <id>` reads one graph agent task and returns a stable workflow run envelope.
-- [ ] **RUN-02**: The runner creates or reuses a scoped patch proposal for the task.
-- [ ] **RUN-03**: If no patch bundle exists, the runner returns `waiting_for_patch_bundle` with agent-facing next actions and no content mutation.
-- [ ] **RUN-04**: If a patch bundle exists, the runner applies it through the existing deterministic apply contract.
-- [ ] **RUN-05**: Successful non-dry-run application marks the task `done` through lifecycle events.
-- [ ] **RUN-06**: `run-task --dry-run` writes no proposals, task events, content changes, or application records.
-- [ ] **RUN-07**: Workflow errors are structured and preserve already-auditable intermediate state.
+- [x] **RUN-01**: `wikify run-task --id <id>` reads one graph agent task and returns a stable workflow run envelope.
+- [x] **RUN-02**: The runner creates or reuses a scoped patch proposal for the task.
+- [x] **RUN-03**: If no patch bundle exists, the runner returns `waiting_for_patch_bundle` with agent-facing next actions and no content mutation.
+- [x] **RUN-04**: If a patch bundle exists, the runner applies it through the existing deterministic apply contract.
+- [x] **RUN-05**: Successful non-dry-run application marks the task `done` through lifecycle events.
+- [x] **RUN-06**: `run-task --dry-run` writes no proposals, task events, content changes, or application records.
+- [x] **RUN-07**: Workflow errors are structured and preserve already-auditable intermediate state.
 
 ### Agent Consumer
 
@@ -139,13 +139,13 @@
 | APP-04 | Phase 7 | Complete |
 | APP-05 | Phase 7 | Complete |
 | APP-06 | Phase 7 | Complete |
-| RUN-01 | Phase 8 | Planned |
-| RUN-02 | Phase 8 | Planned |
-| RUN-03 | Phase 8 | Planned |
-| RUN-04 | Phase 8 | Planned |
-| RUN-05 | Phase 8 | Planned |
-| RUN-06 | Phase 8 | Planned |
-| RUN-07 | Phase 8 | Planned |
+| RUN-01 | Phase 8 | Complete |
+| RUN-02 | Phase 8 | Complete |
+| RUN-03 | Phase 8 | Complete |
+| RUN-04 | Phase 8 | Complete |
+| RUN-05 | Phase 8 | Complete |
+| RUN-06 | Phase 8 | Complete |
+| RUN-07 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -157,4 +157,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after Phase 8 planning start*
+*Last updated: 2026-04-28 after Phase 8 completion*

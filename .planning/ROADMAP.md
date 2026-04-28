@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, and now moves toward low-interruption task workflow orchestration.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, and low-interruption task workflow orchestration.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -19,7 +19,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 5: Graph Relevance Scoring** - Rank findings and tasks using explainable graph relevance signals.
 - [x] **Phase 6: Purpose-Aware Proposals** - Add optional purpose context so proposals align with the wiki's goals.
 - [x] **Phase 7: Patch Apply And Rollback Contract** - Apply deterministic agent-generated patch bundles with audit and rollback safety.
-- [ ] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
+- [x] **Phase 8: Agent Task Workflow Runner** - Orchestrate proposal, patch bundle detection, apply, and task lifecycle with minimal user interruption.
 
 ## Phase Details
 
@@ -152,7 +152,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: Build agent task workflow runner
+- [x] 08-01: Build agent task workflow runner
 
 ## Progress
 
@@ -165,4 +165,4 @@ Plans:
 | 5. Graph Relevance Scoring | 1/1 | Complete | 2026-04-28 |
 | 6. Purpose-Aware Proposals | 1/1 | Complete | 2026-04-28 |
 | 7. Patch Apply And Rollback Contract | 1/1 | Complete | 2026-04-28 |
-| 8. Agent Task Workflow Runner | 0/1 | Ready to plan | - |
+| 8. Agent Task Workflow Runner | 1/1 | Complete | 2026-04-28 |

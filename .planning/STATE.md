@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 8 planning: low-interruption agent task workflow runner.
+**Current focus:** Phase 8 complete: low-interruption agent task workflow runner.
 
 ## Current Position
 
 Phase: 8 of 8 (Agent Task Workflow Runner)
-Plan: 0 of 1 in current phase
-Status: Added and ready to plan
-Last activity: 2026-04-28 - Added Phase 8 agent task workflow runner.
+Plan: 1 of 1 in current phase
+Status: Complete
+Last activity: 2026-04-28 - Completed Phase 8 agent task workflow runner.
 
-Progress: ████████░░ 88%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 1 session
-- Total execution time: 7 sessions
+- Total execution time: 8 sessions
 
 **By Phase:**
 
@@ -34,10 +34,10 @@ Progress: ████████░░ 88%
 | 5. Graph Relevance Scoring | 1/1 | 1 session | 1 session |
 | 6. Purpose-Aware Proposals | 1/1 | 1 session | 1 session |
 | 7. Patch Apply And Rollback Contract | 1/1 | 1 session | 1 session |
-| 8. Agent Task Workflow Runner | 0/1 | Not started | - |
+| 8. Agent Task Workflow Runner | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 03-01, 04-01, 05-01, 06-01, 07-01
+- Last 5 plans: 04-01, 05-01, 06-01, 07-01, 08-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -69,10 +69,12 @@ Recent decisions affecting current work:
 - [Phase 7]: Patch content must arrive as an explicit agent-generated patch bundle.
 - [Phase 7]: Apply supports deterministic `replace_text` only, with exact-once source matching and one operation per path.
 - [Phase 7]: Rollback is hash-guarded and refuses drifted content.
+- [Phase 8]: `run-task` composes audited primitives and stops at `waiting_for_patch_bundle` when semantic patch content is missing.
+- [Phase 8]: Successful run-task apply marks tasks done through lifecycle events.
 
 ### Pending Todos
 
-- Plan and execute Phase 8 agent task workflow runner.
+- None for this milestone.
 
 ### Blockers/Concerns
 
@@ -95,5 +97,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-28
-Stopped at: Phase 8 added and ready to plan.
+Stopped at: Phase 8 complete.
 Resume file: None
