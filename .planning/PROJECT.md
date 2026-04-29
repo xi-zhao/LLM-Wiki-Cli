@@ -12,24 +12,21 @@ Users can turn scattered personal and project knowledge into a living local wiki
 
 ## Current State
 
-**Shipped milestone:** v0.1.0a2 Agentic Maintenance Automation (2026-04-29)
+**Shipped milestone:** v0.2.0 Personal Wiki Core & Views (2026-04-30)
 
-Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
+Wikify now has the core personal wiki loop: users can initialize a wiki workspace, register sources, sync changed local material into deterministic queues, wikiize source items into source-backed pages, generate human-facing Markdown/static views, export agent context, and run object-aware maintenance without creating a second knowledge store.
 
-The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts; Phase 24 shipped the canonical wiki object model, Markdown front matter metadata bridge, structured object validation, graph object-id compatibility, and `wikify validate`; Phase 25 shipped `wikify wikiize` for source-backed generated pages, queue lifecycle updates, edit protection, wikiization task artifacts, and explicit agent enrichment handoff; Phase 26 shipped `wikify views` for human-facing Markdown views, local static HTML, view manifests, and non-interrupting view drift tasks; Phase 27 shipped `wikify agent export`, agent indexes, `llms.txt` / `llms-full.txt`, context packs, citation queries, and related-object queries; Phase 28 shipped personal-wiki-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility tests, and documentation.
+The v0.1.0a2 maintenance loop remains compatible: graph findings still become task artifacts, tasks still produce scoped proposals and explicit patch bundles, verifier gates still block unsafe changes, and repair feedback remains durable. v0.2.0 extends that foundation to personal knowledge sources and shared human/agent wiki artifacts.
 
-## Current Milestone: v0.2.0 Personal Wiki Core & Views
+## Next Milestone: Not Yet Defined
 
-**Goal:** Build the core personal wiki object model, ingest flow, human-facing generated views, and agent-facing context interfaces.
+**Goal:** Define the next product slice with fresh requirements before implementation resumes.
 
-**Target features:**
-- Source registry for files, directories, URLs, repositories, and notes.
-- Incremental ingest and sync artifacts for changed source material.
-- Wiki object model for sources, pages, topics, projects, people, decisions, timelines, citations, and context packs.
-- Wikiization pipeline that produces source-backed Markdown pages.
-- Human wiki views: index pages, source pages, topic pages, recent updates, graph/timeline entry points, and local static output.
-- Agent wiki interfaces: `llms.txt`, `llms-full.txt`, `graph.json`, citation index, related-topic queries, and task-specific context packs.
-- Maintenance integration so the existing graph task, verifier, and repair loop can improve personal wiki content.
+**Candidate directions:**
+- Provider runtime for explicit model calls, budgets, retries, and audit records.
+- Search and retrieval improvements such as hybrid ranking or optional embeddings.
+- Release packaging and workflow polish for repeated personal wiki use.
+- Richer review/maintenance ergonomics for generated pages, source issues, and agent context quality.
 
 ## Requirements
 
@@ -88,7 +85,7 @@ The product direction for v0.2.0 expands the target object from project Markdown
 
 ### Active
 
-- None - v0.2.0 implementation requirements are complete and ready for milestone completion.
+- None - v0.2.0 is shipped. The next milestone should define fresh active requirements.
 
 ### Out of Scope
 
@@ -109,7 +106,7 @@ The product direction for v0.2.0 expands the target object from project Markdown
 - Current graph modules live in `wikify/graph/`.
 - Existing docs: `README.md`, `LLM-Wiki-Cli-README.md`, `scripts/fokb_protocol.md`, and `AGENTS.md`.
 - `gsd-sdk` is not available in PATH in this environment, so GSD artifacts are maintained manually while preserving the workflow structure.
-- v0.2.0 should absorb Graphify as graph intelligence and LLM Wiki as wikiization/ingest inspiration without cloning either product.
+- v0.2.0 absorbed Graphify as graph intelligence and LLM Wiki as wikiization/ingest inspiration without cloning either product.
 
 ## Constraints
 
@@ -169,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-30 after completing Phase 28*
+*Last updated: 2026-04-30 after shipping v0.2.0 milestone*

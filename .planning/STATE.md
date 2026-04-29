@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views is implementation-complete; next step is milestone completion.
+**Current focus:** v0.2.0 Personal Wiki Core & Views is shipped; next step is defining the next milestone.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 28 - Maintenance Integration And Compatibility
-Status: Complete
-Last activity: 2026-04-30 - Executed Phase 28 across four waves: object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility verification, docs, and GSD completion.
+Phase: Milestone close
+Status: Shipped
+Last activity: 2026-04-30 - Archived v0.2.0 planning artifacts, marked the milestone shipped, and prepared the project for the next milestone cycle.
 
 Progress: ██████████ 100%
 
@@ -177,7 +177,7 @@ Recent decisions affecting current work:
 
 - `gsd-sdk` is not available in PATH; GSD files are maintained manually in this session.
 - Task lifecycle remains separate from content mutation; apply/rollback handles content changes and lifecycle commands handle task status.
-- v0.2.0 changes product scope from project-only wiki maintenance to a personal knowledge base with shared human and agent views.
+- v0.2.0 changed product scope from project-only wiki maintenance to a personal knowledge base with shared human and agent views.
 
 ### Roadmap Evolution
 
@@ -230,6 +230,7 @@ Recent decisions affecting current work:
 - Phase 28 context captured: compatibility-first maintenance integration, v0.2 target resolver, object/view/agent findings, additive task metadata, generated-page preservation checks, and E2E workflow verification.
 - Phase 28 planned: 4 dependent plans covering object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility tests, docs, verification, and GSD completion artifacts.
 - Phase 28 completed: object-aware maintenance targets, artifact-health findings, generated-page preservation, E2E compatibility test, public docs, protocol docs, full test suite, compile check, and GSD summaries shipped.
+- Milestone v0.2.0 shipped: personal wiki source registry, sync, object model, wikiization, human views, agent context, and object-aware maintenance archived.
 
 ## Deferred Items
 
@@ -242,6 +243,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-30
-Stopped at: Phase 28 complete and v0.2.0 requirements satisfied.
-Resume file: .planning/phases/28-maintenance-integration-and-compatibility/28-04-VERIFICATION.md
-Next command: `/gsd-complete-milestone`
+Stopped at: v0.2.0 shipped and archived.
+Resume file: .planning/milestones/v0.2.0-MILESTONE-AUDIT.md
+Next command: `/gsd-new-milestone`
