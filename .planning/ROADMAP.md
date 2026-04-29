@@ -13,6 +13,8 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 22: Personal Wiki Workspace And Source Registry
 
+**Status:** Complete 2026-04-29
+
 **Goal:** Add the workspace and source registry foundation for personal knowledge sources.
 
 **Requirements:** SRC-01, SRC-02, SRC-03, SRC-04
@@ -29,7 +31,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Verification:** Unit tests for source registration, registry persistence, duplicate handling, source inspection JSON, and compatibility entrypoints.
 
 **Plans:**
-- [ ] **22-01 Build Personal Wiki Workspace And Source Registry** - Implement `wikify init`, `wikify source add/list/show`, workspace manifest persistence, and canonical source registry persistence.
+- [x] **22-01 Build Personal Wiki Workspace And Source Registry** - Implement `wikify init`, `wikify source add/list/show`, workspace manifest persistence, and canonical source registry persistence.
 
 **Wave 1:** 22-01 can run independently.
 
@@ -144,10 +146,10 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRC-01 | Phase 22 | Pending |
-| SRC-02 | Phase 22 | Pending |
-| SRC-03 | Phase 22 | Pending |
-| SRC-04 | Phase 22 | Pending |
+| SRC-01 | Phase 22 | Complete |
+| SRC-02 | Phase 22 | Complete |
+| SRC-03 | Phase 22 | Complete |
+| SRC-04 | Phase 22 | Complete |
 | ING-01 | Phase 23 | Pending |
 | ING-02 | Phase 23 | Pending |
 | ING-03 | Phase 23 | Pending |
@@ -196,4 +198,4 @@ Detailed phase plans, summaries, and verification artifacts from v0.1.0a2 remain
 | Milestone | Phases | Plans | Status | Completed |
 |-----------|--------|-------|--------|-----------|
 | v0.1.0a2 Agentic Maintenance Automation | 1-21 | 21/21 | Complete | 2026-04-29 |
-| v0.2.0 Personal Wiki Core & Views | 22-28 | 0/7 | Planned | — |
+| v0.2.0 Personal Wiki Core & Views | 22-28 | 1/7 | In Progress | — |

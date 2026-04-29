@@ -16,7 +16,7 @@ Users can turn scattered personal and project knowledge into a living local wiki
 
 Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
 
-The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views.
+The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 has shipped the workspace manifest and source registry foundation.
 
 ## Current Milestone: v0.2.0 Personal Wiki Core & Views
 
@@ -58,10 +58,12 @@ The product direction for v0.2.0 expands the target object from project Markdown
 - [x] `wikify verify-bundle` lets an explicit verifier agent review patch bundles before apply.
 - [x] Verifier rejection blocks the task with durable feedback for later agents to inspect and retry.
 - [x] `wikify run-task --agent-command` can repair verifier-blocked tasks by regenerating rejected bundles with feedback.
+- [x] `wikify init [BASE]` creates a personal wiki workspace with `wikify.json`, `.wikify/registry/sources.json`, and visible `sources/`, `wiki/`, `artifacts/`, and `views/` directories.
+- [x] `wikify source add/list/show` registers and exposes durable source records for files, directories, URLs, repositories, and notes through stable JSON envelopes.
 
 ### Active
 
-- [ ] Personal wiki source registry and incremental sync.
+- [ ] Incremental source sync and ingest queue.
 - [ ] Canonical wiki object model shared by human and agent views.
 - [ ] Source-backed wikiization pipeline.
 - [ ] Generated human wiki views and local static browsing.
@@ -116,6 +118,7 @@ The product direction for v0.2.0 expands the target object from project Markdown
 | Position v0.2.0 around personal knowledge, not only project knowledge | Project wiki generation is a use case; the broader product is a personal agent-callable wiki | Active |
 | Keep CLI-first control while adding human-facing views | The CLI is the operation surface, but `wikify open`/static output should make the result inspectable | Active |
 | Treat audit and rollback as trust infrastructure, not the headline promise | Users care about safe automation and recoverability, not internal control-plane terminology | Active |
+| Keep source registration shallow in Phase 22 | `source add` should only record durable source identity and bounded offline metadata; sync/wikiization/views stay explicit later commands | Good |
 
 ## Evolution
 
@@ -135,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after starting v0.2.0 Personal Wiki Core & Views*
+*Last updated: 2026-04-29 after completing Phase 22*

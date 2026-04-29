@@ -63,6 +63,18 @@
 - `invalid_json_output`
 - `internal_error`
 - `environment_check_failed`
+- `workspace_missing`
+- `workspace_schema_invalid`
+- `workspace_manifest_invalid`
+- `workspace_manifest_invalid_json`
+- `source_registry_missing`
+- `source_registry_schema_invalid`
+- `source_registry_invalid`
+- `source_registry_invalid_json`
+- `source_registry_workspace_mismatch`
+- `source_type_invalid`
+- `source_locator_invalid`
+- `source_not_found`
 - `object_not_found`
 - `graph_maintenance_failed`
 - `agent_task_queue_missing`
@@ -117,6 +129,11 @@
 ### 环境层
 - `init`
 - `check`
+
+### Source registry 层
+- `source add <locator> --type file|directory|url|repository|note`
+- `source list`
+- `source show <source-id-or-locator>`
 
 ### 运行 / 状态层
 - `status`
@@ -200,7 +217,72 @@
 - `lint`
 - `lint --deep`
 
-## 5. Maintenance schema v1
+## 5. Workspace and source registry schema v1
+
+`wikify init [BASE]` 创建个人 wiki workspace。成功结果使用标准 envelope：
+
+```json
+{
+  "ok": true,
+  "command": "init",
+  "exit_code": 0,
+  "result": {
+    "schema_version": "wikify.workspace.v1",
+    "status": "initialized",
+    "base": "/abs/personal-wiki",
+    "workspace": {
+      "schema_version": "wikify.workspace.v1",
+      "workspace_id": "wk_<uuid>",
+      "paths": {
+        "sources": "sources",
+        "wiki": "wiki",
+        "artifacts": "artifacts",
+        "views": "views",
+        "state": ".wikify"
+      }
+    },
+    "artifacts": {
+      "manifest": "/abs/personal-wiki/wikify.json",
+      "source_registry": "/abs/personal-wiki/.wikify/registry/sources.json"
+    }
+  }
+}
+```
+
+`wikify source add` 写入 `.wikify/registry/sources.json`，registry schema 为 `wikify.source-registry.v1`。source id 格式为 `src_<uuid4hex>`。
+
+source record 关键字段：
+
+- `source_id`
+- `type`
+- `locator`
+- `locator_key`
+- `fingerprint`
+- `discovery_status`
+- `last_sync_status`
+- `created_at`
+- `updated_at`
+- `errors`
+
+`last_sync_status` 初始值固定为 `never_synced`。
+
+边界规则：
+
+- `source add` 只登记，不抓取 URL
+- `source add` 不 clone repository
+- `source add` 不生成 wiki 页面
+- `source add` 不写 `graph/`、`sorted/` 或 maintenance artifacts
+- `source add` 不调用任何隐藏 provider 或外部 agent
+- 重复 canonical `locator_key` 返回 `status: "existing"`，不新增 source
+
+base 解析优先级：
+
+1. `WIKIFY_BASE`
+2. `FOKB_BASE`
+3. 当前目录或父目录中的 `wikify.json`
+4. 应用根目录 fallback
+
+## 6. Maintenance schema v1
 
 `maintenance` 是 `wikify` 当前最重要的增量知识维护协议层之一。`graph` 是结构理解协议层，负责把已编译 Markdown wiki 转成可审计图谱产物。`maintain` 是自动图谱维护入口，负责把 graph analytics 转成 findings、plan、execution classification 和 append-only history。
 

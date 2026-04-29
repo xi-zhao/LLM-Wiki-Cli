@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views requirements and roadmap.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, next up Phase 23 incremental source sync and ingest queue.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 22 - Personal Wiki Workspace And Source Registry
-Status: Planned; ready to execute
-Last activity: 2026-04-29 - Created Phase 22 execution plan for workspace and source registry.
+Status: Complete
+Last activity: 2026-04-29 - Implemented and verified `wikify init` plus `wikify source add/list/show`.
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █░░░░░░░░░ 14%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
+- Total plans completed: 22
 - Average duration: 1 session
-- Total execution time: 18 sessions
+- Total execution time: 22 sessions
 
 **By Phase:**
 
@@ -48,9 +48,10 @@ Progress: ░░░░░░░░░░ 0%
 | 19. Verifier Rejection Feedback | 1/1 | 1 session | 1 session |
 | 20. Verifier Repair Automation | 1/1 | 1 session | 1 session |
 | 21. Milestone Verification Artifacts | 1/1 | 1 session | 1 session |
+| 22. Personal Wiki Workspace And Source Registry | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 16-01, 17-01, 18-01, 19-01, 20-01
+- Last 5 plans: 18-01, 19-01, 20-01, 21-01, 22-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -122,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 20]: Explicit repair runs regenerate rejected default bundles before verifier/apply.
 - [Milestone Audit]: Product requirements are satisfied, and v0.1.0a1 can be archived after Phase 21's standalone verification artifacts.
 - [Phase 21]: Standalone verification artifacts close the milestone audit gap without changing product code.
+- [Phase 22]: `source add` is shallow registration only; sync, wikiization, views, graph, and agent exports remain explicit later commands.
+- [Phase 22]: Source identity uses opaque `src_` ids with duplicate detection through canonical `locator_key`.
 
 ### Pending Todos
 
@@ -165,6 +168,7 @@ Recent decisions affecting current work:
 - Milestone v0.2.0 started: Personal Wiki Core & Views.
 - Phase 22 context captured: workspace manifest, source identity, registration scope, CLI shape, and registry artifact decisions.
 - Phase 22 planned: 1 plan covering workspace initialization, source registry module, CLI commands, docs, and verification.
+- Phase 22 completed: workspace manifest, source registry module, CLI commands, docs, and verification shipped.
 
 ## Deferred Items
 
@@ -177,6 +181,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 22 planned.
-Resume file: .planning/phases/22-personal-wiki-workspace-and-source-registry/22-01-PLAN.md
-Next command: `$gsd-execute-phase 22`
+Stopped at: Phase 22 complete.
+Resume file: .planning/phases/22-personal-wiki-workspace-and-source-registry/22-01-SUMMARY.md
+Next command: `$gsd-discuss-phase 23`

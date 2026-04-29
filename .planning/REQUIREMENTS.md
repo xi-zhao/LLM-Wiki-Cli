@@ -8,10 +8,10 @@
 
 ### Source Registry
 
-- [ ] **SRC-01**: User can initialize a personal wiki workspace with explicit source, wiki, artifact, and view locations.
-- [ ] **SRC-02**: User can register files, directories, URLs, repositories, and note-like Markdown paths as durable sources.
-- [ ] **SRC-03**: Each registered source records a stable source id, type, locator, fingerprint metadata, discovery status, last sync status, timestamps, and errors.
-- [ ] **SRC-04**: User and agent can list and inspect registered sources through stable JSON CLI output.
+- [x] **SRC-01**: User can initialize a personal wiki workspace with explicit source, wiki, artifact, and view locations.
+- [x] **SRC-02**: User can register files, directories, URLs, repositories, and note-like Markdown paths as durable sources.
+- [x] **SRC-03**: Each registered source records a stable source id, type, locator, fingerprint metadata, discovery status, last sync status, timestamps, and errors.
+- [x] **SRC-04**: User and agent can list and inspect registered sources through stable JSON CLI output.
 
 ### Incremental Ingest
 
@@ -91,10 +91,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRC-01 | Phase 22 | Pending |
-| SRC-02 | Phase 22 | Pending |
-| SRC-03 | Phase 22 | Pending |
-| SRC-04 | Phase 22 | Pending |
+| SRC-01 | Phase 22 | Complete |
+| SRC-02 | Phase 22 | Complete |
+| SRC-03 | Phase 22 | Complete |
+| SRC-04 | Phase 22 | Complete |
 | ING-01 | Phase 23 | Pending |
 | ING-02 | Phase 23 | Pending |
 | ING-03 | Phase 23 | Pending |
@@ -130,4 +130,4 @@
 
 ---
 *Requirements defined: 2026-04-29*
-*Last updated: 2026-04-29 after starting v0.2.0 milestone*
+*Last updated: 2026-04-29 after completing Phase 22*

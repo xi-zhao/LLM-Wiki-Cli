@@ -26,6 +26,8 @@ In short:
 
 ## What it does
 
+- Initialize a personal wiki workspace with a source registry
+- Register source files, directories, URLs, repositories, and notes without hidden fetch/sync work
 - Ingest URLs into a local wiki
 - Maintain parsed articles, briefs, topics, timelines, and digests
 - Return stable JSON envelopes for automation
@@ -39,6 +41,10 @@ In short:
 ```bash
 pip install -e .
 
+wikify init ~/personal-wiki
+export WIKIFY_BASE="$HOME/personal-wiki"
+wikify source add "https://example.com" --type url
+wikify source list
 wikify check
 wikify stats
 wikify ingest "https://example.com"
@@ -82,6 +88,40 @@ It is **not** meant to be a dump of a private working knowledge base.
 Your real KB should normally live in:
 - another repo, or
 - this repo but ignored locally
+
+## Workspace and source registry
+
+`wikify init [BASE]` creates a personal wiki workspace. It writes:
+- `wikify.json`
+- `.wikify/registry/sources.json`
+- `sources/`
+- `wiki/`
+- `artifacts/`
+- `views/`
+
+`wikify source add <locator> --type <type>` registers a source in `.wikify/registry/sources.json`.
+
+Supported source types are:
+- `file`
+- `directory`
+- `url`
+- `repository`
+- `note`
+
+Registration is deliberately shallow. It canonicalizes the locator, assigns a stable `src_<uuid>` source id, records local file metadata when available, and sets `last_sync_status` to `never_synced`. It does not fetch URLs, clone repositories, call providers, generate wiki pages, or build graph artifacts. Those are explicit later commands.
+
+Useful commands:
+
+```bash
+wikify init ~/personal-wiki
+export WIKIFY_BASE="$HOME/personal-wiki"
+wikify source add ~/notes/research.md --type file
+wikify source add "https://example.com/report" --type url
+wikify source list
+wikify source show src_<id>
+```
+
+When `WIKIFY_BASE` and `FOKB_BASE` are unset, `wikify` looks for `wikify.json` in the current directory or its parents before falling back to the application root.
 
 ## Try the sample KB
 

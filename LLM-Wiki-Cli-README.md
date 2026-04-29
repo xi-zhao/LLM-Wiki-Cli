@@ -78,15 +78,60 @@ Wikify 的产品目标可以概括成五句话：
 ## 3.1 环境与状态
 
 - `init`
+- `source add`
+- `source list`
+- `source show`
 - `check`
 - `status`
 - `stats`
 - `state`
 
 作用：
-- 初始化目录结构和状态文件
+- 初始化个人 wiki workspace、目录结构和状态文件
+- 登记个人知识库的增量 source registry
 - 检查运行环境
 - 返回机器可读的系统状态与聚合视图
+
+### 个人 wiki workspace 与 source registry
+
+`wikify init [BASE]` 会创建一个以个人知识库为中心的 workspace：
+
+- `wikify.json`
+- `.wikify/registry/sources.json`
+- `sources/`
+- `wiki/`
+- `artifacts/`
+- `views/`
+
+`wikify source add <locator> --type <type>` 只做 source 登记，不做抓取、clone、同步、wiki 化、graph 构建或 provider 调用。
+
+支持的 source type：
+
+- `file`
+- `directory`
+- `url`
+- `repository`
+- `note`
+
+source registry 的价值是给 agent 一个稳定、增量、可查询的知识入口。每个 source 会得到 `src_<uuid>`，登记时记录 canonical locator、本地文件 fingerprint 或远程未校验状态，并把 `last_sync_status` 设为 `never_synced`。后续 sync、parse、wikiize、view、agent export 都应该是显式命令，不隐藏在 `source add` 里。
+
+基础流程：
+
+```bash
+wikify init ~/personal-wiki
+export WIKIFY_BASE="$HOME/personal-wiki"
+wikify source add ~/notes/research.md --type file
+wikify source add "https://example.com/report" --type url
+wikify source list
+wikify source show src_<id>
+```
+
+base 解析优先级：
+
+1. `WIKIFY_BASE`
+2. `FOKB_BASE`
+3. 当前目录或父目录中的 `wikify.json`
+4. 应用根目录兼容 fallback
 
 ## 3.2 入库与工作流
 
