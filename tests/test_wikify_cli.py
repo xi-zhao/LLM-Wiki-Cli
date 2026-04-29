@@ -568,6 +568,26 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(show_args.source_action, 'show')
         self.assertEqual(show_args.target, 'src_123')
 
+    def test_build_parser_accepts_sync_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args(['sync'])
+
+        self.assertEqual(args.command, 'sync')
+        self.assertIsNone(args.source)
+        self.assertFalse(args.dry_run)
+
+    def test_build_parser_accepts_sync_source_and_dry_run_options(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args(['sync', '--source', 'src_abc', '--dry-run'])
+
+        self.assertEqual(args.command, 'sync')
+        self.assertEqual(args.source, 'src_abc')
+        self.assertTrue(args.dry_run)
+
     def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -610,6 +630,114 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'source.add')
                 self.assertEqual(payload['error']['code'], 'workspace_missing')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_sync_command_dry_run_returns_json_without_writing_artifacts(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import source_items_path
+        from wikify.workspace import add_source, initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Note\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'sync', '--dry-run'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'sync')
+                self.assertTrue(payload['result']['dry_run'])
+                self.assertFalse(source_items_path(base).exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_sync_command_writes_artifacts_and_reports_new_items(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import source_items_path, sync_report_path, ingest_queue_path
+        from wikify.workspace import add_source, initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Note\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'sync'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'sync')
+                self.assertEqual(payload['result']['summary']['item_status_counts']['new'], 1)
+                self.assertTrue(source_items_path(base).is_file())
+                self.assertTrue(sync_report_path(base).is_file())
+                self.assertTrue(ingest_queue_path(base).is_file())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_sync_command_missing_source_returns_structured_error(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'sync', '--source', 'src_missing'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'sync')
+                self.assertEqual(payload['error']['code'], 'sync_source_not_found')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
