@@ -100,6 +100,43 @@ class MaintenanceTaskLifecycleTests(unittest.TestCase):
             apply_lifecycle_action(kb, 'agent-task-1', 'cancel')
             self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'rejected')
 
+    def test_block_details_are_persisted_and_retry_clears_feedback(self):
+        from wikify.maintenance.task_lifecycle import apply_lifecycle_action
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb, status='proposed')
+            feedback = {
+                'source': 'bundle_verifier',
+                'summary': 'rejected',
+                'findings': [{'severity': 'high', 'message': 'test rejection'}],
+                'verification_path': '/tmp/verification.json',
+                'verdict': {'accepted': False, 'summary': 'rejected'},
+            }
+
+            apply_lifecycle_action(
+                kb,
+                'agent-task-1',
+                'block',
+                note='patch bundle rejected by verifier',
+                details=feedback,
+            )
+
+            queue = self._read_queue(kb)
+            events = self._read_events(kb)
+            task = queue['tasks'][0]
+            self.assertEqual(task['status'], 'blocked')
+            self.assertEqual(task['blocked_feedback'], feedback)
+            self.assertEqual(events['events'][0]['action'], 'block')
+            self.assertEqual(events['events'][0]['details'], feedback)
+
+            apply_lifecycle_action(kb, 'agent-task-1', 'retry')
+
+            task = self._read_queue(kb)['tasks'][0]
+            self.assertEqual(task['status'], 'queued')
+            self.assertEqual(task['attempts'], 1)
+            self.assertNotIn('blocked_feedback', task)
+
     def test_invalid_transition_raises(self):
         from wikify.maintenance.task_lifecycle import InvalidTaskTransition, apply_lifecycle_action
 

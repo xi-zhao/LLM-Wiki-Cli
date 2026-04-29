@@ -243,9 +243,24 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
             self.assertEqual(raised.exception.code, 'patch_bundle_verification_rejected')
             self.assertEqual(raised.exception.details['phase'], 'bundle_verifier')
             self.assertTrue(Path(raised.exception.details['verification_path']).exists())
+            self.assertTrue(Path(raised.exception.details['agent_tasks']).exists())
+            self.assertTrue(Path(raised.exception.details['task_events']).exists())
+            self.assertEqual(raised.exception.details['verdict']['accepted'], False)
             self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
             self.assertFalse((kb / 'sorted' / 'graph-patch-applications').exists())
-            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'proposed')
+            queue = self._read_queue(kb)
+            events = json.loads((kb / 'sorted' / 'graph-agent-task-events.json').read_text(encoding='utf-8'))
+            task = queue['tasks'][0]
+            feedback = task['blocked_feedback']
+            block_event = events['events'][-1]
+            self.assertEqual(task['status'], 'blocked')
+            self.assertEqual(feedback['source'], 'bundle_verifier')
+            self.assertEqual(feedback['summary'], 'rejected')
+            self.assertEqual(feedback['verification_path'], raised.exception.details['verification_path'])
+            self.assertEqual(feedback['verdict']['accepted'], False)
+            self.assertEqual(feedback['findings'], [{'severity': 'high', 'message': 'test rejection'}])
+            self.assertEqual([event['action'] for event in events['events']], ['mark_proposed', 'block'])
+            self.assertEqual(block_event['details'], feedback)
 
     def test_run_agent_task_with_agent_command_produces_bundle_applies_and_marks_done(self):
         from wikify.maintenance.task_runner import run_agent_task

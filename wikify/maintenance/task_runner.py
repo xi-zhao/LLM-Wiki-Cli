@@ -65,6 +65,48 @@ def _wrap_error(exc: Exception, phase: str) -> TaskRunError:
     return TaskRunError(str(exc), code=code, details=details)
 
 
+def _verifier_rejection_feedback(exc: BundleVerifierError) -> dict:
+    details = dict(exc.details or {})
+    verdict = dict(details.get('verdict') or {})
+    return {
+        'source': 'bundle_verifier',
+        'reason': exc.code,
+        'summary': verdict.get('summary') or str(exc),
+        'findings': verdict.get('findings') or [],
+        'verification_path': details.get('verification_path'),
+        'verdict': verdict,
+    }
+
+
+def _verifier_rejection_error(root: Path, task_id: str, exc: BundleVerifierError) -> TaskRunError:
+    feedback = _verifier_rejection_feedback(exc)
+    details = dict(exc.details or {})
+    details['phase'] = 'bundle_verifier'
+    details['summary'] = feedback['summary']
+    details['findings'] = feedback['findings']
+    details['feedback'] = feedback
+
+    try:
+        lifecycle = apply_lifecycle_action(
+            root,
+            task_id,
+            'block',
+            note='patch bundle rejected by verifier',
+            details=feedback,
+        )
+    except TaskLifecycleError as lifecycle_exc:
+        details['lifecycle_error'] = {
+            'code': lifecycle_exc.code,
+            'message': str(lifecycle_exc),
+            'details': lifecycle_exc.details,
+        }
+    else:
+        details['agent_tasks'] = lifecycle['artifacts']['agent_tasks']
+        details['task_events'] = lifecycle['artifacts']['task_events']
+
+    return TaskRunError(str(exc), code=exc.code, details=details)
+
+
 def _status_for_task(root: Path, task_id: str) -> str:
     queue = load_task_queue(root)
     selected = select_tasks(queue, task_id=task_id)
@@ -227,6 +269,8 @@ def run_agent_task(
                 timeout_seconds=verifier_timeout_seconds,
             )
         except BundleVerifierError as exc:
+            if exc.code == 'patch_bundle_verification_rejected':
+                raise _verifier_rejection_error(root, task_id, exc) from exc
             raise _wrap_error(exc, 'bundle_verifier') from exc
         result['steps'].append(_step('bundle_verifier', 'accepted', verification=verification))
         result['artifacts']['verification'] = verification['artifacts']['verification']

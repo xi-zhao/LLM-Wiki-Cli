@@ -110,6 +110,7 @@ def apply_lifecycle_action(
     action: str,
     note: str | None = None,
     proposal_path: str | None = None,
+    details: dict | None = None,
 ) -> dict:
     root = Path(base).expanduser().resolve()
     queue = load_task_queue(root)
@@ -129,6 +130,10 @@ def apply_lifecycle_action(
         task['proposal_path'] = proposal_path
     if action == 'retry':
         task['attempts'] = int(task.get('attempts') or 0) + 1
+    if action == 'block' and details is not None:
+        task['blocked_feedback'] = details
+    if action in {'retry', 'restore'}:
+        task.pop('blocked_feedback', None)
 
     events_document = _load_events(root)
     events = events_document.setdefault('events', [])
@@ -144,6 +149,8 @@ def apply_lifecycle_action(
         event['note'] = note
     if proposal_path:
         event['proposal_path'] = proposal_path
+    if details is not None:
+        event['details'] = details
     events.append(event)
 
     queue.setdefault('summary', {})['task_count'] = len(queue.get('tasks', []))

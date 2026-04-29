@@ -30,7 +30,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
 - [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
 - [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
-- [ ] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
+- [x] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
 
 ## Phase Details
 
@@ -367,7 +367,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 19-01: Build verifier rejection feedback loop
+- [x] 19-01: Build verifier rejection feedback loop
 
 ## Progress
 
@@ -391,4 +391,4 @@ Plans:
 | 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |
 | 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
 | 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |
-| 19. Verifier Rejection Feedback | 0/1 | Planned | - |
+| 19. Verifier Rejection Feedback | 1/1 | Complete | 2026-04-29 |

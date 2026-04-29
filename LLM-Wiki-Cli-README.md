@@ -771,6 +771,7 @@ profile artifact 写在 wiki root：
 - 在 deterministic preflight 通过之后、真正 apply 之前，让另一个显式 agent 审核 patch bundle
 - 审核通过才继续 apply 和 mark-done
 - 审核拒绝时写 audit artifact，然后返回结构化错误，不修改正文
+- 在 `run-task` / batch / loop 自动化中，审核拒绝会把 task 标记为 `blocked` 并写入可机读反馈
 - 减少人工审批打扰，但不把审核藏成默认 provider 行为
 
 默认命令：
@@ -830,6 +831,14 @@ Wikify 会暴露环境变量：
 - schema 错误返回 `bundle_verifier_verdict_schema_invalid`
 - command 失败返回 `bundle_verifier_command_failed`
 - timeout 返回 `bundle_verifier_timeout`
+
+当 verifier 拒绝发生在 `run-task` 自动化路径中，Wikify 还会：
+- 把选中的 task lifecycle 标记为 `blocked`
+- 在 task 上写 `blocked_feedback`，包含 `summary`、`findings`、`verification_path` 和完整 `verdict`
+- 在 `sorted/graph-agent-task-events.json` 的 block event 上写同样的 `details`
+- 在错误 `details` 中暴露 `verification_path`、`agent_tasks` 和 `task_events`
+
+后续 agent 可以读取这些 artifact 修复 bundle，再用 `wikify tasks --id <id> --retry` 或 `--restore` 回到 `queued`；retry / restore 会清理旧的 `blocked_feedback`，避免新一轮执行背着过期审核结论。
 
 安全规则：verifier gate 不替代 deterministic preflight，也不直接修改内容。它只是在 apply 前增加一个显式外部 review command。dry-run 会构造 request 和 preflight，但不执行 verifier、不写 verification artifact。
 
