@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, an explicit agent verifier gate, durable verifier rejection feedback, and verifier repair automation.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, an explicit agent verifier gate, durable verifier rejection feedback, verifier repair automation, and milestone verification closure.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -32,6 +32,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
 - [x] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
 - [x] **Phase 20: Verifier Repair Automation** - Feed verifier rejection feedback back into explicit producer runs so blocked tasks can be repaired.
+- [ ] **Phase 21: Milestone Verification Artifacts** - Close the milestone audit gap by creating standalone verification artifacts for completed phases.
 
 ## Phase Details
 
@@ -388,6 +389,22 @@ Plans:
 Plans:
 - [x] 20-01: Build verifier repair automation
 
+### Phase 21: Milestone Verification Artifacts
+**Goal**: Close `v0.1.0a1` milestone audit gap `GSD-AUDIT-01` by creating standalone verification artifacts for Phases 1-20 and re-running the milestone audit.
+**Depends on**: Phase 20, `.planning/v0.1.0a1-MILESTONE-AUDIT.md`
+**Requirements**: GSV-01, GSV-02, GSV-03, GSV-04
+**Why after Phase 20**: Product automation is complete, but the milestone cannot be archived honestly while verification evidence only lives inside summaries. This phase creates the missing GSD audit surface without changing product behavior.
+**Success Criteria** (what must be TRUE):
+  1. Every completed phase from 1-20 has a standalone `*-VERIFICATION.md` artifact.
+  2. Verification artifacts cross-reference phase requirements, summary evidence, and current test/compile checks.
+  3. The milestone audit is updated so `GSD-AUDIT-01` is closed or explicitly downgraded from blocker.
+  4. Functional requirements and product code remain unchanged.
+  5. Full unittest suite, compileall, and `git diff --check` pass.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 21-01: Build milestone verification artifact set
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -412,3 +429,4 @@ Plans:
 | 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |
 | 19. Verifier Rejection Feedback | 1/1 | Complete | 2026-04-29 |
 | 20. Verifier Repair Automation | 1/1 | Complete | 2026-04-29 |
+| 21. Milestone Verification Artifacts | 0/1 | Planned | - |

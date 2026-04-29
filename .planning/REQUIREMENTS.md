@@ -203,6 +203,13 @@
 - [x] **RPR-06**: Repair failures remain bounded: content is unchanged, application records are not written, and fresh rejection feedback is persisted.
 - [x] **RPR-07**: Docs and tests describe verifier repair automation and the explicit command boundary.
 
+### Milestone Verification Closure
+
+- [ ] **GSV-01**: Each completed milestone phase from 1-20 has a standalone `*-VERIFICATION.md` artifact.
+- [ ] **GSV-02**: Verification artifacts cross-reference phase requirements, summary evidence, and current verification commands.
+- [ ] **GSV-03**: The `v0.1.0a1` milestone audit is updated after verification artifacts exist.
+- [ ] **GSV-04**: Milestone completion remains blocked until the audit no longer reports missing verification artifacts as an open blocker.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -352,6 +359,10 @@
 | RPR-05 | Phase 20 | Complete |
 | RPR-06 | Phase 20 | Complete |
 | RPR-07 | Phase 20 | Complete |
+| GSV-01 | Phase 21 | Pending |
+| GSV-02 | Phase 21 | Pending |
+| GSV-03 | Phase 21 | Pending |
+| GSV-04 | Phase 21 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -370,9 +381,11 @@
 - v2 agent verifier gate requirements: 8 total
 - v2 verifier rejection feedback requirements: 7 total
 - v2 verifier repair automation requirements: 7 total
-- Mapped to phases: 129
-- Unmapped: 0
+- milestone verification closure requirements: 4 total
+- Mapped to phases: 133
+- Future provider-backed agent consumer requirements: 3 intentionally deferred
+- Unmapped active milestone requirements: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 for Phase 20 completion*
+*Last updated: 2026-04-29 for Phase 21 audit gap closure planning*
