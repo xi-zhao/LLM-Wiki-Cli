@@ -5,6 +5,10 @@ from pathlib import Path
 
 
 class MaintenancePatchApplyTests(unittest.TestCase):
+    def _write_json(self, path: Path, document: dict):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(document), encoding='utf-8')
+
     def _write_proposal(self, kb: Path) -> Path:
         proposal = {
             'schema_version': 'wikify.patch-proposal.v1',
@@ -51,6 +55,64 @@ class MaintenancePatchApplyTests(unittest.TestCase):
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps(bundle), encoding='utf-8')
         return path
+
+    def _write_generated_page_proposal(self, kb: Path) -> Path:
+        from wikify.maintenance.preservation import build_preservation_context
+
+        source_refs = [{'source_id': 'src_notes', 'item_id': 'item_alpha', 'confidence': 0.9}]
+        page = (
+            '---\n'
+            'body_path: wiki/pages/page_alpha.md\n'
+            'id: page_alpha\n'
+            'review_status: generated\n'
+            'source_refs: [{"source_id": "src_notes", "item_id": "item_alpha", "confidence": 0.9}]\n'
+            'type: wiki_page\n'
+            '---\n'
+            '# Alpha\n\nOriginal body.\n'
+        )
+        (kb / 'wiki' / 'pages').mkdir(parents=True)
+        (kb / 'wiki' / 'pages' / 'page_alpha.md').write_text(page, encoding='utf-8')
+        self._write_json(
+            kb / 'artifacts' / 'objects' / 'wiki_pages' / 'page_alpha.json',
+            {
+                'schema_version': 'wikify.wiki-page.v1',
+                'id': 'page_alpha',
+                'type': 'wiki_page',
+                'body_path': 'wiki/pages/page_alpha.md',
+                'source_refs': source_refs,
+                'review_status': 'generated',
+            },
+        )
+        proposal = {
+            'schema_version': 'wikify.patch-proposal.v1',
+            'task_id': 'agent-task-1',
+            'source_finding_id': 'generated-drift',
+            'action': 'queue_generated_page_repair',
+            'target': 'wiki/pages/page_alpha.md',
+            'write_scope': ['wiki/pages/page_alpha.md'],
+            'planned_edits': [],
+            'acceptance_checks': ['source refs preserved'],
+            'risk': 'medium',
+            'preflight': {'write_scope_valid': True},
+            'preservation': build_preservation_context(kb, ['wiki/pages/page_alpha.md']),
+        }
+        path = kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json'
+        self._write_json(path, proposal)
+        return path
+
+    def _write_generated_page_bundle(self, kb: Path, *, find: str, replace: str) -> Path:
+        return self._write_bundle(
+            kb,
+            operations=[
+                {
+                    'operation': 'replace_text',
+                    'path': 'wiki/pages/page_alpha.md',
+                    'find': find,
+                    'replace': replace,
+                    'rationale': 'test generated page preservation',
+                }
+            ],
+        )
 
     def test_preflight_patch_bundle_validates_without_writing(self):
         from wikify.maintenance.patch_apply import preflight_patch_bundle
@@ -172,6 +234,43 @@ class MaintenancePatchApplyTests(unittest.TestCase):
 
             self.assertEqual(raised.exception.code, 'patch_operation_conflict')
             self.assertEqual(target.read_text(encoding='utf-8'), 'One [[Missing]] and one [[Other]].\n')
+
+    def test_preflight_patch_bundle_rejects_generated_page_source_refs_loss(self):
+        from wikify.maintenance.patch_apply import PatchApplyError, preflight_patch_bundle
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            proposal_path = self._write_generated_page_proposal(kb)
+            bundle_path = self._write_generated_page_bundle(
+                kb,
+                find='source_refs: [{"source_id": "src_notes", "item_id": "item_alpha", "confidence": 0.9}]\n',
+                replace='',
+            )
+
+            with self.assertRaises(PatchApplyError) as raised:
+                preflight_patch_bundle(kb, proposal_path, bundle_path)
+
+            self.assertEqual(raised.exception.code, 'generated_page_preservation_failed')
+
+    def test_apply_patch_bundle_rejects_generated_page_review_status_change_without_writing(self):
+        from wikify.maintenance.patch_apply import PatchApplyError, apply_patch_bundle
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            proposal_path = self._write_generated_page_proposal(kb)
+            page = kb / 'wiki' / 'pages' / 'page_alpha.md'
+            before = page.read_text(encoding='utf-8')
+            bundle_path = self._write_generated_page_bundle(
+                kb,
+                find='review_status: generated',
+                replace='review_status: approved',
+            )
+
+            with self.assertRaises(PatchApplyError) as raised:
+                apply_patch_bundle(kb, proposal_path, bundle_path)
+
+            self.assertEqual(raised.exception.code, 'generated_page_preservation_failed')
+            self.assertEqual(page.read_text(encoding='utf-8'), before)
 
     def test_rollback_application_restores_previous_text(self):
         from wikify.maintenance.patch_apply import apply_patch_bundle, rollback_application

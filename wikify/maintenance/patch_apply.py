@@ -3,6 +3,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+from wikify.maintenance.preservation import GeneratedPagePreservationError, validate_patch_bundle_preservation
+
 
 BUNDLE_SCHEMA_VERSION = 'wikify.patch-bundle.v1'
 PREFLIGHT_SCHEMA_VERSION = 'wikify.patch-application-preflight.v1'
@@ -202,10 +204,18 @@ def _validated_operations(base: Path, proposal: dict, bundle: dict) -> list[dict
     return result
 
 
+def _validate_preservation(base: Path, proposal: dict, bundle: dict) -> dict:
+    try:
+        return validate_patch_bundle_preservation(base, proposal, bundle)
+    except GeneratedPagePreservationError as exc:
+        raise PatchApplyError(str(exc), code=exc.code, details=dict(exc.details or {})) from exc
+
+
 def preflight_patch_bundle(base: Path | str, proposal_path: Path | str, bundle_path: Path | str) -> dict:
     root = Path(base).expanduser().resolve()
     resolved_proposal, resolved_bundle, proposal, bundle = _validate_proposal_and_bundle(root, proposal_path, bundle_path)
     operations = _validated_operations(root, proposal, bundle)
+    preservation = _validate_preservation(root, proposal, bundle)
     return {
         'schema_version': PREFLIGHT_SCHEMA_VERSION,
         'base': str(root),
@@ -223,6 +233,7 @@ def preflight_patch_bundle(base: Path | str, proposal_path: Path | str, bundle_p
             }
             for op in operations
         ],
+        'preservation': preservation,
         'summary': {
             'task_id': proposal.get('task_id'),
             'operation_count': len(operations),
@@ -235,6 +246,7 @@ def apply_patch_bundle(base: Path | str, proposal_path: Path | str, bundle_path:
     root = Path(base).expanduser().resolve()
     resolved_proposal, resolved_bundle, proposal, bundle = _validate_proposal_and_bundle(root, proposal_path, bundle_path)
     operations = _validated_operations(root, proposal, bundle)
+    preservation = _validate_preservation(root, proposal, bundle)
 
     applied_operations = []
     for op in operations:
@@ -265,6 +277,7 @@ def apply_patch_bundle(base: Path | str, proposal_path: Path | str, bundle_path:
         'bundle_path': str(resolved_bundle),
         'affected_paths': sorted({op['path'] for op in applied_operations}),
         'operations': applied_operations,
+        'preservation': preservation,
         'rollback': {
             'status': 'available',
             'guard': 'current file hash must match operation after_hash',

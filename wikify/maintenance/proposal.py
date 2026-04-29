@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+from wikify.maintenance.preservation import build_preservation_context
 from wikify.maintenance.purpose import load_purpose_context
 from wikify.maintenance.task_reader import load_task_queue, select_tasks
 
@@ -124,6 +125,7 @@ def build_patch_proposal(base: Path | str, task_id: str) -> dict:
     path = _planned_path(task, write_scope)
     _validate_paths([path], write_scope)
     purpose_context = load_purpose_context(base)
+    preservation = build_preservation_context(base, write_scope)
 
     planned_edit = {
         'operation': 'propose_content_patch',
@@ -134,7 +136,7 @@ def build_patch_proposal(base: Path | str, task_id: str) -> dict:
         'status': 'planned',
     }
 
-    return {
+    proposal = {
         'schema_version': SCHEMA_VERSION,
         'generated_at': _utc_now(),
         'task_id': task.get('id'),
@@ -155,6 +157,9 @@ def build_patch_proposal(base: Path | str, task_id: str) -> dict:
             'task_status_mutation': False,
         },
     }
+    if preservation.get('required'):
+        proposal['preservation'] = preservation
+    return proposal
 
 
 def proposal_path(base: Path | str, task_id: str) -> Path:

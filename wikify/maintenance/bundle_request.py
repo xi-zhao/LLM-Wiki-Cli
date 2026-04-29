@@ -166,6 +166,30 @@ def build_bundle_request(
     proposal = build_patch_proposal(root, task_id)
     write_scope = [_normalize_relative_path(path) for path in proposal.get('write_scope') or []]
     targets = [_target_snapshot(root, path, max_target_chars) for path in write_scope]
+    preservation = proposal.get('preservation') or {}
+    preservation_required = bool(preservation.get('required'))
+    agent_instructions = [
+        'Generate a wikify.patch-bundle.v1 JSON artifact at suggested_bundle_path.',
+        'Use only replace_text operations over paths listed in proposal.write_scope.',
+        'Choose find text from target snapshots so wikify apply can validate exactly one occurrence.',
+        'Do not edit content files directly; write the patch bundle artifact only.',
+    ]
+    if preservation_required:
+        agent_instructions.extend([
+            'Preserve generated page source_refs exactly.',
+            'Preserve generated page review_status exactly.',
+        ])
+    safety = {
+        'content_mutation': False,
+        'task_status_mutation': False,
+        'hidden_llm_call': False,
+    }
+    if preservation_required:
+        safety['generated_page_preservation'] = {
+            'required': True,
+            'schema_version': preservation.get('schema_version'),
+            'page_count': len(preservation.get('pages') or []),
+        }
 
     return {
         'schema_version': SCHEMA_VERSION,
@@ -189,17 +213,8 @@ def build_bundle_request(
                 ],
             }
         ],
-        'agent_instructions': [
-            'Generate a wikify.patch-bundle.v1 JSON artifact at suggested_bundle_path.',
-            'Use only replace_text operations over paths listed in proposal.write_scope.',
-            'Choose find text from target snapshots so wikify apply can validate exactly one occurrence.',
-            'Do not edit content files directly; write the patch bundle artifact only.',
-        ],
-        'safety': {
-            'content_mutation': False,
-            'task_status_mutation': False,
-            'hidden_llm_call': False,
-        },
+        'agent_instructions': agent_instructions,
+        'safety': safety,
         'expected_bundle_schema': {
             'schema_version': 'wikify.patch-bundle.v1',
             'proposal_task_id': proposal.get('task_id'),

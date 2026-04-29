@@ -6,6 +6,10 @@ from pathlib import Path
 
 
 class MaintenanceBundleVerifierTests(unittest.TestCase):
+    def _write_json(self, path: Path, document: dict):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(document), encoding='utf-8')
+
     def _write_queue(self, kb: Path):
         queue = {
             'schema_version': 'wikify.graph-agent-tasks.v1',
@@ -59,6 +63,67 @@ class MaintenanceBundleVerifierTests(unittest.TestCase):
         bundle_path.parent.mkdir(parents=True)
         bundle_path.write_text(json.dumps(bundle), encoding='utf-8')
         return proposal_path, bundle_path, target
+
+    def _write_generated_page_proposal_and_bundle(self, kb: Path):
+        from wikify.maintenance.preservation import build_preservation_context
+
+        source_refs = [{'source_id': 'src_notes', 'item_id': 'item_alpha', 'confidence': 0.9}]
+        (kb / 'wiki' / 'pages').mkdir(parents=True)
+        page = kb / 'wiki' / 'pages' / 'page_alpha.md'
+        page.write_text(
+            '---\n'
+            'body_path: wiki/pages/page_alpha.md\n'
+            'id: page_alpha\n'
+            'review_status: generated\n'
+            'source_refs: [{"source_id": "src_notes", "item_id": "item_alpha", "confidence": 0.9}]\n'
+            'type: wiki_page\n'
+            '---\n'
+            '# Alpha\n\nOriginal body.\n',
+            encoding='utf-8',
+        )
+        self._write_json(
+            kb / 'artifacts' / 'objects' / 'wiki_pages' / 'page_alpha.json',
+            {
+                'schema_version': 'wikify.wiki-page.v1',
+                'id': 'page_alpha',
+                'type': 'wiki_page',
+                'body_path': 'wiki/pages/page_alpha.md',
+                'source_refs': source_refs,
+                'review_status': 'generated',
+            },
+        )
+        proposal = {
+            'schema_version': 'wikify.patch-proposal.v1',
+            'task_id': 'agent-task-1',
+            'source_finding_id': 'generated-drift',
+            'action': 'queue_generated_page_repair',
+            'target': 'wiki/pages/page_alpha.md',
+            'write_scope': ['wiki/pages/page_alpha.md'],
+            'planned_edits': [],
+            'acceptance_checks': ['source refs preserved'],
+            'risk': 'medium',
+            'preflight': {'write_scope_valid': True},
+            'preservation': build_preservation_context(kb, ['wiki/pages/page_alpha.md']),
+        }
+        proposal_path = kb / 'sorted' / 'graph-patch-proposals' / 'agent-task-1.json'
+        self._write_json(proposal_path, proposal)
+        bundle = {
+            'schema_version': 'wikify.patch-bundle.v1',
+            'proposal_task_id': 'agent-task-1',
+            'proposal_path': 'sorted/graph-patch-proposals/agent-task-1.json',
+            'operations': [
+                {
+                    'operation': 'replace_text',
+                    'path': 'wiki/pages/page_alpha.md',
+                    'find': 'review_status: generated',
+                    'replace': 'review_status: approved',
+                    'rationale': 'unsafe metadata change',
+                }
+            ],
+        }
+        bundle_path = kb / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'
+        self._write_json(bundle_path, bundle)
+        return proposal_path, bundle_path
 
     def _write_verifier(self, kb: Path, *, accepted=True, body: str | None = None) -> Path:
         script = kb / ('accept_verifier.py' if accepted else 'reject_verifier.py')
@@ -148,6 +213,24 @@ class MaintenanceBundleVerifierTests(unittest.TestCase):
 
             self.assertEqual(result['status'], 'dry_run')
             self.assertFalse(result['executed'])
+            self.assertFalse(sentinel.exists())
+            self.assertFalse((kb / 'sorted' / 'graph-patch-verifications').exists())
+
+    def test_verify_patch_bundle_rejects_preservation_failure_before_verifier_runs(self):
+        from wikify.maintenance.bundle_verifier import BundleVerifierError, verify_patch_bundle
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            proposal_path, bundle_path = self._write_generated_page_proposal_and_bundle(kb)
+            sentinel = kb / 'sentinel.txt'
+            script = kb / 'sentinel_verifier.py'
+            script.write_text(f'from pathlib import Path\nPath({str(sentinel)!r}).write_text("ran")\n', encoding='utf-8')
+
+            with self.assertRaises(BundleVerifierError) as raised:
+                verify_patch_bundle(kb, proposal_path, bundle_path, [sys.executable, str(script)])
+
+            self.assertEqual(raised.exception.code, 'generated_page_preservation_failed')
+            self.assertEqual(raised.exception.details['phase'], 'preflight')
             self.assertFalse(sentinel.exists())
             self.assertFalse((kb / 'sorted' / 'graph-patch-verifications').exists())
 

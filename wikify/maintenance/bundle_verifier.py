@@ -79,6 +79,7 @@ def _build_request(root: Path, proposal_path: Path, bundle_path: Path, proposal:
         'bundle_path': str(bundle_path),
         'proposal': proposal,
         'bundle': bundle,
+        'preservation': proposal.get('preservation'),
         'preflight': preflight,
         'instructions': [
             'Review whether the patch bundle should be applied.',
