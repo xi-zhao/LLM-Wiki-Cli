@@ -250,6 +250,55 @@ wikify views --section sources
 
 边界规则：`wikify views` 不运行 `sync`、`wikiize`、`graph`、外部 agent、provider、网络抓取、repository 命令或后台 watcher。缺少 graph、topic、project、person、decision、citation、timeline 或 task artifact 时，只生成明确 empty state 或 warning，不伪造内容。
 
+### Agent wiki interfaces 与 context packs
+
+`wikify agent` 是给 agent 调用的 wiki context 接口层。它和 human views 使用同一个 object/source/wiki/view source of truth，不另建一套 agent-only store。
+
+常用命令：
+
+```bash
+wikify agent export
+wikify agent export --dry-run
+wikify agent context "agent context" --max-chars 12000 --max-pages 8
+wikify agent context "agent context" --dry-run
+wikify agent cite "Source Title" --limit 10
+wikify agent related "agent context" --limit 10
+```
+
+`wikify agent export` 写出 agent 入口文件和索引：
+
+- `llms.txt`
+- `llms-full.txt`
+- `artifacts/agent/page-index.json`
+- `artifacts/agent/citation-index.json`
+- `artifacts/agent/related-index.json`
+- `artifacts/agent/graph.json`
+- `.wikify/agent/last-agent-export.json`
+
+`wikify agent context` 写出任务级 context pack：
+
+- `artifacts/agent/context-packs/<pack-id>.json`
+- `artifacts/objects/context_packs/<pack-id>.json`
+- `.wikify/agent/context-pack-manifest.json`
+
+相关 schema：
+
+- `wikify.agent-export.v1`
+- `wikify.page-index.v1`
+- `wikify.citation-index.v1`
+- `wikify.related-index.v1`
+- `wikify.agent-graph.v1`
+- `wikify.context-pack.v1`
+- `wikify.context-pack-manifest.v1`
+
+边界规则：明确是 no hidden providers，不使用 embedding/vector DB；context pack 不重新读取 raw source；`wikify agent` 不隐式执行 `sync`、`wikiize`、`views` 或 `graph`。如果知识库需要刷新，应显式跑对应命令。
+
+context pack 是 deterministic、budgeted、source-backed 的。结果会记录 `requested_max_chars`、`included_chars`、`max_pages`、`selected_count`、`omitted_count`、`truncated` 和每个 item 的 `selection_rationale`。`--dry-run` 只返回计划写入路径和选择结果，不落盘。
+
+`wikify agent cite` 会优先返回显式 `wikify.citation.v1` citation object，其次才是 page-level `source_refs` fallback。没有证据时返回空 `evidence` 和 next actions，不伪造 citation。
+
+`wikify agent related` 返回可解释的关系排序，不是黑箱 similarity。signals 包括 direct object link、graph edge、shared source、citation overlap、common neighbor、type affinity 和 text match。
+
 ## 3.2 Wiki object model 与验证
 
 Phase 24 定义 v0.2 对象模型和验证面；Phase 25 通过 `wikify wikiize` 消费 `.wikify/queues/ingest-items.json` 并生成 source-backed wiki 页面；Phase 26 通过 `wikify views` 从这些对象渲染 human views。agent exports、provider runtime 和更广泛 maintenance repair flow 仍属于后续阶段。

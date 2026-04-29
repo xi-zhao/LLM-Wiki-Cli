@@ -31,6 +31,7 @@ In short:
 - Sync registered sources into deterministic source item and ingest queue artifacts
 - Wikiize queued source items into source-backed Markdown pages and wiki page objects
 - Render human-facing wiki views and local static HTML from object/source artifacts
+- Export agent-facing wiki context through `llms.txt`, JSON indexes, context packs, citations, and related-object queries
 - Ingest URLs into a local wiki
 - Maintain parsed articles, briefs, topics, timelines, and digests
 - Return stable JSON envelopes for automation
@@ -55,6 +56,11 @@ wikify wikiize
 wikify validate
 wikify views --dry-run
 wikify views
+wikify agent export --dry-run
+wikify agent export
+wikify agent context "agent context" --max-chars 12000 --max-pages 8
+wikify agent cite "Source Title" --limit 10
+wikify agent related "agent context" --limit 10
 wikify check
 wikify stats
 wikify ingest "https://example.com"
@@ -254,6 +260,53 @@ wikify views --section sources
 Generated Markdown views are hash guarded through `.wikify/views/view-manifest.json`. If a generated view was edited by a person or agent, Wikify preserves the edit, skips that path, returns `completed_with_conflicts`, and writes a non-interrupting task to `.wikify/queues/view-tasks.json`.
 
 `wikify views` does not run `sync`, `wikiize`, `graph`, providers, external agents, repository commands, network fetchers, or background watchers. Missing optional graph, topic, project, person, decision, citation, timeline, and task artifacts produce honest empty-state views or warnings instead of invented content.
+
+## Agent wiki interfaces and context packs
+
+`wikify agent` exposes the generated wiki as durable machine context for agents such as Codex, OpenClaw, Claude Code, and shell automation. It reads the same object/source/wiki/view artifacts used by human views; it does not create a second knowledge store.
+
+Commands:
+
+```bash
+wikify agent export
+wikify agent export --dry-run
+wikify agent context "agent context" --max-chars 12000 --max-pages 8
+wikify agent context "agent context" --dry-run
+wikify agent cite "Source Title" --limit 10
+wikify agent related "agent context" --limit 10
+```
+
+`wikify agent export` writes conventional root context files plus JSON indexes:
+
+- `llms.txt`
+- `llms-full.txt`
+- `artifacts/agent/page-index.json`
+- `artifacts/agent/citation-index.json`
+- `artifacts/agent/related-index.json`
+- `artifacts/agent/graph.json`
+- `.wikify/agent/last-agent-export.json`
+
+`wikify agent context` writes task-specific context packs:
+
+- `artifacts/agent/context-packs/<pack-id>.json`
+- `artifacts/objects/context_packs/<pack-id>.json`
+- `.wikify/agent/context-pack-manifest.json`
+
+Schema versions:
+
+- `wikify.agent-export.v1`
+- `wikify.page-index.v1`
+- `wikify.citation-index.v1`
+- `wikify.related-index.v1`
+- `wikify.agent-graph.v1`
+- `wikify.context-pack.v1`
+- `wikify.context-pack-manifest.v1`
+
+Boundaries are explicit: there are no hidden providers, no embeddings or vector database, no raw source reread for context packs, and no implicit `sync`, `wikiize`, `views`, or `graph` execution. Run those commands explicitly when the wiki needs to be refreshed.
+
+Context packs are deterministic and budgeted. They select source-backed wiki page excerpts with `requested_max_chars`, `included_chars`, `max_pages`, `selected_count`, `omitted_count`, and explicit `truncated` metadata. `--dry-run` reports planned pack paths and selected items without writing files.
+
+Citation queries prefer explicit `wikify.citation.v1` objects over weaker page-level `source_refs`. Unsupported claims return an empty `evidence` list plus next actions instead of guessed citations. Related queries return ranked objects with signal-level explanations such as direct links, graph edges, shared sources, citation overlap, common neighbors, type affinity, and text matches.
 
 ## Wiki object model and validation
 

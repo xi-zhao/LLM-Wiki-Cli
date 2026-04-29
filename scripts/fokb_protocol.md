@@ -141,6 +141,21 @@
 - `views_section_invalid`
 - `views_validation_failed`
 - `views_failed`
+- `agent_json_invalid`
+- `agent_object_invalid`
+- `agent_object_index_invalid`
+- `agent_source_items_invalid`
+- `agent_validation_report_invalid`
+- `agent_view_manifest_invalid`
+- `agent_views_report_invalid`
+- `agent_legacy_graph_invalid`
+- `agent_validation_failed`
+- `agent_query_invalid`
+- `agent_export_failed`
+- `agent_context_failed`
+- `agent_cite_failed`
+- `agent_related_failed`
+- `agent_context_pack_manifest_invalid`
 - `object_required_field_missing`
 - `object_duplicate_id`
 - `object_link_unresolved`
@@ -189,6 +204,54 @@
 - `views --dry-run`
 - `views --no-html`
 - `views --section all|home|sources|pages|collections|timeline|graph|review`
+
+### Agent wiki interface 层
+- `agent export`
+- `agent export --dry-run`
+- `agent context <query>`
+- `agent context <query> --dry-run`
+- `agent context <query> --max-chars <n>`
+- `agent context <query> --max-pages <n>`
+- `agent context <query> --include-full-pages`
+- `agent cite <query-or-object-id>`
+- `agent cite <query-or-object-id> --limit <n>`
+- `agent related <target>`
+- `agent related <target> --limit <n>`
+
+Envelope command names:
+- `agent.export`
+- `agent.context`
+- `agent.cite`
+- `agent.related`
+
+Agent artifact paths:
+- `llms.txt`
+- `llms-full.txt`
+- `artifacts/agent/page-index.json`
+- `artifacts/agent/citation-index.json`
+- `artifacts/agent/related-index.json`
+- `artifacts/agent/graph.json`
+- `artifacts/agent/context-packs/<pack-id>.json`
+- `.wikify/agent/last-agent-export.json`
+- `.wikify/agent/context-pack-manifest.json`
+
+Agent schema versions:
+- `wikify.agent-export.v1`
+- `wikify.page-index.v1`
+- `wikify.citation-index.v1`
+- `wikify.related-index.v1`
+- `wikify.agent-graph.v1`
+- `wikify.context-pack.v1`
+- `wikify.context-pack-manifest.v1`
+
+Protocol boundaries:
+- `wikify agent` uses existing object/source/wiki/view artifacts as the source of truth.
+- no hidden providers, no embeddings, and no vector database are used by Phase 27 agent ranking or context selection.
+- context packs do not reread raw source files; they select generated wiki page excerpts and source/citation metadata.
+- `agent export`, `agent context`, `agent cite`, and `agent related` do not implicitly run `sync`, `wikiize`, `views`, or `graph`.
+- `agent.context` is the only query command here that writes context-pack artifacts; `agent.cite` and `agent.related` are read-only.
+- citation evidence ranks explicit `wikify.citation.v1` objects before page `source_refs` fallback, and unsupported queries return empty `evidence` plus next actions instead of fabricated citations.
+- related output exposes signal maps rather than opaque similarity scores.
 
 ### 运行 / 状态层
 - `status`
