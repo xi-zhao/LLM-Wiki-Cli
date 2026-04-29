@@ -35,6 +35,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify agent-profile --set-default` lets bare `--agent-profile` resolve a default while preserving explicit execution intent.
 - [x] `wikify maintain-loop` repeats bounded maintenance runs until no work remains or a configured stop condition is reached.
 - [x] `wikify verify-bundle` lets an explicit verifier agent review patch bundles before apply.
+- [ ] Verifier rejection blocks the task with durable feedback for later agents to inspect and retry.
 
 ### Out of Scope
 
@@ -87,6 +88,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Default profiles require explicit flags | A default profile reduces typing only when `--agent-profile` is present; it must not silently trigger external execution | ✓ Good |
 | Maintenance loop composes maintain-run | Repeating the audited primitive keeps automation useful without broadening patch or provider semantics | ✓ Good |
 | Verifier gate runs before apply | Agent review should block unsafe bundles before content mutation while keeping user interruption low | ✓ Good |
+| Verifier rejection becomes task feedback | Automation should leave actionable state, not only transient errors | Planned |
 
 ---
-*Last updated: 2026-04-29 after Phase 18 completion*
+*Last updated: 2026-04-29 for Phase 19 planning*

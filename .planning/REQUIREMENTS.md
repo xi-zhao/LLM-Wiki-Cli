@@ -183,6 +183,16 @@
 - [x] **VFG-07**: Invalid verifier output, command failure, and timeout return structured non-retryable errors.
 - [x] **VFG-08**: Docs and tests cover verifier contract, profile shorthand, and explicit external-agent boundaries.
 
+### Verifier Rejection Feedback
+
+- [ ] **VRF-01**: Verifier rejection in `run-task` marks the selected task `blocked`.
+- [ ] **VRF-02**: Blocked task metadata includes verifier rejection summary, findings, and verification artifact path.
+- [ ] **VRF-03**: The lifecycle event for the block includes the same feedback details.
+- [ ] **VRF-04**: `patch_bundle_verification_rejected` error details expose `agent_tasks`, `task_events`, and `verification_path`.
+- [ ] **VRF-05**: Rejected verifier feedback does not mutate content or write application records.
+- [ ] **VRF-06**: Retrying or restoring blocked work clears stale verifier rejection metadata.
+- [ ] **VRF-07**: Docs and tests describe rejection feedback and retry behavior.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -318,6 +328,13 @@
 | VFG-06 | Phase 18 | Complete |
 | VFG-07 | Phase 18 | Complete |
 | VFG-08 | Phase 18 | Complete |
+| VRF-01 | Phase 19 | Planned |
+| VRF-02 | Phase 19 | Planned |
+| VRF-03 | Phase 19 | Planned |
+| VRF-04 | Phase 19 | Planned |
+| VRF-05 | Phase 19 | Planned |
+| VRF-06 | Phase 19 | Planned |
+| VRF-07 | Phase 19 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -334,9 +351,10 @@
 - v2 default profile requirements: 7 total
 - v2 maintenance loop requirements: 8 total
 - v2 agent verifier gate requirements: 8 total
-- Mapped to phases: 115
+- v2 verifier rejection feedback requirements: 7 total
+- Mapped to phases: 122
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 after Phase 18 completion*
+*Last updated: 2026-04-29 for Phase 19 planning*

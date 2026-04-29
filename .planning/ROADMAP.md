@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, and an explicit agent verifier gate.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, an explicit agent verifier gate, and durable verifier rejection feedback.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -30,6 +30,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
 - [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
 - [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
+- [ ] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
 
 ## Phase Details
 
@@ -350,6 +351,24 @@ Plans:
 Plans:
 - [x] 18-01: Build explicit agent verifier gate
 
+### Phase 19: Verifier Rejection Feedback
+**Goal**: Verifier rejection blocks the task with durable machine-readable feedback instead of leaving only an error envelope.
+**Depends on**: Phase 18
+**Requirements**: VRF-01, VRF-02, VRF-03, VRF-04, VRF-05, VRF-06, VRF-07
+**Why after Phase 18**: The verifier gate can stop unsafe bundles. The next useful automation step is making that stop actionable for later agents through task state and lifecycle events.
+**Success Criteria** (what must be TRUE):
+  1. A rejected verifier verdict marks the task `blocked`.
+  2. The blocked task contains feedback pointing to the verification artifact and verdict summary/findings.
+  3. The lifecycle event contains the same feedback details.
+  4. Error details expose `agent_tasks`, `task_events`, and `verification_path`.
+  5. Content stays unchanged and no application record is written.
+  6. Retrying blocked work clears stale verifier rejection metadata.
+  7. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 19-01: Build verifier rejection feedback loop
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -372,3 +391,4 @@ Plans:
 | 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |
 | 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
 | 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |
+| 19. Verifier Rejection Feedback | 0/1 | Planned | - |
