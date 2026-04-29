@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-28)
+See: .planning/PROJECT.md (updated 2026-04-29)
 
-**Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** v0.1.0a2 shipped; ready for next milestone planning.
+**Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
+**Current focus:** v0.2.0 Personal Wiki Core & Views requirements and roadmap.
 
 ## Current Position
 
-Milestone: v0.1.0a2 Agentic Maintenance Automation
-Phase: None active
-Status: Milestone archived
-Last activity: 2026-04-29 - Archived v0.1.0a2 milestone and prepared for next milestone planning.
+Milestone: v0.2.0 Personal Wiki Core & Views
+Phase: Not started (defining requirements and roadmap)
+Status: Defining requirements
+Last activity: 2026-04-29 - Started v0.2.0 milestone planning.
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -131,6 +131,7 @@ Recent decisions affecting current work:
 
 - `gsd-sdk` is not available in PATH; GSD files are maintained manually in this session.
 - Task lifecycle remains separate from content mutation; apply/rollback handles content changes and lifecycle commands handle task status.
+- v0.2.0 changes product scope from project-only wiki maintenance to a personal knowledge base with shared human and agent views.
 
 ### Roadmap Evolution
 
@@ -161,6 +162,7 @@ Recent decisions affecting current work:
 - Milestone audit completed: v0.1.0a1 has a GSD process gap for missing phase verification artifacts.
 - Phase 21 added: Milestone Verification Artifacts.
 - Phase 21 completed: Milestone Verification Artifacts.
+- Milestone v0.2.0 started: Personal Wiki Core & Views.
 
 ## Deferred Items
 
@@ -173,6 +175,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: v0.1.0a2 milestone archived.
+Stopped at: v0.2.0 milestone planning started.
 Resume file: None
-Next command: `$gsd-new-milestone`
+Next command: Complete requirements and roadmap, then `$gsd-discuss-phase 22`

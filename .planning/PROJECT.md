@@ -2,26 +2,34 @@
 
 ## What This Is
 
-Wikify is an agent-facing Markdown knowledge base control CLI. It gives agents stable JSON commands for ingest, maintenance, decision, execution, and graph understanding while keeping Markdown as the human-readable source of truth.
+Wikify is a CLI-first personal knowledge base generator and maintenance tool. It turns scattered files, directories, URLs, repositories, notes, and other source material into an incremental local wiki that is useful to both humans and agents.
 
-The current product direction fuses LLM Wiki-style markdown-first knowledge management with Graphify-style structural insight, then turns graph findings into autonomous maintenance work that can survive messy agent-written code.
+The generated wiki is the product artifact: readable and navigable for people, while exposing stable machine interfaces that coding and research agents can query, cite, and use as durable context.
 
 ## Core Value
 
-Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
+Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
 
 ## Current State
 
 **Shipped milestone:** v0.1.0a2 Agentic Maintenance Automation (2026-04-29)
 
-Wikify now has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback. The milestone audit passed with 20 standalone phase verification artifacts for phases 1-20 plus Phase 21 closure metadata.
+Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
 
-## Next Milestone Goals
+The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views.
 
-- Decide whether the next milestone should focus on provider-backed semantic generation, release packaging, or a narrower hardening pass.
-- Define fresh requirements before implementation; `.planning/REQUIREMENTS.md` is intentionally removed during milestone close and should be recreated by `$gsd-new-milestone`.
-- Preserve the existing explicit-agent boundary unless a future requirements phase deliberately designs provider/key/retry semantics.
+## Current Milestone: v0.2.0 Personal Wiki Core & Views
 
+**Goal:** Build the core personal wiki object model, ingest flow, human-facing generated views, and agent-facing context interfaces.
+
+**Target features:**
+- Source registry for files, directories, URLs, repositories, and notes.
+- Incremental ingest and sync artifacts for changed source material.
+- Wiki object model for sources, pages, topics, projects, people, decisions, timelines, citations, and context packs.
+- Wikiization pipeline that produces source-backed Markdown pages.
+- Human wiki views: index pages, source pages, topic pages, recent updates, graph/timeline entry points, and local static output.
+- Agent wiki interfaces: `llms.txt`, `llms-full.txt`, `graph.json`, citation index, related-topic queries, and task-specific context packs.
+- Maintenance integration so the existing graph task, verifier, and repair loop can improve personal wiki content.
 
 ## Requirements
 
@@ -51,14 +59,25 @@ Wikify now has a complete CLI-first agent maintenance loop: graph findings becom
 - [x] Verifier rejection blocks the task with durable feedback for later agents to inspect and retry.
 - [x] `wikify run-task --agent-command` can repair verifier-blocked tasks by regenerating rejected bundles with feedback.
 
+### Active
+
+- [ ] Personal wiki source registry and incremental sync.
+- [ ] Canonical wiki object model shared by human and agent views.
+- [ ] Source-backed wikiization pipeline.
+- [ ] Generated human wiki views and local static browsing.
+- [ ] Agent context exports and query commands.
+- [ ] Maintenance-loop integration for the personal wiki model.
+
 ### Out of Scope
 
-- Hidden LLM calls inside the CLI — provider/key/retry semantics should be explicit in a later phase.
-- Hidden content generation during `wikify maintain` V1 — semantic repairs require explicit patch bundles and audit records.
-- Interactive user approval during maintenance runs — unsafe work should be queued, not prompted.
-- Copying GPLv3 code from `nashsu/llm_wiki`; only product ideas and architecture lessons may be borrowed.
-- Desktop/Tauri UI work from `llm_wiki`; Wikify remains a CLI-first agent surface.
-- Provider-backed semantic patch generation before explicit provider/key/retry semantics are designed and tested.
+- Hidden LLM calls inside the CLI - provider/key/retry semantics should be explicit in a later milestone.
+- Obsidian or Notion replacement features - Wikify produces and maintains a wiki, but does not become a full manual note-taking app.
+- Chat-first RAG UI - agent access should be command/artifact driven before chat workflows are considered.
+- Desktop/Tauri UI parity with `llm_wiki` - local static output is enough for v0.2.0.
+- Public cloud sync, account systems, or hosted sharing - v0.2.0 is local-first.
+- Vector database dependency - relevance should start from deterministic indexes and graph artifacts.
+- Copying GPLv3 code from `nashsu/llm_wiki` - only product ideas and architecture lessons may be borrowed.
+- Selling audit logs or rollback as the headline value - they remain trust infrastructure behind safe automation.
 
 ## Context
 
@@ -66,44 +85,54 @@ Wikify now has a complete CLI-first agent maintenance loop: graph findings becom
 - Tests are run with `python3 -m unittest discover -s tests -v`; `pytest` is not installed locally.
 - Current maintenance modules live in `wikify/maintenance/`.
 - Current graph modules live in `wikify/graph/`.
-- Existing docs: `README.md`, `LLM-Wiki-Cli-README.md`, `scripts/fokb_protocol.md`.
+- Existing docs: `README.md`, `LLM-Wiki-Cli-README.md`, `scripts/fokb_protocol.md`, and `AGENTS.md`.
+- `gsd-sdk` is not available in PATH in this environment, so GSD artifacts are maintained manually while preserving the workflow structure.
+- v0.2.0 should absorb Graphify as graph intelligence and LLM Wiki as wikiization/ingest inspiration without cloning either product.
 
 ## Constraints
 
-- **Runtime**: stdlib-only implementation unless a future requirement justifies dependencies.
+- **Runtime**: Keep the implementation stdlib-only unless a future phase justifies a dependency.
 - **Compatibility**: `fokb` compatibility must not be broken while `wikify` becomes the preferred surface.
-- **Safety**: Graph maintenance may write audit artifacts but must not rewrite topic, parsed, source, or sorted content pages in V1.
+- **Source of truth**: Human views and agent views must be generated from the same wiki model.
+- **Local-first**: v0.2.0 should work without accounts, hosted services, or mandatory provider credentials.
 - **Automation**: Outputs should be machine-readable JSON envelopes and artifacts, not prose-only stdout.
+- **Display**: The wiki must be a human-facing result, not only an agent backend.
 - **Testing**: New behavior must be covered by `unittest` with red/green verification where practical.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Use `wikify maintain` as the autonomous loop entrypoint | Keeps graph maintenance separate from legacy incremental `maintenance` history query | ✓ Good |
-| Queue semantic/content actions instead of executing them in V1 | Prevents silent content damage while still enabling autonomous follow-up | ✓ Good |
-| Add GSD `.planning` for future work | User requested GSD implementation discipline | ✓ Active |
-| Learn from `nashsu/llm_wiki` without copying code | Its GPLv3 license conflicts with Wikify's MIT direction, but product patterns are useful | ✓ Good |
-| Sequence proposal before lifecycle and apply | Agents need auditable proposals before state mutation or content mutation becomes useful | ✓ Good |
-| Keep relevance scoring advisory first | Scores should improve prioritization before they drive automatic writes | ✓ Good |
-| Keep patch proposals read-only | Lets agents review planned edits while preserving V1 no-content-mutation safety | ✓ Good |
-| Make lifecycle mutation explicit | Default task reads stay safe while `--mark-*`, `--retry`, `--restore`, and `--cancel` provide durable automation state | ✓ Good |
-| Keep graph relevance advisory | Relevance improves explanation and prioritization without becoming an automatic write trigger | ✓ Good |
-| Keep purpose context explanatory | Purpose files should enrich proposal rationale, not expand write scope or apply content changes | ✓ Good |
-| Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | ✓ Good |
-| Stop at missing patch bundles | Workflow automation should return an agent action instead of prompting the user or inventing content | ✓ Good |
-| Generate patch bundle requests before provider execution | A stable request artifact lets any external agent generate bundle content without hidden CLI LLM calls | ✓ Good |
-| Let runner prepare bundle requests | The main workflow should create the agent handoff artifact automatically when it reaches `waiting_for_patch_bundle` | ✓ Good |
-| Add external agent adapter before provider SDKs | A command adapter lets users bring Codex/Claude/other agents explicitly while Wikify keeps audit and validation boundaries | ✓ Good |
-| Let run-task compose producer automation only when explicitly commanded | One-command automation should reduce orchestration without hiding provider execution or changing safety boundaries | ✓ Good |
-| Batch automation must be bounded and sequential first | Limit and stop-on-error defaults reduce blast radius before any concurrent or provider-backed execution exists | ✓ Good |
-| Maintenance run automation composes existing primitives | The low-interruption entrypoint should refresh maintenance and run bounded batches without hidden provider behavior or new apply semantics | ✓ Good |
-| Agent profiles are aliases, not providers | Reduces repeated command input while keeping provider/model/key/retry behavior outside hidden Wikify defaults | ✓ Good |
-| Default profiles require explicit flags | A default profile reduces typing only when `--agent-profile` is present; it must not silently trigger external execution | ✓ Good |
-| Maintenance loop composes maintain-run | Repeating the audited primitive keeps automation useful without broadening patch or provider semantics | ✓ Good |
-| Verifier gate runs before apply | Agent review should block unsafe bundles before content mutation while keeping user interruption low | ✓ Good |
-| Verifier rejection becomes task feedback | Automation should leave actionable state, not only transient errors | ✓ Good |
-| Repair rejected bundles before provider SDKs | Feedback-fed repair improves automation while preserving explicit external command boundaries | ✓ Good |
+| Use `wikify maintain` as the autonomous loop entrypoint | Keeps graph maintenance separate from legacy incremental `maintenance` history query | Good |
+| Queue semantic/content actions instead of executing them silently | Prevents silent content damage while still enabling autonomous follow-up | Good |
+| Add GSD `.planning` for future work | User requested GSD implementation discipline | Active |
+| Learn from `nashsu/llm_wiki` without copying code | Its GPLv3 license conflicts with Wikify's MIT direction, but product patterns are useful | Good |
+| Require structured patch bundles for apply | Agents may generate patch content, but CLI applies only deterministic, scoped operations with rollback evidence | Good |
+| Add external agent adapter before provider SDKs | A command adapter lets users bring Codex, Claude, OpenClaw, or other agents explicitly while Wikify keeps audit and validation boundaries | Good |
+| Verifier gate runs before apply | Agent review should block unsafe bundles before content mutation while keeping user interruption low | Good |
+| Repair rejected bundles before provider SDKs | Feedback-fed repair improves automation while preserving explicit external command boundaries | Good |
+| Treat the generated wiki as the product artifact | Human readability matters because the knowledge base is an outcome, not only internal agent context | Active |
+| Keep human and agent views on one source of truth | Separate stores would create drift and make generated knowledge harder to trust | Active |
+| Position v0.2.0 around personal knowledge, not only project knowledge | Project wiki generation is a use case; the broader product is a personal agent-callable wiki | Active |
+| Keep CLI-first control while adding human-facing views | The CLI is the operation surface, but `wikify open`/static output should make the result inspectable | Active |
+| Treat audit and rollback as trust infrastructure, not the headline promise | Users care about safe automation and recoverability, not internal control-plane terminology | Active |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition**:
+1. Requirements invalidated? Move to Out of Scope with reason.
+2. Requirements validated? Move to Validated with phase reference.
+3. New requirements emerged? Add to Active.
+4. Decisions to log? Add to Key Decisions.
+5. "What This Is" still accurate? Update if drifted.
+
+**After each milestone**:
+1. Full review of all sections.
+2. Core Value check - still the right priority?
+3. Audit Out of Scope - reasons still valid?
+4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after v0.1.0a2 milestone completion*
+*Last updated: 2026-04-29 after starting v0.2.0 Personal Wiki Core & Views*
