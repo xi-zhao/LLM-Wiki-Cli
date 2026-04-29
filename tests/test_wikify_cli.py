@@ -650,6 +650,20 @@ class WikifyCliTests(unittest.TestCase):
         self.assertTrue(args.no_html)
         self.assertEqual(args.section, 'sources')
 
+    def test_build_parser_accepts_agent_export_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args(['agent', 'export', '--dry-run', '--max-full-chars', '24000', '--max-page-chars', '3000'])
+        profile_args = parser.parse_args(['agent-profile', '--list'])
+
+        self.assertEqual(args.command, 'agent')
+        self.assertEqual(args.agent_action, 'export')
+        self.assertTrue(args.dry_run)
+        self.assertEqual(args.max_full_chars, 24000)
+        self.assertEqual(args.max_page_chars, 3000)
+        self.assertEqual(profile_args.command, 'agent-profile')
+
     def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -1053,6 +1067,132 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'wikiize')
                 self.assertEqual(payload['error']['code'], 'wikiize_source_items_missing')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_export_command_dry_run_returns_json_without_writing_artifacts(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.agent import agent_report_path, page_index_path
+        from wikify.sync import sync_workspace
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import run_wikiization
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Source Title\n\nAgent Context source.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                run_wikiization(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'export', '--dry-run'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'agent.export')
+                self.assertEqual(payload['result']['schema_version'], 'wikify.agent-export.v1')
+                self.assertTrue(payload['result']['dry_run'])
+                self.assertFalse((base / 'llms.txt').exists())
+                self.assertFalse(page_index_path(base).exists())
+                self.assertFalse(agent_report_path(base).exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_export_command_writes_json_artifacts(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import sync_workspace
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import run_wikiization
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Source Title\n\nAgent Context source.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                run_wikiization(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'export'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'agent.export')
+                self.assertTrue((base / 'llms.txt').is_file())
+                self.assertIn('artifacts/agent/page-index.json', payload['result']['completion']['artifacts'])
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_export_command_validation_errors_return_exit_code_2(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                self._write_json(
+                    base / 'artifacts' / 'objects' / 'wiki_pages' / 'page_bad.json',
+                    {
+                        'schema_version': 'wikify.wiki-page.v1',
+                        'id': 'page_bad',
+                        'type': 'wiki_page',
+                        'title': 'Bad',
+                    },
+                )
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'export'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'agent.export')
+                self.assertIn(payload['error']['code'], {'agent_validation_failed', 'agent_object_invalid'})
+                self.assertFalse((base / 'llms.txt').exists())
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
