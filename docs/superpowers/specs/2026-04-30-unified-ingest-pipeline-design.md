@@ -29,6 +29,29 @@ registered source or explicit locator
 
 The first strong validation source is WeChat public account articles from `mp.weixin.qq.com`. The architecture should also fit normal web pages and local documents without creating a second pipeline.
 
+## Human Product Surface
+
+Humans should primarily see the final organized wiki, not the pipeline machinery.
+
+The human-facing product surface is:
+
+- `wikify ingest <locator>` to add new knowledge.
+- `wikify views` or a future `wikify open` to inspect the organized wiki.
+- Generated Markdown/static wiki pages under `views/` and `views/site/`.
+
+The machine-facing surface is:
+
+- source registry
+- sync
+- ingest queues
+- source item objects
+- wikiization queues
+- validation reports
+- agent exports
+- maintenance tasks
+
+Those machine artifacts must remain stable and inspectable for agents, debugging, and recovery, but product copy and default user workflows should not require humans to understand them. A normal user should be able to think: "I gave Wikify source material; Wikify updated my wiki."
+
 ## Non-Goals
 
 - No hidden network work in `wikify sync`.
@@ -45,7 +68,7 @@ This keeps the product shape clean while reducing rewrite risk. Existing scripts
 
 ## CLI Surface
 
-Keep `wikify ingest <locator>` as the explicit network-capable entrypoint.
+Keep `wikify ingest <locator>` as the explicit, human-friendly, network-capable entrypoint.
 
 Add focused options:
 
@@ -61,6 +84,7 @@ wikify ingest <locator> --queue-wikiize
 Rules:
 
 - `wikify ingest` may fetch network content because the user invoked ingest explicitly.
+- `wikify ingest` should run the full user-visible path by default: ingest, queue wikiization, wikiize the ingested item when deterministic content is available, validate, and refresh human views. Advanced flags may stop after lower-level artifacts for agents and debugging.
 - `wikify source add --type url` still only registers.
 - `wikify sync` still records URL sources as offline remote items and never fetches them.
 - `--queue-wikiize` is the default for successful normalized documents unless `--dry-run` is set.
@@ -218,6 +242,33 @@ Initial findings:
 
 Maintenance should queue repair/regeneration tasks; it should not rerun network fetch silently.
 
+## User Experience
+
+For a human user, the target flow is:
+
+```bash
+wikify ingest https://mp.weixin.qq.com/s/...
+```
+
+Expected result:
+
+- The command returns a concise success summary and the path to the updated wiki entry.
+- The organized wiki views are refreshed.
+- Raw ingest diagnostics are available only as linked artifacts, not as the main experience.
+- If extraction fails, the user sees a clear failure and next action, not a pile of partial pipeline files.
+
+For agents and advanced debugging, lower-level commands remain available:
+
+```bash
+wikify source add ...
+wikify sync
+wikify wikiize --dry-run
+wikify validate --strict
+wikify agent context ...
+```
+
+This split is intentional: humans consume the final knowledge base; agents operate and repair the pipeline.
+
 ## Compatibility
 
 Keep legacy behavior available:
@@ -251,8 +302,8 @@ The first implementation slice is complete when:
 - `wikify ingest <mp.weixin.qq.com URL>` uses the unified pipeline.
 - Successful WeChat ingest produces canonical ingest and source item artifacts.
 - The generated source item is queued for `wikify wikiize`.
-- `wikify wikiize` can turn that source item into a source-backed wiki page.
-- `wikify views` and `wikify agent export` can consume the resulting page through existing v0.2 behavior.
+- The default human path turns deterministic content into a source-backed wiki page and refreshes human views.
+- `wikify wikiize`, `wikify views`, and `wikify agent export` can still consume the resulting artifacts as lower-level agent/debug commands.
 - `wikify sync` remains offline for URL sources.
 - Existing legacy ingest tests and full unit discovery pass.
 
