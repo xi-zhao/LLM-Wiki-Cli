@@ -102,3 +102,36 @@ class IngestPipelineContractTests(unittest.TestCase):
 
         self.assertEqual(item['source_type'], 'file')
         self.assertEqual(item['locator'], '/tmp/wikify-contract/notes/example.md')
+
+    def test_normalized_document_defaults_source_id_for_direct_ingest(self):
+        from wikify.ingest.artifacts import queue_entry_for_source_item, source_item_from_normalized
+        from wikify.ingest.documents import NormalizedDocument
+
+        document = NormalizedDocument(
+            item_id='item_direct',
+            source_id=None,
+            adapter='wechat_url',
+            original_locator='https://mp.weixin.qq.com/s/direct',
+            canonical_locator='https://mp.weixin.qq.com/s/direct',
+            title='Direct Article',
+            body_text='Direct body',
+            markdown='Direct body',
+            captured_at='2026-04-30T00:00:00Z',
+            published_at=None,
+            author=None,
+            raw_paths={
+                'document': 'sources/raw/wechat_url/item_direct/document.md',
+                'document_path': '/tmp/wikify-contract/sources/raw/wechat_url/item_direct/document.md',
+            },
+            assets=[],
+            warnings=[],
+            fingerprint={'kind': 'fetched', 'sha256': 'direct'},
+            metadata={},
+        )
+
+        item = source_item_from_normalized(document, status='new')
+        queue_entry = queue_entry_for_source_item(item, now='2026-04-30T00:00:00Z')
+
+        self.assertEqual(item['source_id'], 'ingest:wechat_url')
+        self.assertEqual(queue_entry['source_id'], 'ingest:wechat_url')
+        self.assertEqual(queue_entry['evidence']['source_id'], 'ingest:wechat_url')

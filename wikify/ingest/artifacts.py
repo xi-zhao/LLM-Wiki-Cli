@@ -72,6 +72,7 @@ def write_text_atomic(path: Path | str, text: str):
 def source_item_from_normalized(document: NormalizedDocument, status: str) -> dict:
     relative_path = document.raw_paths.get('document')
     absolute_path = document.raw_paths.get('document_path') or relative_path
+    source_id = document.source_id or f'ingest:{document.adapter}'
     source_type = 'url' if document.canonical_locator.startswith(('http://', 'https://')) else 'file'
     metadata = dict(document.metadata or {})
     metadata.update({
@@ -87,7 +88,7 @@ def source_item_from_normalized(document: NormalizedDocument, status: str) -> di
     return {
         'schema_version': SOURCE_ITEMS_SCHEMA_VERSION,
         'item_id': document.item_id,
-        'source_id': document.source_id,
+        'source_id': source_id,
         'source_type': source_type,
         'item_type': 'file',
         'status': status,
