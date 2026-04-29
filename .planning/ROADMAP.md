@@ -28,6 +28,16 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 **Verification:** Unit tests for source registration, registry persistence, duplicate handling, source inspection JSON, and compatibility entrypoints.
 
+**Plans:**
+- [ ] **22-01 Build Personal Wiki Workspace And Source Registry** - Implement `wikify init`, `wikify source add/list/show`, workspace manifest persistence, and canonical source registry persistence.
+
+**Wave 1:** 22-01 can run independently.
+
+**Cross-cutting constraints:**
+- No hidden network, provider, sync, wikiization, view generation, or agent export behavior in Phase 22.
+- Source identity must use opaque immutable ids, with duplicate detection through `locator_key`.
+- Human-visible workspace outputs and internal `.wikify/` control state must remain separate.
+
 ### Phase 23: Incremental Sync And Ingest Queue
 
 **Goal:** Detect source changes and produce deterministic ingest queue/status artifacts.
