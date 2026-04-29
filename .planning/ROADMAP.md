@@ -148,7 +148,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 27: Agent Wiki Interfaces And Context Packs
 
-**Status:** Planned 2026-04-29
+**Status:** Complete 2026-04-29
 
 **Goal:** Expose the personal wiki as stable machine-readable context for agents.
 
@@ -163,12 +163,12 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 **Dependencies:** Phase 24, Phase 25, Phase 26.
 
-**Verification:** Unit tests for llms exports, graph/citation/page indexes, context-pack budgeting, cite query output, related query ranking, and JSON envelope stability.
+**Verification:** Unit tests for llms exports, graph/citation/page indexes, context-pack budgeting, cite query output, related query ranking, JSON envelope stability, and source-to-agent-context smoke workflow.
 
 **Plans:**
-- [ ] **27-01 Build Agent Export Core And Index Artifacts** - Implement `wikify agent export`, root `llms.txt` / `llms-full.txt`, page/citation/related/agent-graph indexes under `artifacts/agent/`, `.wikify/agent/last-agent-export.json`, CLI wiring, and export tests.
-- [ ] **27-02 Build Context Packs, Citation Query, And Related Query** - Implement `wikify agent context`, `wikify agent cite`, and `wikify agent related` with deterministic context-pack budgeting, citation/source-ref evidence, related explanation signals, context pack object writes, CLI wiring, and tests.
-- [ ] **27-03 Document Agent Wiki Interfaces And Verify End-To-End Flow** - Document command usage, artifact/schema contracts, no-hidden-provider boundaries, protocol behavior, full test suite, smoke workflow, GSD summaries, and Phase 27 completion artifacts.
+- [x] **27-01 Build Agent Export Core And Index Artifacts** - Implemented `wikify agent export`, root `llms.txt` / `llms-full.txt`, page/citation/related/agent-graph indexes under `artifacts/agent/`, `.wikify/agent/last-agent-export.json`, CLI wiring, and export tests.
+- [x] **27-02 Build Context Packs, Citation Query, And Related Query** - Implemented `wikify agent context`, `wikify agent cite`, and `wikify agent related` with deterministic context-pack budgeting, citation/source-ref evidence, related explanation signals, context pack object writes, CLI wiring, and tests.
+- [x] **27-03 Document Agent Wiki Interfaces And Verify End-To-End Flow** - Documented command usage, artifact/schema contracts, no-hidden-provider boundaries, protocol behavior, full test suite, smoke workflow, GSD summaries, and Phase 27 completion artifacts.
 
 **Wave 1:** 27-01 can run after Phase 24, Phase 25, and Phase 26.
 
@@ -226,11 +226,11 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 | VIEW-03 | Phase 26 | Complete |
 | VIEW-04 | Phase 26 | Complete |
 | VIEW-05 | Phase 26 | Complete |
-| AGT-01 | Phase 27 | Pending |
-| AGT-02 | Phase 27 | Pending |
-| AGT-03 | Phase 27 | Pending |
-| AGT-04 | Phase 27 | Pending |
-| AGT-05 | Phase 27 | Pending |
+| AGT-01 | Phase 27 | Complete |
+| AGT-02 | Phase 27 | Complete |
+| AGT-03 | Phase 27 | Complete |
+| AGT-04 | Phase 27 | Complete |
+| AGT-05 | Phase 27 | Complete |
 | MAINT-01 | Phase 28 | Pending |
 | MAINT-02 | Phase 28 | Pending |
 | MAINT-03 | Phase 28 | Pending |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 27 agent wiki interfaces and context packs.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 28 maintenance integration and compatibility.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 27 - Agent Wiki Interfaces And Context Packs
-Status: Ready to execute
-Last activity: 2026-04-29 - Planned Phase 27 as three dependent plans: agent export/index core, context/cite/related query commands, and documentation plus end-to-end verification.
+Phase: 28 - Maintenance Integration And Compatibility
+Status: Ready to discuss and plan
+Last activity: 2026-04-29 - Completed Phase 27 with agent exports, indexes, context packs, citation queries, related queries, docs, full tests, compile check, and smoke workflow.
 
-Progress: ███████░░░ 71%
+Progress: █████████░ 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26
+- Total plans completed: 29
 - Average duration: 1 session
-- Total execution time: 26 sessions
+- Total execution time: 29 sessions
 
 **By Phase:**
 
@@ -53,10 +53,10 @@ Progress: ███████░░░ 71%
 | 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
 | 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
 | 26. Human Wiki Views And Local Static Output | 1/1 | 1 session | 1 session |
-| 27. Agent Wiki Interfaces And Context Packs | 0/3 | 0 sessions | TBD |
+| 27. Agent Wiki Interfaces And Context Packs | 3/3 | 3 sessions | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 22-01, 23-01, 24-01, 25-01, 26-01
+- Last 5 plans: 25-01, 26-01, 27-01, 27-02, 27-03
 - Trend: Stable
 
 ## Accumulated Context
@@ -155,6 +155,8 @@ Recent decisions affecting current work:
 - [Phase 27]: Citation queries should distinguish explicit `citation` objects from weaker page-level `source_refs` and return empty evidence honestly when none exists.
 - [Phase 27]: Non-dry-run agent exports/context packs should validate object artifacts before writing and degrade gracefully when optional graph/view/citation artifacts are missing.
 - [Phase 27 planning]: Split implementation into three dependent plans so export/index foundations land before context/cite/related queries, and docs/smoke verification run after behavior is stable.
+- [Phase 27]: Agent exports and context packs are explicit `wikify agent` commands; they do not implicitly run sync, wikiize, views, graph, providers, embeddings, or vector stores.
+- [Phase 27]: Context packs are represented both as `artifacts/agent/context-packs/<pack-id>.json` and as `wikify.context-pack.v1` objects under `artifacts/objects/context_packs/`.
 
 ### Pending Todos
 
@@ -213,6 +215,7 @@ Recent decisions affecting current work:
 - Phase 26 completed: `wikify views`, dry-run planning, artifact loading, home/page/source/collection/timeline/graph/review Markdown views, stdlib static HTML, view manifest hash guards, view drift task queue, CLI wiring, docs, and verification shipped.
 - Phase 27 context captured: object-aware agent command namespace, `llms.txt`/`llms-full.txt`, `artifacts/agent/` indexes, context pack budget semantics, citation and related query behavior, validation gates, and explicit no-hidden-provider/no-vector boundary.
 - Phase 27 planned: 3 dependent plans covering `wikify agent export`, agent indexes and llms artifacts, deterministic context packs, citation and related query commands, docs, smoke verification, and GSD completion artifacts.
+- Phase 27 completed: `wikify agent export`, `llms.txt`, `llms-full.txt`, page/citation/related indexes, agent graph export, deterministic context packs, citation query, related query, public docs, protocol docs, full test suite, compile check, and smoke workflow shipped.
 
 ## Deferred Items
 
@@ -225,6 +228,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 27 planned and ready to execute.
-Resume file: .planning/phases/27-agent-wiki-interfaces-and-context-packs/27-01-PLAN.md
-Next command: `$gsd-execute-phase 27`
+Stopped at: Phase 27 completed and ready to start Phase 28.
+Resume file: .planning/ROADMAP.md
+Next command: `$gsd-discuss-phase 28`

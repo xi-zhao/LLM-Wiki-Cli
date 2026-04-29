@@ -45,11 +45,11 @@
 
 ### Agent Wiki Interfaces
 
-- [ ] **AGT-01**: Agent can read `llms.txt` and `llms-full.txt` exports that summarize the wiki structure and important entry points.
-- [ ] **AGT-02**: Agent can read `graph.json`, citation index, and page index artifacts generated from the wiki object model.
-- [ ] **AGT-03**: Agent can request a task-specific context pack that selects relevant pages, source references, and graph neighbors within a size budget.
-- [ ] **AGT-04**: Agent can query citations for a topic or claim and receive source-backed references with stable ids.
-- [ ] **AGT-05**: Agent can query related topics/pages and receive ranked relationships with explanations.
+- [x] **AGT-01**: Agent can read `llms.txt` and `llms-full.txt` exports that summarize the wiki structure and important entry points.
+- [x] **AGT-02**: Agent can read `graph.json`, citation index, and page index artifacts generated from the wiki object model.
+- [x] **AGT-03**: Agent can request a task-specific context pack that selects relevant pages, source references, and graph neighbors within a size budget.
+- [x] **AGT-04**: Agent can query citations for a topic or claim and receive source-backed references with stable ids.
+- [x] **AGT-05**: Agent can query related topics/pages and receive ranked relationships with explanations.
 
 ### Maintenance Integration
 
@@ -113,11 +113,11 @@
 | VIEW-03 | Phase 26 | Complete |
 | VIEW-04 | Phase 26 | Complete |
 | VIEW-05 | Phase 26 | Complete |
-| AGT-01 | Phase 27 | Pending |
-| AGT-02 | Phase 27 | Pending |
-| AGT-03 | Phase 27 | Pending |
-| AGT-04 | Phase 27 | Pending |
-| AGT-05 | Phase 27 | Pending |
+| AGT-01 | Phase 27 | Complete |
+| AGT-02 | Phase 27 | Complete |
+| AGT-03 | Phase 27 | Complete |
+| AGT-04 | Phase 27 | Complete |
+| AGT-05 | Phase 27 | Complete |
 | MAINT-01 | Phase 28 | Pending |
 | MAINT-02 | Phase 28 | Pending |
 | MAINT-03 | Phase 28 | Pending |
@@ -130,4 +130,4 @@
 
 ---
 *Requirements defined: 2026-04-29*
-*Last updated: 2026-04-29 after completing Phase 26*
+*Last updated: 2026-04-29 after completing Phase 27*
