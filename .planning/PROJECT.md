@@ -16,7 +16,7 @@ Users can turn scattered personal and project knowledge into a living local wiki
 
 Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
 
-The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 has shipped the workspace manifest and source registry foundation.
+The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts.
 
 ## Current Milestone: v0.2.0 Personal Wiki Core & Views
 
@@ -60,10 +60,12 @@ The product direction for v0.2.0 expands the target object from project Markdown
 - [x] `wikify run-task --agent-command` can repair verifier-blocked tasks by regenerating rejected bundles with feedback.
 - [x] `wikify init [BASE]` creates a personal wiki workspace with `wikify.json`, `.wikify/registry/sources.json`, and visible `sources/`, `wiki/`, `artifacts/`, and `views/` directories.
 - [x] `wikify source add/list/show` registers and exposes durable source records for files, directories, URLs, repositories, and notes through stable JSON envelopes.
+- [x] `wikify sync` discovers registered source items, classifies freshness, writes `.wikify/sync/` status artifacts, and maintains `.wikify/queues/ingest-items.json`.
+- [x] `wikify sync --dry-run` previews source item and queue changes without writing sync artifacts or registry metadata.
+- [x] URL and remote repository sync remain offline with `network_checked: false`; local repository sync scans files without repository commands.
 
 ### Active
 
-- [ ] Incremental source sync and ingest queue.
 - [ ] Canonical wiki object model shared by human and agent views.
 - [ ] Source-backed wikiization pipeline.
 - [ ] Generated human wiki views and local static browsing.
@@ -119,6 +121,7 @@ The product direction for v0.2.0 expands the target object from project Markdown
 | Keep CLI-first control while adding human-facing views | The CLI is the operation surface, but `wikify open`/static output should make the result inspectable | Active |
 | Treat audit and rollback as trust infrastructure, not the headline promise | Users care about safe automation and recoverability, not internal control-plane terminology | Active |
 | Keep source registration shallow in Phase 22 | `source add` should only record durable source identity and bounded offline metadata; sync/wikiization/views stay explicit later commands | Good |
+| Keep Phase 23 sync offline and artifact-first | `sync` should classify freshness and prepare queue work without hidden network, repository, provider, ingest, wikiization, view, or agent export side effects | Good |
 
 ## Evolution
 
@@ -138,4 +141,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after completing Phase 22*
+*Last updated: 2026-04-29 after completing Phase 23*

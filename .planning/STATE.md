@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 23 incremental source sync and ingest queue.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 24 wiki object model and validation.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 23 - Incremental Sync And Ingest Queue
-Status: Planned; ready to execute
-Last activity: 2026-04-29 - Created Phase 23 execution plan for `wikify sync`, source item classification, sync artifacts, and ingest queue semantics.
+Status: Complete
+Last activity: 2026-04-29 - Completed Phase 23 implementation and verification for `wikify sync`, source item artifacts, and ingest queue semantics.
 
-Progress: █░░░░░░░░░ 14%
+Progress: ███░░░░░░░ 29%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 1 session
-- Total execution time: 22 sessions
+- Total execution time: 23 sessions
 
 **By Phase:**
 
@@ -49,9 +49,10 @@ Progress: █░░░░░░░░░ 14%
 | 20. Verifier Repair Automation | 1/1 | 1 session | 1 session |
 | 21. Milestone Verification Artifacts | 1/1 | 1 session | 1 session |
 | 22. Personal Wiki Workspace And Source Registry | 1/1 | 1 session | 1 session |
+| 23. Incremental Sync And Ingest Queue | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 18-01, 19-01, 20-01, 21-01, 22-01
+- Last 5 plans: 19-01, 20-01, 21-01, 22-01, 23-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -128,6 +129,7 @@ Recent decisions affecting current work:
 - [Phase 23]: `wikify sync` discovers and classifies registered source items, but does not run ingest, fetch URLs, clone repositories, generate wiki pages, or call providers.
 - [Phase 23]: Source items use deterministic ids derived from source id and item locator so repeated syncs can detect unchanged items.
 - [Phase 23]: Sync writes current-state JSON artifacts under `.wikify/sync/` and `.wikify/queues/`, keeping human wiki directories separate from control-plane state.
+- [Phase 23]: Only `new` and `changed` source items create active ingest queue entries; `missing`, `skipped`, and `errored` stay as status evidence.
 
 ### Pending Todos
 
@@ -174,6 +176,7 @@ Recent decisions affecting current work:
 - Phase 22 completed: workspace manifest, source registry module, CLI commands, docs, and verification shipped.
 - Phase 23 context captured: sync command boundary, source item model, freshness classification, artifact paths, queue semantics, and registry sync metadata.
 - Phase 23 planned: 1 TDD plan covering sync module tests, sync implementation, CLI wiring, docs, GSD updates, and verification.
+- Phase 23 completed: `wikify sync`, deterministic source item index, sync report, ingest queue, dry-run, source selection, docs, and verification shipped.
 
 ## Deferred Items
 
@@ -186,6 +189,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 23 planned.
-Resume file: .planning/phases/23-incremental-sync-and-ingest-queue/23-01-PLAN.md
-Next command: `$gsd-execute-phase 23`
+Stopped at: Phase 23 complete.
+Resume file: .planning/ROADMAP.md
+Next command: `$gsd-discuss-phase 24`

@@ -42,7 +42,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 23: Incremental Sync And Ingest Queue
 
-**Status:** Planned; ready to execute
+**Status:** Complete 2026-04-29
 
 **Goal:** Detect source changes and produce deterministic ingest queue/status artifacts.
 
@@ -60,7 +60,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Verification:** Unit tests for file, directory, URL metadata, repository path, dry-run, unchanged repeat sync, missing source handling, and queue artifact shape.
 
 **Plans:**
-- [ ] **23-01 Build Incremental Sync And Ingest Queue** - Implement `wikify sync`, source item discovery/classification, source item index, sync report, ingest queue artifact, registry sync metadata, docs, and verification.
+- [x] **23-01 Build Incremental Sync And Ingest Queue** - Implement `wikify sync`, source item discovery/classification, source item index, sync report, ingest queue artifact, registry sync metadata, docs, and verification.
 
 **Wave 1:** 23-01 can run independently after Phase 22.
 
@@ -162,10 +162,10 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 | SRC-02 | Phase 22 | Complete |
 | SRC-03 | Phase 22 | Complete |
 | SRC-04 | Phase 22 | Complete |
-| ING-01 | Phase 23 | Pending |
-| ING-02 | Phase 23 | Pending |
-| ING-03 | Phase 23 | Pending |
-| ING-04 | Phase 23 | Pending |
+| ING-01 | Phase 23 | Complete |
+| ING-02 | Phase 23 | Complete |
+| ING-03 | Phase 23 | Complete |
+| ING-04 | Phase 23 | Complete |
 | OBJ-01 | Phase 24 | Pending |
 | OBJ-02 | Phase 24 | Pending |
 | OBJ-03 | Phase 24 | Pending |

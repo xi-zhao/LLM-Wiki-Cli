@@ -15,10 +15,10 @@
 
 ### Incremental Ingest
 
-- [ ] **ING-01**: User can run a sync command that detects new, changed, missing, and unchanged source items without reprocessing unchanged items.
-- [ ] **ING-02**: Sync writes deterministic queue/status artifacts for discovered source items, skipped items, errors, and pending wikiization work.
-- [ ] **ING-03**: Sync supports a dry-run mode that reports planned registry and queue changes without writing artifacts.
-- [ ] **ING-04**: Source item freshness is determined from deterministic fingerprints and local metadata so repeated syncs are stable.
+- [x] **ING-01**: User can run a sync command that detects new, changed, missing, and unchanged source items without reprocessing unchanged items.
+- [x] **ING-02**: Sync writes deterministic queue/status artifacts for discovered source items, skipped items, errors, and pending wikiization work.
+- [x] **ING-03**: Sync supports a dry-run mode that reports planned registry and queue changes without writing artifacts.
+- [x] **ING-04**: Source item freshness is determined from deterministic fingerprints and local metadata so repeated syncs are stable.
 
 ### Wiki Object Model
 
@@ -95,10 +95,10 @@
 | SRC-02 | Phase 22 | Complete |
 | SRC-03 | Phase 22 | Complete |
 | SRC-04 | Phase 22 | Complete |
-| ING-01 | Phase 23 | Pending |
-| ING-02 | Phase 23 | Pending |
-| ING-03 | Phase 23 | Pending |
-| ING-04 | Phase 23 | Pending |
+| ING-01 | Phase 23 | Complete |
+| ING-02 | Phase 23 | Complete |
+| ING-03 | Phase 23 | Complete |
+| ING-04 | Phase 23 | Complete |
 | OBJ-01 | Phase 24 | Pending |
 | OBJ-02 | Phase 24 | Pending |
 | OBJ-03 | Phase 24 | Pending |
