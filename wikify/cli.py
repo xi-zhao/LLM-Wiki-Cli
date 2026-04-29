@@ -3,7 +3,13 @@ import os
 
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
-from wikify.agent import AgentInterfaceError, run_agent_export
+from wikify.agent import (
+    AgentInterfaceError,
+    query_agent_citations,
+    query_agent_related,
+    run_agent_context,
+    run_agent_export,
+)
 from wikify.graph.builder import build_graph_artifacts
 from wikify.object_validation import validate_workspace_objects
 from wikify.sync import SyncError, sync_workspace
@@ -383,6 +389,104 @@ def cmd_agent_export(args):
         'user_message': summary,
     }
     return envelope_ok('agent.export', result)
+
+
+def _agent_interface_error(command: str, exc: AgentInterfaceError):
+    return envelope_error(
+        command,
+        exc.code,
+        str(exc),
+        2,
+        retryable=False,
+        details=exc.details,
+    )
+
+
+def cmd_agent_context(args):
+    try:
+        result = run_agent_context(
+            discover_base(),
+            args.query,
+            dry_run=args.dry_run,
+            max_chars=args.max_chars,
+            max_pages=args.max_pages,
+            include_full_pages=args.include_full_pages,
+        )
+    except WorkspaceError as exc:
+        return _workspace_error('agent.context', exc)
+    except AgentInterfaceError as exc:
+        return _agent_interface_error('agent.context', exc)
+    except Exception as exc:
+        return envelope_error(
+            'agent.context',
+            'agent_context_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [item['path'] for item in result.get('generated', []) if item.get('path')]
+    summary = 'agent context dry run completed' if result.get('dry_run') else 'agent context pack written'
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': summary,
+    }
+    return envelope_ok('agent.context', result)
+
+
+def cmd_agent_cite(args):
+    try:
+        result = query_agent_citations(discover_base(), args.query, limit=args.limit)
+    except WorkspaceError as exc:
+        return _workspace_error('agent.cite', exc)
+    except AgentInterfaceError as exc:
+        return _agent_interface_error('agent.cite', exc)
+    except Exception as exc:
+        return envelope_error(
+            'agent.cite',
+            'agent_cite_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'agent citation query completed',
+        'artifacts': [],
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'agent citation query completed',
+    }
+    return envelope_ok('agent.cite', result)
+
+
+def cmd_agent_related(args):
+    try:
+        result = query_agent_related(discover_base(), args.target, limit=args.limit)
+    except WorkspaceError as exc:
+        return _workspace_error('agent.related', exc)
+    except AgentInterfaceError as exc:
+        return _agent_interface_error('agent.related', exc)
+    except Exception as exc:
+        return envelope_error(
+            'agent.related',
+            'agent_related_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'agent related query completed',
+        'artifacts': [],
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'agent related query completed',
+    }
+    return envelope_ok('agent.related', result)
 
 
 def cmd_validate(args):
@@ -1385,6 +1489,24 @@ def build_parser() -> argparse.ArgumentParser:
         p_agent_export.add_argument('--max-full-chars', type=int, default=60000)
         p_agent_export.add_argument('--max-page-chars', type=int, default=4000)
         p_agent_export.set_defaults(func=cmd_agent_export)
+
+        p_agent_context = agent_sub.add_parser('context', help='Build a budgeted context pack for an agent task')
+        p_agent_context.add_argument('query')
+        p_agent_context.add_argument('--dry-run', action='store_true')
+        p_agent_context.add_argument('--max-chars', type=int, default=12000)
+        p_agent_context.add_argument('--max-pages', type=int, default=8)
+        p_agent_context.add_argument('--include-full-pages', action='store_true')
+        p_agent_context.set_defaults(func=cmd_agent_context)
+
+        p_agent_cite = agent_sub.add_parser('cite', help='Return source-backed citation evidence for a query or object id')
+        p_agent_cite.add_argument('query')
+        p_agent_cite.add_argument('--limit', type=int, default=10)
+        p_agent_cite.set_defaults(func=cmd_agent_cite)
+
+        p_agent_related = agent_sub.add_parser('related', help='Return ranked related objects with explanation signals')
+        p_agent_related.add_argument('target')
+        p_agent_related.add_argument('--limit', type=int, default=10)
+        p_agent_related.set_defaults(func=cmd_agent_related)
 
     if 'agent-profile' not in sub.choices:
         p_agent_profile = sub.add_parser('agent-profile', help='Manage explicit external agent command profiles')
