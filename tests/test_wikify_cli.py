@@ -607,6 +607,38 @@ class WikifyCliTests(unittest.TestCase):
         self.assertTrue(focused_args.strict)
         self.assertTrue(focused_args.write_report)
 
+    def test_build_parser_accepts_wikiize_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'wikiize',
+            '--dry-run',
+            '--queue-id',
+            'queue_abc',
+            '--item',
+            'item_abc',
+            '--source',
+            'src_abc',
+            '--limit',
+            '2',
+            '--agent-command',
+            'python3 agent.py',
+            '--timeout',
+            '30',
+        ])
+        profile_args = parser.parse_args(['wikiize', '--agent-profile'])
+
+        self.assertEqual(args.command, 'wikiize')
+        self.assertTrue(args.dry_run)
+        self.assertEqual(args.queue_id, 'queue_abc')
+        self.assertEqual(args.item, 'item_abc')
+        self.assertEqual(args.source, 'src_abc')
+        self.assertEqual(args.limit, 2)
+        self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.timeout, 30.0)
+        self.assertEqual(profile_args.agent_profile, '@default')
+
     def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -894,6 +926,122 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'sync')
                 self.assertEqual(payload['error']['code'], 'sync_source_not_found')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_wikiize_command_dry_run_returns_json_without_writing_pages(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import sync_workspace
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import wiki_pages_dir, wikiize_report_path
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Note\n\nQueued source.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'wikiize', '--dry-run'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'wikiize')
+                self.assertTrue(payload['result']['dry_run'])
+                self.assertEqual(payload['result']['summary']['planned_count'], 1)
+                self.assertFalse(wiki_pages_dir(base).exists())
+                self.assertFalse(wikiize_report_path(base).exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_wikiize_command_writes_generated_page_and_object(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import sync_workspace
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import wikiize_report_path
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Note\n\nQueued source.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'wikiize'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'wikiize')
+                self.assertEqual(payload['result']['summary']['completed_count'], 1)
+                body_path = base / payload['result']['items'][0]['paths']['body_path']
+                object_path = base / payload['result']['items'][0]['paths']['object_path']
+                self.assertTrue(body_path.is_file())
+                self.assertTrue(object_path.is_file())
+                self.assertTrue(wikiize_report_path(base).is_file())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_wikiize_command_missing_artifacts_returns_structured_error(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'wikiize'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'wikiize')
+                self.assertEqual(payload['error']['code'], 'wikiize_source_items_missing')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
