@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 26 - Human Wiki Views And Local Static Output
-Status: Complete
-Last activity: 2026-04-29 - Completed Phase 26 plan 26-01: `wikify views`, human Markdown view generation, local static HTML, view manifests, view task conflicts, CLI wiring, docs, and verification.
+Phase: 27 - Agent Wiki Interfaces And Context Packs
+Status: Context gathered
+Last activity: 2026-04-29 - Captured Phase 27 context: object-aware `wikify agent` namespace, root `llms.txt`, visible `artifacts/agent/` indexes, deterministic context packs, citation evidence, related queries, validation gates, and no hidden provider/vector behavior.
 
 Progress: ███████░░░ 71%
 
@@ -53,6 +53,7 @@ Progress: ███████░░░ 71%
 | 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
 | 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
 | 26. Human Wiki Views And Local Static Output | 1/1 | 1 session | 1 session |
+| 27. Agent Wiki Interfaces And Context Packs | 0/1 | 0 sessions | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 22-01, 23-01, 24-01, 25-01, 26-01
@@ -148,6 +149,11 @@ Recent decisions affecting current work:
 - [Phase 26]: Generated view Markdown should be hash-guarded through `.wikify/views/view-manifest.json`; missing optional data should produce honest empty states and next actions.
 - [Phase 26]: `wikify views` validates object artifacts before non-dry-run rendering and turns generated view drift into non-interrupting `.wikify/queues/view-tasks.json` work.
 - [Phase 26]: Static HTML uses stdlib-only escaped rendering under `views/site/` with local CSS and no server, CDN, telemetry, or JavaScript framework dependency.
+- [Phase 27]: Agent interfaces should use a new object-aware `wikify agent` namespace instead of overloading legacy `wikify query` or `wikify graph`.
+- [Phase 27]: Agent artifacts should write conventional root `llms.txt` / `llms-full.txt` plus visible JSON indexes under `artifacts/agent/`, with `.wikify/agent/` reserved for reports and manifests.
+- [Phase 27]: Context packs should be deterministic, budgeted, source-backed, and explainable using local object metadata, citations/source refs, links, and graph/relevance signals; embeddings and hidden LLM selection stay deferred.
+- [Phase 27]: Citation queries should distinguish explicit `citation` objects from weaker page-level `source_refs` and return empty evidence honestly when none exists.
+- [Phase 27]: Non-dry-run agent exports/context packs should validate object artifacts before writing and degrade gracefully when optional graph/view/citation artifacts are missing.
 
 ### Pending Todos
 
@@ -204,6 +210,7 @@ Recent decisions affecting current work:
 - Phase 26 context captured: `wikify views` command boundary, object-artifact source of truth, human Markdown view set, static HTML output, graph/timeline entry views, missing-data behavior, and view hash guards.
 - Phase 26 planned: 1 TDD plan covering `wikify views`, object/source/control artifact loading, Markdown human views, static HTML rendering, hash-guarded view updates, view task queue, CLI wiring, docs, and verification.
 - Phase 26 completed: `wikify views`, dry-run planning, artifact loading, home/page/source/collection/timeline/graph/review Markdown views, stdlib static HTML, view manifest hash guards, view drift task queue, CLI wiring, docs, and verification shipped.
+- Phase 27 context captured: object-aware agent command namespace, `llms.txt`/`llms-full.txt`, `artifacts/agent/` indexes, context pack budget semantics, citation and related query behavior, validation gates, and explicit no-hidden-provider/no-vector boundary.
 
 ## Deferred Items
 
@@ -216,6 +223,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 26 completed.
-Resume file: .planning/phases/26-human-wiki-views-and-local-static-output/26-01-SUMMARY.md
-Next command: `$gsd-discuss-phase 27`
+Stopped at: Phase 27 context gathered.
+Resume file: .planning/phases/27-agent-wiki-interfaces-and-context-packs/27-CONTEXT.md
+Next command: `$gsd-plan-phase 27`
