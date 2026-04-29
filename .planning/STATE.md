@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 25 - Source-Backed Wikiization Pipeline
-Status: Planned; ready for execution
-Last activity: 2026-04-29 - Planned Phase 25 source-backed wikiization pipeline, including `wikify wikiize`, queue selection, deterministic page generation, source refs, edit protection, wikiization tasks, explicit agent request/result handoff, docs, and verification gates.
+Status: Executing 25-01 Build Source-Backed Wikiization Pipeline
+Last activity: 2026-04-29 - Started executing Phase 25 plan 25-01 for `wikify wikiize`, generated source-backed pages, queue lifecycle, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 
 Progress: ████░░░░░░ 43%
 
@@ -200,6 +200,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 25 planned.
+Stopped at: Phase 25 execution started.
 Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-01-PLAN.md
-Next command: `$gsd-execute-phase 25`
+Next command: Continue executing `.planning/phases/25-source-backed-wikiization-pipeline/25-01-PLAN.md`
