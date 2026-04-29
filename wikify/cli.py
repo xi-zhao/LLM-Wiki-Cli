@@ -4,6 +4,7 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.object_validation import validate_workspace_objects
 from wikify.sync import SyncError, sync_workspace
 from wikify.maintenance.bundle_request import (
     BundleRequestError,
@@ -240,6 +241,51 @@ def cmd_sync(args):
         'user_message': 'sync completed',
     }
     return envelope_ok('sync', result)
+
+
+def cmd_validate(args):
+    try:
+        result = validate_workspace_objects(
+            discover_base(),
+            path=args.path,
+            strict=args.strict,
+            write_report=args.write_report,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'validate',
+            'object_validation_command_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    if result.get('summary', {}).get('error_count', 0):
+        result['completion'] = {
+            'status': 'failed',
+            'summary': 'validation failed',
+            'artifacts': artifacts,
+            'next_actions': ['fix_object_validation_errors'],
+            'user_message': 'validation failed',
+        }
+        return envelope_error(
+            'validate',
+            'object_validation_failed',
+            'object validation failed',
+            2,
+            retryable=False,
+            details={'validation': result},
+        )
+
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'validation completed',
+        'artifacts': artifacts,
+        'next_actions': [],
+        'user_message': 'validation completed',
+    }
+    return envelope_ok('validate', result, exit_code=0)
 
 
 def cmd_maintain(args):
@@ -1148,6 +1194,13 @@ def build_parser() -> argparse.ArgumentParser:
         p_sync.add_argument('--source')
         p_sync.add_argument('--dry-run', action='store_true')
         p_sync.set_defaults(func=cmd_sync)
+
+    if 'validate' not in sub.choices:
+        p_validate = sub.add_parser('validate', help='Validate Wikify object artifacts and Markdown object metadata')
+        p_validate.add_argument('--path')
+        p_validate.add_argument('--strict', action='store_true')
+        p_validate.add_argument('--write-report', action='store_true')
+        p_validate.set_defaults(func=cmd_validate)
 
     if 'graph' not in sub.choices:
         p_graph = sub.add_parser('graph', help='Build graph artifacts from compiled Markdown wiki files')

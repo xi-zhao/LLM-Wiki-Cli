@@ -83,6 +83,10 @@ class WikifyCliTests(unittest.TestCase):
         path.write_text(json.dumps(queue), encoding='utf-8')
         return path
 
+    def _write_json(self, path: Path, document: dict):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(document, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
     def _write_bundle_request_fixture(self, kb: Path):
         from wikify.maintenance.bundle_request import build_bundle_request, write_bundle_request
         from wikify.maintenance.proposal import write_patch_proposal
@@ -588,6 +592,21 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.source, 'src_abc')
         self.assertTrue(args.dry_run)
 
+    def test_build_parser_accepts_validate_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        default_args = parser.parse_args(['validate'])
+        focused_args = parser.parse_args(['validate', '--path', 'topics/intro.md', '--strict', '--write-report'])
+
+        self.assertEqual(default_args.command, 'validate')
+        self.assertIsNone(default_args.path)
+        self.assertFalse(default_args.strict)
+        self.assertEqual(focused_args.command, 'validate')
+        self.assertEqual(focused_args.path, 'topics/intro.md')
+        self.assertTrue(focused_args.strict)
+        self.assertTrue(focused_args.write_report)
+
     def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -630,6 +649,143 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'source.add')
                 self.assertEqual(payload['error']['code'], 'workspace_missing')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_validate_command_returns_success_for_legacy_markdown_warnings(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                topics = base / 'topics'
+                topics.mkdir()
+                (topics / 'legacy.md').write_text('# Legacy\n', encoding='utf-8')
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'validate'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'validate')
+                self.assertEqual(payload['result']['schema_version'], 'wikify.object-validation.v1')
+                self.assertGreater(payload['result']['summary']['warning_count'], 0)
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_validate_command_strict_errors_return_exit_code_2(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                self._write_json(
+                    base / 'artifacts' / 'objects' / 'wiki_pages' / 'page_intro.json',
+                    {
+                        'schema_version': 'wikify.wiki-page.v1',
+                        'id': 'page_intro',
+                        'type': 'wiki_page',
+                        'title': 'Intro',
+                        'summary': 'Intro summary',
+                    },
+                )
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'validate', '--strict'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'validate')
+                self.assertEqual(payload['error']['code'], 'object_validation_failed')
+                self.assertEqual(payload['error']['details']['validation']['schema_version'], 'wikify.object-validation.v1')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_validate_command_supports_focused_path(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                topics = base / 'topics'
+                topics.mkdir()
+                (topics / 'intro.md').write_text(
+                    '\n'.join([
+                        '---',
+                        'schema_version: wikify.wiki-page.v1',
+                        'id: page_intro',
+                        'type: wiki_page',
+                        'title: Intro',
+                        'summary: Intro summary',
+                        'body_path: topics/intro.md',
+                        'source_refs: []',
+                        'outbound_links: []',
+                        'backlinks: []',
+                        'created_at: 2026-04-29T00:00:00Z',
+                        'updated_at: 2026-04-29T00:00:00Z',
+                        'confidence: 0.8',
+                        'review_status: generated',
+                        '---',
+                        '# Intro',
+                        '',
+                    ]),
+                    encoding='utf-8',
+                )
+                (topics / 'other.md').write_text('# Other\n', encoding='utf-8')
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'validate', '--path', 'topics/intro.md'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['result']['schema_version'], 'wikify.object-validation.v1')
+                self.assertTrue(payload['result']['path'].endswith('topics/intro.md'))
+                self.assertEqual(payload['result']['summary']['object_count'], 1)
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

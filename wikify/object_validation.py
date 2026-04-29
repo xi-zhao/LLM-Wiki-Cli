@@ -111,7 +111,9 @@ def validate_workspace_objects(
         'artifacts': {},
     }
     if write_report:
-        result['artifacts']['validation_report'] = str(write_validation_report(root, result))
+        report_path = validation_report_path(root)
+        result['artifacts']['validation_report'] = str(report_path)
+        write_validation_report(root, result)
     return result
 
 
