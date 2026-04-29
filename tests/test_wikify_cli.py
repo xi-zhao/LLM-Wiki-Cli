@@ -549,6 +549,139 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(bare_loop_profile_args.agent_profile, '@default')
         self.assertEqual(bare_verifier_profile_args.verifier_profile, '@default')
 
+    def test_build_parser_accepts_workspace_and_source_commands(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        init_args = parser.parse_args(['init', '/tmp/personal-wiki'])
+        add_args = parser.parse_args(['source', 'add', 'https://example.com/a', '--type', 'url'])
+        list_args = parser.parse_args(['source', 'list'])
+        show_args = parser.parse_args(['source', 'show', 'src_123'])
+
+        self.assertEqual(init_args.command, 'init')
+        self.assertEqual(init_args.base, '/tmp/personal-wiki')
+        self.assertEqual(add_args.command, 'source')
+        self.assertEqual(add_args.source_action, 'add')
+        self.assertEqual(add_args.locator, 'https://example.com/a')
+        self.assertEqual(add_args.type, 'url')
+        self.assertEqual(list_args.source_action, 'list')
+        self.assertEqual(show_args.source_action, 'show')
+        self.assertEqual(show_args.target, 'src_123')
+
+    def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
+        cli = importlib.import_module('wikify.cli')
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir) / 'personal-wiki'
+            stdout = io.StringIO()
+
+            with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                cli.main(['--output', 'json', 'init', str(base)])
+
+            self.assertEqual(raised.exception.code, 0)
+            payload = json.loads(stdout.getvalue())
+            self.assertTrue(payload['ok'])
+            self.assertEqual(payload['command'], 'init')
+            self.assertEqual(payload['result']['workspace']['schema_version'], 'wikify.workspace.v1')
+            self.assertTrue((base / 'wikify.json').exists())
+            self.assertTrue((base / '.wikify' / 'registry' / 'sources.json').exists())
+            self.assertTrue((base / 'sources').is_dir())
+            self.assertTrue((base / 'wiki').is_dir())
+            self.assertTrue((base / 'artifacts').is_dir())
+            self.assertTrue((base / 'views').is_dir())
+            self.assertFalse((base / 'graph').exists())
+            self.assertFalse((base / 'sorted').exists())
+
+    def test_source_add_requires_initialized_workspace(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                os.environ['WIKIFY_BASE'] = tmpdir
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'source', 'add', 'missing.md', '--type', 'file'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'source.add')
+                self.assertEqual(payload['error']['code'], 'workspace_manifest_missing')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_source_commands_add_list_and_show_registry_records(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                note = base / 'sources' / 'note.md'
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'init', str(base)])
+                self.assertEqual(raised.exception.code, 0)
+
+                note.write_text('# Note\n', encoding='utf-8')
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'source', 'add', str(note), '--type', 'file'])
+                self.assertEqual(raised.exception.code, 0)
+                add_payload = json.loads(stdout.getvalue())
+                self.assertEqual(add_payload['command'], 'source.add')
+                self.assertEqual(add_payload['result']['status'], 'added')
+                self.assertEqual(add_payload['result']['source']['last_sync_status'], 'never_synced')
+                source_id = add_payload['result']['source']['id']
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'source', 'add', str(note), '--type', 'file'])
+                self.assertEqual(raised.exception.code, 0)
+                duplicate_payload = json.loads(stdout.getvalue())
+                self.assertEqual(duplicate_payload['result']['status'], 'existing')
+                self.assertEqual(duplicate_payload['result']['source']['id'], source_id)
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'source', 'list'])
+                self.assertEqual(raised.exception.code, 0)
+                list_payload = json.loads(stdout.getvalue())
+                self.assertEqual(list_payload['command'], 'source.list')
+                self.assertEqual(list_payload['result']['summary']['source_count'], 1)
+                self.assertEqual(list_payload['result']['sources'][0]['id'], source_id)
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'source', 'show', source_id])
+                self.assertEqual(raised.exception.code, 0)
+                show_payload = json.loads(stdout.getvalue())
+                self.assertEqual(show_payload['command'], 'source.show')
+                self.assertEqual(show_payload['result']['source']['id'], source_id)
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')
         repo = Path(__file__).resolve().parents[1]
