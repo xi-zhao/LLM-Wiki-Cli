@@ -232,6 +232,66 @@ class ViewGenerationTests(unittest.TestCase):
             self.assertIn('No timeline entries exist yet.', (root / 'views' / 'timeline.md').read_text(encoding='utf-8'))
             self.assertNotIn('Source Title.md', (root / 'views' / 'topics' / 'index.md').read_text(encoding='utf-8'))
 
+    def test_generate_static_html_with_local_assets_and_escaped_content(self):
+        from wikify.views import run_view_generation
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_note_workspace(root, content='# Unsafe <Name>\n\nNo scripts should execute.\n')
+
+            result = run_view_generation(root)
+
+            self.assertEqual(result['status'], 'completed')
+            self.assertTrue((root / 'views' / 'site' / 'index.html').exists())
+            self.assertTrue((root / 'views' / 'site' / 'pages.html').exists())
+            self.assertTrue((root / 'views' / 'site' / 'sources' / 'index.html').exists())
+            self.assertTrue((root / 'views' / 'site' / 'assets' / 'style.css').exists())
+            self.assertGreaterEqual(result['summary']['generated_html_count'], 6)
+
+            home_html = (root / 'views' / 'site' / 'index.html').read_text(encoding='utf-8')
+            pages_html = (root / 'views' / 'site' / 'pages.html').read_text(encoding='utf-8')
+            source_index_html = (root / 'views' / 'site' / 'sources' / 'index.html').read_text(encoding='utf-8')
+            css = (root / 'views' / 'site' / 'assets' / 'style.css').read_text(encoding='utf-8')
+
+            self.assertIn('<!doctype html>', home_html)
+            self.assertIn('<h1>Wikify</h1>', home_html)
+            self.assertIn('href="pages.html"', home_html)
+            self.assertIn('href="assets/style.css"', home_html)
+            self.assertIn('&lt;Name&gt;', pages_html)
+            self.assertNotIn('<Name>', pages_html)
+            self.assertIn('href="../assets/style.css"', source_index_html)
+            self.assertIn('font-family:', css)
+            self.assertNotIn('https://', home_html + pages_html + source_index_html + css)
+            self.assertNotIn('<script', home_html + pages_html + source_index_html + css)
+
+    def test_generated_markdown_views_are_hash_guarded_against_user_edits(self):
+        from wikify.views import run_view_generation, view_task_queue_path, views_manifest_path
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_note_workspace(root)
+            first = run_view_generation(root, include_html=False)
+            self.assertEqual(first['status'], 'completed')
+            index_path = root / 'views' / 'index.md'
+            original_manifest = self._read_json(views_manifest_path(root))
+            original_hash = original_manifest['files']['views/index.md']['sha256']
+            index_path.write_text(index_path.read_text(encoding='utf-8') + '\nUser retained note.\n', encoding='utf-8')
+
+            second = run_view_generation(root, include_html=False)
+
+            self.assertEqual(second['status'], 'completed_with_conflicts')
+            self.assertEqual(second['summary']['conflict_count'], 1)
+            self.assertIn('User retained note.', index_path.read_text(encoding='utf-8'))
+            next_manifest = self._read_json(views_manifest_path(root))
+            self.assertEqual(next_manifest['files']['views/index.md']['sha256'], original_hash)
+            queue = self._read_json(view_task_queue_path(root))
+            self.assertEqual(queue['schema_version'], 'wikify.view-tasks.v1')
+            self.assertEqual(queue['summary']['task_count'], 1)
+            task = queue['tasks'][0]
+            self.assertFalse(task['requires_user'])
+            self.assertEqual(task['reason_code'], 'generated_view_drifted')
+            self.assertEqual(task['target_paths']['view_path'], 'views/index.md')
+
 
 if __name__ == '__main__':
     unittest.main()
