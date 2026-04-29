@@ -16,7 +16,7 @@ Users can turn scattered personal and project knowledge into a living local wiki
 
 Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
 
-The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts; Phase 24 shipped the canonical wiki object model, Markdown front matter metadata bridge, structured object validation, graph object-id compatibility, and `wikify validate`; Phase 25 shipped `wikify wikiize` for source-backed generated pages, queue lifecycle updates, edit protection, wikiization task artifacts, and explicit agent enrichment handoff.
+The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts; Phase 24 shipped the canonical wiki object model, Markdown front matter metadata bridge, structured object validation, graph object-id compatibility, and `wikify validate`; Phase 25 shipped `wikify wikiize` for source-backed generated pages, queue lifecycle updates, edit protection, wikiization task artifacts, and explicit agent enrichment handoff; Phase 26 shipped `wikify views` for human-facing Markdown views, local static HTML, view manifests, and non-interrupting view drift tasks.
 
 ## Current Milestone: v0.2.0 Personal Wiki Core & Views
 
@@ -74,10 +74,12 @@ The product direction for v0.2.0 expands the target object from project Markdown
 - [x] Wikiization updates generated pages only when stored generated hashes prove it is safe, and turns user-edited drift into review tasks.
 - [x] Remote-without-content, unsupported, ambiguous, or failed wikiization work creates `.wikify/queues/wikiization-tasks.json` instead of fake pages.
 - [x] External semantic enrichment for wikiization uses explicit `wikify.wikiization-request.v1` and `wikify.wikiization-result.v1` artifacts through `--agent-command` or `--agent-profile`.
+- [x] `wikify views` renders human-facing Markdown views for home, pages, sources, collections, timeline, graph, and review from object/source/control artifacts.
+- [x] `wikify views` produces local static HTML under `views/site/` with stdlib-only rendering and no server or external assets.
+- [x] Generated view Markdown is hash-guarded through `.wikify/views/view-manifest.json`, with drift converted into `.wikify/queues/view-tasks.json`.
 
 ### Active
 
-- [ ] Generated human wiki views and local static browsing.
 - [ ] Agent context exports and query commands.
 - [ ] Maintenance-loop integration for the personal wiki model.
 
@@ -134,6 +136,8 @@ The product direction for v0.2.0 expands the target object from project Markdown
 | Keep Phase 24 object contracts artifact-first | Object JSON and Markdown metadata should define/validate the wiki model without consuming queues or generating pages before Phase 25 | Good |
 | Preserve graph path ids while exposing object ids | Existing graph/maintenance compatibility matters; canonical ids can be additive until generated pages are migrated | Good |
 | Keep Phase 25 wikiization source-backed and explicit | `wikiize` should make the source-to-page loop real while avoiding hidden fetch/provider behavior and protecting user edits | Good |
+| Keep Phase 26 views explicit and artifact-derived | `views` should render existing wiki objects without implicitly running sync, wikiize, graph, providers, agents, or network work | Good |
+| Hash-guard generated human views | Visible wiki pages may be edited by people or agents, so drift should create repair tasks instead of silent overwrites | Good |
 
 ## Evolution
 
@@ -153,4 +157,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after completing Phase 25*
+*Last updated: 2026-04-29 after completing Phase 26*

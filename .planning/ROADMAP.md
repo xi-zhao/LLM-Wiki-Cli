@@ -100,6 +100,8 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 25: Source-Backed Wikiization Pipeline
 
+**Status:** Complete 2026-04-29
+
 **Goal:** Convert ingested source items into structured, source-backed Markdown wiki pages.
 
 **Requirements:** WIK-01, WIK-02, WIK-03, WIK-04, WIK-05
@@ -122,6 +124,8 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 26: Human Wiki Views And Local Static Output
 
+**Status:** Complete 2026-04-29
+
 **Goal:** Make the generated knowledge base readable and navigable for people.
 
 **Requirements:** VIEW-01, VIEW-02, VIEW-03, VIEW-04, VIEW-05
@@ -138,7 +142,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Verification:** Unit tests for Markdown view generation, HTML output, navigation links, source pages, topic pages, graph/timeline entry files, and missing-data behavior.
 
 **Plans:**
-- [ ] **26-01 Build Human Wiki Views And Static Output** - Implement `wikify views`, dry-run planning, Markdown home/page/source/collection/timeline/graph/review views, hash-guarded view writes, view task conflicts, local static HTML under `views/site/`, CLI wiring, docs, and verification.
+- [x] **26-01 Build Human Wiki Views And Static Output** - Implement `wikify views`, dry-run planning, Markdown home/page/source/collection/timeline/graph/review views, hash-guarded view writes, view task conflicts, local static HTML under `views/site/`, CLI wiring, docs, and verification.
 
 **Wave 1:** 26-01 can run after Phase 24 and Phase 25.
 
@@ -197,11 +201,11 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 | WIK-03 | Phase 25 | Complete |
 | WIK-04 | Phase 25 | Complete |
 | WIK-05 | Phase 25 | Complete |
-| VIEW-01 | Phase 26 | Pending |
-| VIEW-02 | Phase 26 | Pending |
-| VIEW-03 | Phase 26 | Pending |
-| VIEW-04 | Phase 26 | Pending |
-| VIEW-05 | Phase 26 | Pending |
+| VIEW-01 | Phase 26 | Complete |
+| VIEW-02 | Phase 26 | Complete |
+| VIEW-03 | Phase 26 | Complete |
+| VIEW-04 | Phase 26 | Complete |
+| VIEW-05 | Phase 26 | Complete |
 | AGT-01 | Phase 27 | Pending |
 | AGT-02 | Phase 27 | Pending |
 | AGT-03 | Phase 27 | Pending |
@@ -232,4 +236,4 @@ Detailed phase plans, summaries, and verification artifacts from v0.1.0a2 remain
 | Milestone | Phases | Plans | Status | Completed |
 |-----------|--------|-------|--------|-----------|
 | v0.1.0a2 Agentic Maintenance Automation | 1-21 | 21/21 | Complete | 2026-04-29 |
-| v0.2.0 Personal Wiki Core & Views | 22-28 | 3/7 | In Progress | — |
+| v0.2.0 Personal Wiki Core & Views | 22-28 | 5/7 | In Progress | — |

@@ -37,11 +37,11 @@
 
 ### Human Wiki Views
 
-- [ ] **VIEW-01**: User can generate a human-facing wiki home page with recent updates, core topics, source groups, and recommended entry points.
-- [ ] **VIEW-02**: User can browse generated source pages that show each source's status, contributed pages, citations, and unresolved issues.
-- [ ] **VIEW-03**: User can browse generated topic, project, person, and decision pages with summaries, related pages, and source-backed references.
-- [ ] **VIEW-04**: User can generate local static HTML output for the wiki using stdlib-compatible rendering.
-- [ ] **VIEW-05**: Human views include graph and timeline entry points generated from the same wiki object model.
+- [x] **VIEW-01**: User can generate a human-facing wiki home page with recent updates, core topics, source groups, and recommended entry points.
+- [x] **VIEW-02**: User can browse generated source pages that show each source's status, contributed pages, citations, and unresolved issues.
+- [x] **VIEW-03**: User can browse generated topic, project, person, and decision pages with summaries, related pages, and source-backed references.
+- [x] **VIEW-04**: User can generate local static HTML output for the wiki using stdlib-compatible rendering.
+- [x] **VIEW-05**: Human views include graph and timeline entry points generated from the same wiki object model.
 
 ### Agent Wiki Interfaces
 
@@ -108,11 +108,11 @@
 | WIK-03 | Phase 25 | Complete |
 | WIK-04 | Phase 25 | Complete |
 | WIK-05 | Phase 25 | Complete |
-| VIEW-01 | Phase 26 | Pending |
-| VIEW-02 | Phase 26 | Pending |
-| VIEW-03 | Phase 26 | Pending |
-| VIEW-04 | Phase 26 | Pending |
-| VIEW-05 | Phase 26 | Pending |
+| VIEW-01 | Phase 26 | Complete |
+| VIEW-02 | Phase 26 | Complete |
+| VIEW-03 | Phase 26 | Complete |
+| VIEW-04 | Phase 26 | Complete |
+| VIEW-05 | Phase 26 | Complete |
 | AGT-01 | Phase 27 | Pending |
 | AGT-02 | Phase 27 | Pending |
 | AGT-03 | Phase 27 | Pending |
@@ -130,4 +130,4 @@
 
 ---
 *Requirements defined: 2026-04-29*
-*Last updated: 2026-04-29 after completing Phase 24*
+*Last updated: 2026-04-29 after completing Phase 26*

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 26 human wiki views and local static output.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 27 agent wiki interfaces and context packs.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 26 - Human Wiki Views And Local Static Output
-Status: Ready to execute
-Last activity: 2026-04-29 - Planned Phase 26 plan 26-01: `wikify views`, human Markdown view generation, local static HTML, view manifests, view task conflicts, CLI wiring, docs, and verification.
+Status: Complete
+Last activity: 2026-04-29 - Completed Phase 26 plan 26-01: `wikify views`, human Markdown view generation, local static HTML, view manifests, view task conflicts, CLI wiring, docs, and verification.
 
-Progress: ██████░░░░ 57%
+Progress: ███████░░░ 71%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
+- Total plans completed: 26
 - Average duration: 1 session
-- Total execution time: 25 sessions
+- Total execution time: 26 sessions
 
 **By Phase:**
 
@@ -52,10 +52,10 @@ Progress: ██████░░░░ 57%
 | 23. Incremental Sync And Ingest Queue | 1/1 | 1 session | 1 session |
 | 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
 | 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
-| 26. Human Wiki Views And Local Static Output | 0/1 | 0 sessions | TBD |
+| 26. Human Wiki Views And Local Static Output | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 21-01, 22-01, 23-01, 24-01, 25-01
+- Last 5 plans: 22-01, 23-01, 24-01, 25-01, 26-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -146,6 +146,8 @@ Recent decisions affecting current work:
 - [Phase 26]: `wikify views` should be the explicit human-view generation command, producing Markdown views and local static HTML without running sync, wikiize, graph, providers, or agents implicitly.
 - [Phase 26]: Human views must render from `artifacts/objects/` plus source, queue, validation, and optional graph artifacts, not from a separate human-only knowledge store.
 - [Phase 26]: Generated view Markdown should be hash-guarded through `.wikify/views/view-manifest.json`; missing optional data should produce honest empty states and next actions.
+- [Phase 26]: `wikify views` validates object artifacts before non-dry-run rendering and turns generated view drift into non-interrupting `.wikify/queues/view-tasks.json` work.
+- [Phase 26]: Static HTML uses stdlib-only escaped rendering under `views/site/` with local CSS and no server, CDN, telemetry, or JavaScript framework dependency.
 
 ### Pending Todos
 
@@ -201,6 +203,7 @@ Recent decisions affecting current work:
 - Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
 - Phase 26 context captured: `wikify views` command boundary, object-artifact source of truth, human Markdown view set, static HTML output, graph/timeline entry views, missing-data behavior, and view hash guards.
 - Phase 26 planned: 1 TDD plan covering `wikify views`, object/source/control artifact loading, Markdown human views, static HTML rendering, hash-guarded view updates, view task queue, CLI wiring, docs, and verification.
+- Phase 26 completed: `wikify views`, dry-run planning, artifact loading, home/page/source/collection/timeline/graph/review Markdown views, stdlib static HTML, view manifest hash guards, view drift task queue, CLI wiring, docs, and verification shipped.
 
 ## Deferred Items
 
@@ -213,6 +216,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 26 planned.
-Resume file: .planning/phases/26-human-wiki-views-and-local-static-output/26-01-PLAN.md
-Next command: `$gsd-execute-phase 26`
+Stopped at: Phase 26 completed.
+Resume file: .planning/phases/26-human-wiki-views-and-local-static-output/26-01-SUMMARY.md
+Next command: `$gsd-discuss-phase 27`
