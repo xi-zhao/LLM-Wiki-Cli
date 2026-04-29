@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: Not started (defining requirements and roadmap)
-Status: Defining requirements
-Last activity: 2026-04-29 - Started v0.2.0 milestone planning.
+Phase: 22 - Personal Wiki Workspace And Source Registry
+Status: Context gathered; ready for planning
+Last activity: 2026-04-29 - Captured Phase 22 context for workspace and source registry design.
 
 Progress: ░░░░░░░░░░ 0%
 
@@ -163,6 +163,7 @@ Recent decisions affecting current work:
 - Phase 21 added: Milestone Verification Artifacts.
 - Phase 21 completed: Milestone Verification Artifacts.
 - Milestone v0.2.0 started: Personal Wiki Core & Views.
+- Phase 22 context captured: workspace manifest, source identity, registration scope, CLI shape, and registry artifact decisions.
 
 ## Deferred Items
 
@@ -175,6 +176,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: v0.2.0 milestone planning started.
-Resume file: None
-Next command: Complete requirements and roadmap, then `$gsd-discuss-phase 22`
+Stopped at: Phase 22 context gathered.
+Resume file: .planning/phases/22-personal-wiki-workspace-and-source-registry/22-CONTEXT.md
+Next command: `$gsd-plan-phase 22`
