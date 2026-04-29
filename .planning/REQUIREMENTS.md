@@ -172,6 +172,17 @@
 - [x] **MLP-07**: Docs describe loop automation, stop conditions, default bounds, and explicit external-agent safety.
 - [x] **MLP-08**: Full unittest and compile verification pass.
 
+### Agent Verifier Gate
+
+- [ ] **VFG-01**: `wikify verify-bundle` builds a verifier request from proposal, patch bundle, and deterministic preflight output.
+- [ ] **VFG-02**: Verifier commands receive JSON on stdin and must return a `wikify.patch-bundle-verdict.v1` JSON verdict.
+- [ ] **VFG-03**: Accepted verifier verdicts write `sorted/graph-patch-verifications/<task-id>.json` and allow downstream apply.
+- [ ] **VFG-04**: Rejected verifier verdicts write an audit artifact and block apply before content mutation or lifecycle mark-done.
+- [ ] **VFG-05**: `run-task`, `run-tasks`, `maintain-run`, and `maintain-loop` accept explicit `--verifier-command` and `--verifier-profile` flags.
+- [ ] **VFG-06**: Dry-run paths do not execute verifier commands or write verification artifacts.
+- [ ] **VFG-07**: Invalid verifier output, command failure, and timeout return structured non-retryable errors.
+- [ ] **VFG-08**: Docs and tests cover verifier contract, profile shorthand, and explicit external-agent boundaries.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -299,6 +310,14 @@
 | MLP-06 | Phase 17 | Complete |
 | MLP-07 | Phase 17 | Complete |
 | MLP-08 | Phase 17 | Complete |
+| VFG-01 | Phase 18 | Planned |
+| VFG-02 | Phase 18 | Planned |
+| VFG-03 | Phase 18 | Planned |
+| VFG-04 | Phase 18 | Planned |
+| VFG-05 | Phase 18 | Planned |
+| VFG-06 | Phase 18 | Planned |
+| VFG-07 | Phase 18 | Planned |
+| VFG-08 | Phase 18 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -314,9 +333,10 @@
 - v2 agent profile requirements: 8 total
 - v2 default profile requirements: 7 total
 - v2 maintenance loop requirements: 8 total
-- Mapped to phases: 107
+- v2 agent verifier gate requirements: 8 total
+- Mapped to phases: 115
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 after Phase 17 completion*
+*Last updated: 2026-04-29 for Phase 18 planning*

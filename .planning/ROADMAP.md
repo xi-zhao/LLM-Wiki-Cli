@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, and bounded maintenance loop automation.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, and an explicit agent verifier gate.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -29,6 +29,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
 - [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
 - [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
+- [ ] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
 
 ## Phase Details
 
@@ -330,6 +331,25 @@ Plans:
 Plans:
 - [x] 17-01: Build bounded maintenance loop automation
 
+### Phase 18: Agent Verifier Gate
+**Goal**: `wikify verify-bundle` and automation `--verifier-*` flags let an explicit verifier agent accept or reject a patch bundle before apply.
+**Depends on**: Phase 12, Phase 13, Phase 17
+**Requirements**: VFG-01, VFG-02, VFG-03, VFG-04, VFG-05, VFG-06, VFG-07, VFG-08
+**Why after Phase 17**: The automation loop can now run with little user interruption. The next safety step is delegating review to an explicit verifier agent before content mutation, rather than asking the user to manually approve every bundle.
+**Success Criteria** (what must be TRUE):
+  1. A verifier request includes proposal, bundle, deterministic preflight output, and verdict schema instructions.
+  2. A standalone command can verify an existing proposal/bundle pair.
+  3. Accepted verifier verdicts write audit artifacts and allow apply.
+  4. Rejected verifier verdicts write audit artifacts and block apply before content mutation or mark-done.
+  5. `run-task`, `run-tasks`, `maintain-run`, and `maintain-loop` accept explicit verifier command/profile flags.
+  6. Dry-run never executes verifier commands.
+  7. Docs describe verifier contract and explicit-agent safety boundaries.
+  8. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 18-01: Build explicit agent verifier gate
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -351,3 +371,4 @@ Plans:
 | 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |
 | 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |
 | 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
+| 18. Agent Verifier Gate | 0/1 | Planned | - |
