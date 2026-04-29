@@ -48,6 +48,7 @@ wikify source add "https://example.com" --type url
 wikify source list
 wikify sync --dry-run
 wikify sync
+wikify validate
 wikify check
 wikify stats
 wikify ingest "https://example.com"
@@ -142,6 +143,34 @@ When `WIKIFY_BASE` and `FOKB_BASE` are unset, `wikify` looks for `wikify.json` i
 Sync uses deterministic local fingerprints for files and directories. Re-running without changes reports `unchanged` and does not duplicate queue entries. Only `new` and `changed` items become active pending wikiization work; `missing`, `skipped`, and `errored` items are recorded for status and troubleshooting.
 
 Sync does not fetch URLs, clone repositories, call providers, run `wikify ingest`, generate wiki pages, generate views, or create agent exports. URL and remote repository sources are represented as offline remote items with `network_checked: false`.
+
+## Wiki object model and validation
+
+Phase 24 defines the v0.2 wiki object contract and validation surface only. It does not consume `.wikify/queues/ingest-items.json`, generate wiki pages, call providers, or build human views. Queue consumption and page generation start in Phase 25.
+
+Visible object artifacts live under `artifacts/objects/`:
+- `artifacts/objects/object-index.json` uses `wikify.object-index.v1`
+- `artifacts/objects/validation.json` uses `wikify.object-validation.v1`
+- object JSON files can be grouped under directories such as `artifacts/objects/wiki_pages/`
+
+Supported object schemas are `wikify.wiki-page.v1`, `wikify.topic.v1`, `wikify.project.v1`, `wikify.person.v1`, `wikify.decision.v1`, `wikify.timeline-entry.v1`, `wikify.citation.v1`, `wikify.graph-edge.v1`, and `wikify.context-pack.v1`. Object types are `source`, `source_item`, `wiki_page`, `topic`, `project`, `person`, `decision`, `timeline_entry`, `citation`, `graph_edge`, and `context_pack`.
+
+Wiki page objects require `schema_version`, `id`, `type`, `title`, `summary`, `body_path`, `source_refs`, `outbound_links`, `backlinks`, `created_at`, `updated_at`, `confidence`, and `review_status`. `review_status` is one of `generated`, `needs_review`, `approved`, `rejected`, or `stale`. Graph edge provenance uses `EXTRACTED`, `INFERRED`, or `AMBIGUOUS`.
+
+Markdown front matter is a readable metadata mirror for object fields. Wikify supports a bounded subset: scalar values plus JSON-flow arrays/objects. It intentionally does not require full YAML parsing.
+
+Validation commands:
+
+```bash
+wikify validate
+wikify validate --path <path>
+wikify validate --strict
+wikify validate --write-report
+```
+
+Default validation is compatibility-tolerant: legacy Markdown without object front matter returns warnings and exits `0`. Hard validation failures return exit code `2` with structured records. Each record has `code`, `message`, `path`, `object_id`, `field`, `severity`, and `details`. Stable validation codes include `object_required_field_missing`, `object_duplicate_id`, `object_link_unresolved`, `object_source_ref_unresolved`, `object_frontmatter_invalid`, and `object_schema_invalid`.
+
+Compatibility is preserved: `wikify graph` keeps relative-path node ids while exposing optional object ids, `wikify maintain` keeps its current graph maintenance flow, legacy `fokb` commands still work, and existing sample KB layouts remain readable.
 
 ## Try the sample KB
 

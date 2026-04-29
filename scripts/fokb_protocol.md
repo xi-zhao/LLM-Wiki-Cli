@@ -113,6 +113,14 @@
 - `patch_rollback_hash_mismatch`
 - `patch_rollback_failed`
 - `agent_task_run_failed`
+- `object_validation_failed`
+- `object_validation_command_failed`
+- `object_required_field_missing`
+- `object_duplicate_id`
+- `object_link_unresolved`
+- `object_source_ref_unresolved`
+- `object_frontmatter_invalid`
+- `object_schema_invalid`
 
 ### review / reingest / resolve
 - `review_item_not_found`
@@ -155,6 +163,10 @@
 - `search`
 - `show`
 - `query`
+- `validate`
+- `validate --path <path>`
+- `validate --strict`
+- `validate --write-report`
 
 ### 工作流层
 - `ingest`
@@ -326,7 +338,149 @@ ingest queue 规则：
 - URL 和远程 repository source 只生成 `network_checked: false` 的离线 remote item
 - local repository source 按目录语义扫描 regular files，不调用 repository 工具
 
-## 6. Maintenance schema v1
+## 6. Wiki object model and validation schema v1
+
+Phase 24 只定义对象模型、Markdown front matter metadata bridge、JSON artifact contract 和验证协议。它不消费 ingest queue，不生成 wiki 页面，不调用 provider，不生成 views；队列消费和页面生成从 Phase 25 开始。
+
+对象产物根目录固定为 `artifacts/objects/`：
+
+- `artifacts/objects/object-index.json`
+- `artifacts/objects/validation.json`
+- type-specific JSON artifact directories, for example `artifacts/objects/wiki_pages/`
+
+Phase 24 schema versions:
+
+- `wikify.object-index.v1`
+- `wikify.wiki-page.v1`
+- `wikify.topic.v1`
+- `wikify.project.v1`
+- `wikify.person.v1`
+- `wikify.decision.v1`
+- `wikify.timeline-entry.v1`
+- `wikify.citation.v1`
+- `wikify.graph-edge.v1`
+- `wikify.context-pack.v1`
+- `wikify.object-validation.v1`
+
+Object types:
+
+- `source`
+- `source_item`
+- `wiki_page`
+- `topic`
+- `project`
+- `person`
+- `decision`
+- `timeline_entry`
+- `citation`
+- `graph_edge`
+- `context_pack`
+
+`wiki_page` required fields:
+
+- `schema_version`
+- `id`
+- `type`
+- `title`
+- `summary`
+- `body_path`
+- `source_refs`
+- `outbound_links`
+- `backlinks`
+- `created_at`
+- `updated_at`
+- `confidence`
+- `review_status`
+
+`review_status` values are `generated`, `needs_review`, `approved`, `rejected`, and `stale`.
+
+Graph edge provenance values are `EXTRACTED`, `INFERRED`, and `AMBIGUOUS`.
+
+Markdown front matter supports scalar values plus JSON-flow arrays/objects. It is a bounded parser contract, not full YAML compatibility and not a dependency on a YAML package.
+
+Validation commands:
+
+```bash
+wikify validate
+wikify validate --path <path>
+wikify validate --strict
+wikify validate --write-report
+```
+
+Success envelope:
+
+```json
+{
+  "ok": true,
+  "command": "validate",
+  "exit_code": 0,
+  "result": {
+    "schema_version": "wikify.object-validation.v1",
+    "status": "passed",
+    "summary": {
+      "object_count": 1,
+      "record_count": 0,
+      "error_count": 0,
+      "warning_count": 0
+    },
+    "records": []
+  }
+}
+```
+
+Hard validation failure envelope:
+
+```json
+{
+  "ok": false,
+  "command": "validate",
+  "exit_code": 2,
+  "error": {
+    "code": "object_validation_failed",
+    "message": "object validation failed",
+    "retryable": false,
+    "details": {
+      "validation": {
+        "schema_version": "wikify.object-validation.v1",
+        "records": []
+      }
+    }
+  }
+}
+```
+
+Validation records have exactly these top-level fields:
+
+- `code`
+- `message`
+- `path`
+- `object_id`
+- `field`
+- `severity`
+- `details`
+
+Stable validation codes:
+
+- `object_required_field_missing`
+- `object_duplicate_id`
+- `object_link_unresolved`
+- `object_source_ref_unresolved`
+- `object_frontmatter_invalid`
+- `object_schema_invalid`
+
+Exit semantics:
+
+- warnings-only default validation exits `0`
+- hard validation failures exit `2`
+
+Compatibility:
+
+- `wikify graph` keeps relative path node ids and exposes object ids as additive metadata
+- `wikify maintain` keeps its current graph maintenance artifacts and task flow
+- legacy `fokb` commands remain available
+- existing sample KB layouts remain readable
+
+## 7. Maintenance schema v1
 
 `maintenance` 是 `wikify` 当前最重要的增量知识维护协议层之一。`graph` 是结构理解协议层，负责把已编译 Markdown wiki 转成可审计图谱产物。`maintain` 是自动图谱维护入口，负责把 graph analytics 转成 findings、plan、execution classification 和 append-only history。
 
@@ -370,7 +524,7 @@ ingest queue 规则：
 - `changed_objects`
   - 对象级维护分析数组
 
-## 6. Changed object schema v1
+## 8. Changed object schema v1
 
 ```json
 {
@@ -407,7 +561,7 @@ ingest queue 规则：
 - `verdict`
   - 对象级 verdict
 
-## 7. Claim schema v1
+## 9. Claim schema v1
 
 ```json
 {
@@ -440,7 +594,7 @@ ingest queue 规则：
 - `source_path`
   - 来源路径
 
-## 8. Contradiction schema v1
+## 10. Contradiction schema v1
 
 ```json
 {
@@ -463,7 +617,7 @@ ingest queue 规则：
   - `changed` / `neighbor`
   - 表示当前更像基线的一侧，不等于真值裁决，只表示当前维护判断倾向
 
-## 9. Verdict registry v1
+## 11. Verdict registry v1
 
 ### 顶层 / 对象级 verdict
 - `stable`
@@ -477,7 +631,7 @@ ingest queue 规则：
 - `needs_promotion`
   - 当前对象应进一步沉淀为 topic / timeline / 稳定结论
 
-## 10. History / state / decision 协议
+## 12. History / state / decision 协议
 
 ### `stats`
 重点聚合字段：
@@ -1648,7 +1802,7 @@ repair request 片段：
 提升后的 topic skeleton 会带 `来源候选` 区块，maintenance 会把它识别为 `topic_seed_source_present`，而不是直接视为缺失回链的错误对象。
 同时，template-aware extraction guardrail 会尽量跳过 skeleton 模板句，并抑制 markdown link / slug fragment 噪声及 placeholder semantic words，避免把占位文本误识别成真实 concept / claim。
 
-## 11. Agent 调用建议
+## 13. Agent 调用建议
 
 ### 优先使用字段
 - `ok`
@@ -1686,7 +1840,7 @@ repair request 片段：
 - `error.message` 措辞细节
 - `pretty` 输出格式细节
 
-## 12. 兼容性原则
+## 14. 兼容性原则
 
 - 新增字段允许
 - 既有字段尽量不改名
@@ -1694,7 +1848,7 @@ repair request 片段：
 - `maintenance.verdict / maintenance.changed_objects / contradiction.baseline_side / decision.actions` 进入稳定协议面
 - 算法可演进，但字段语义尽量保持稳定
 
-## 13. 当前已知边界
+## 15. 当前已知边界
 
 - `claim extraction` 仍是 heuristic v1，不是完整语义解析
 - `canonical_subject` 仍是弱归一化，不是完整 entity resolution
@@ -1702,7 +1856,7 @@ repair request 片段：
 - 对 `count: 0` 的 zero-context synthesis，可能没有邻域对象、claims 或 contradictions，这属于正常行为
 - 对 zero-context changed object，`needs_promotion` 会被 guardrail 抑制，避免标题词噪声直接触发 promotion
 
-## 14. 后续演进方向
+## 16. 后续演进方向
 
 - 更强的 subject clustering / entity resolution
 - promotion 动作建议结构化
