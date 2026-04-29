@@ -205,10 +205,10 @@
 
 ### Milestone Verification Closure
 
-- [ ] **GSV-01**: Each completed milestone phase from 1-20 has a standalone `*-VERIFICATION.md` artifact.
-- [ ] **GSV-02**: Verification artifacts cross-reference phase requirements, summary evidence, and current verification commands.
-- [ ] **GSV-03**: The `v0.1.0a1` milestone audit is updated after verification artifacts exist.
-- [ ] **GSV-04**: Milestone completion remains blocked until the audit no longer reports missing verification artifacts as an open blocker.
+- [x] **GSV-01**: Each completed milestone phase from 1-20 has a standalone `*-VERIFICATION.md` artifact.
+- [x] **GSV-02**: Verification artifacts cross-reference phase requirements, summary evidence, and current verification commands.
+- [x] **GSV-03**: The `v0.1.0a1` milestone audit is updated after verification artifacts exist.
+- [x] **GSV-04**: Milestone completion remains blocked until the audit no longer reports missing verification artifacts as an open blocker.
 
 ### Agent Consumer
 
@@ -359,10 +359,10 @@
 | RPR-05 | Phase 20 | Complete |
 | RPR-06 | Phase 20 | Complete |
 | RPR-07 | Phase 20 | Complete |
-| GSV-01 | Phase 21 | Pending |
-| GSV-02 | Phase 21 | Pending |
-| GSV-03 | Phase 21 | Pending |
-| GSV-04 | Phase 21 | Pending |
+| GSV-01 | Phase 21 | Complete |
+| GSV-02 | Phase 21 | Complete |
+| GSV-03 | Phase 21 | Complete |
+| GSV-04 | Phase 21 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total

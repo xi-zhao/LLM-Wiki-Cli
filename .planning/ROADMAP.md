@@ -32,7 +32,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
 - [x] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
 - [x] **Phase 20: Verifier Repair Automation** - Feed verifier rejection feedback back into explicit producer runs so blocked tasks can be repaired.
-- [ ] **Phase 21: Milestone Verification Artifacts** - Close the milestone audit gap by creating standalone verification artifacts for completed phases.
+- [x] **Phase 21: Milestone Verification Artifacts** - Close the milestone audit gap by creating standalone verification artifacts for completed phases.
 
 ## Phase Details
 
@@ -403,7 +403,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 21-01: Build milestone verification artifact set
+- [x] 21-01: Build milestone verification artifact set
 
 ## Progress
 
@@ -429,4 +429,4 @@ Plans:
 | 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |
 | 19. Verifier Rejection Feedback | 1/1 | Complete | 2026-04-29 |
 | 20. Verifier Repair Automation | 1/1 | Complete | 2026-04-29 |
-| 21. Milestone Verification Artifacts | 0/1 | Planned | - |
+| 21. Milestone Verification Artifacts | 1/1 | Complete | 2026-04-29 |
