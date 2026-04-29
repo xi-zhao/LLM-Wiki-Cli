@@ -75,6 +75,10 @@
 - `source_type_invalid`
 - `source_locator_invalid`
 - `source_not_found`
+- `sync_source_not_found`
+- `source_items_invalid_json`
+- `ingest_queue_invalid_json`
+- `sync_failed`
 - `object_not_found`
 - `graph_maintenance_failed`
 - `agent_task_queue_missing`
@@ -134,6 +138,9 @@
 - `source add <locator> --type file|directory|url|repository|note`
 - `source list`
 - `source show <source-id-or-locator>`
+- `sync`
+- `sync --source <source-id>`
+- `sync --dry-run`
 
 ### 运行 / 状态层
 - `status`
@@ -281,6 +288,43 @@ base 解析优先级：
 2. `FOKB_BASE`
 3. 当前目录或父目录中的 `wikify.json`
 4. 应用根目录 fallback
+
+### Incremental sync and ingest queue schema v1
+
+`wikify sync` 是 source registry 后的离线增量发现层。它读取 `.wikify/registry/sources.json`，发现 source item，把 item 分类为 `new`、`changed`、`unchanged`、`missing`、`skipped`、`errored`，并写入三个控制面 artifact：
+
+- `.wikify/sync/source-items.json`，schema_version 为 `wikify.source-items.v1`
+- `.wikify/sync/last-sync.json`，schema_version 为 `wikify.sync-run.v1`
+- `.wikify/queues/ingest-items.json`，schema_version 为 `wikify.ingest-queue.v1`
+
+命令：
+
+```bash
+wikify sync
+wikify sync --source src_<id>
+wikify sync --dry-run
+```
+
+成功 envelope 的 `command` 固定为 `sync`。`result.schema_version` 固定为 `wikify.sync-run.v1`，`result.summary.item_status_counts` 至少包含 `new`、`changed`、`unchanged`、`missing`、`skipped`、`errored` 六类计数。`--source` 只同步指定 source；未选中的 source item 和 registry source metadata 保持不变。
+
+`--dry-run` 返回计划中的 source item 状态、queue 预览和 artifact 路径，但不写 `.wikify/sync/`、`.wikify/queues/`，也不更新 registry sync metadata。
+
+ingest queue 规则：
+
+- 只有 `new` 和 `changed` item 会写入 active queue entry
+- queue entry 使用稳定 `queue_<hash>` id，重复 sync 不重复创建
+- `missing`、`skipped`、`errored` 只进入状态 artifact，不进入 active queue
+- queue entry 必须包含 `source_id`、`item_id`、`item_status`、`status: "queued"`、`requires_user: false`、`evidence`、`acceptance_checks`
+
+边界规则：
+
+- `sync` 不会抓取 URL，does not fetch remote content
+- `sync` 不会 clone repository
+- `sync` 不调用 provider 或隐藏外部 agent
+- `sync` 不运行 `wikify ingest`，不执行 wiki 化
+- `sync` 不生成 wiki 页面、views 或 agent export
+- URL 和远程 repository source 只生成 `network_checked: false` 的离线 remote item
+- local repository source 按目录语义扫描 regular files，不调用 repository 工具
 
 ## 6. Maintenance schema v1
 

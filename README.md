@@ -28,6 +28,7 @@ In short:
 
 - Initialize a personal wiki workspace with a source registry
 - Register source files, directories, URLs, repositories, and notes without hidden fetch/sync work
+- Sync registered sources into deterministic source item and ingest queue artifacts
 - Ingest URLs into a local wiki
 - Maintain parsed articles, briefs, topics, timelines, and digests
 - Return stable JSON envelopes for automation
@@ -45,6 +46,8 @@ wikify init ~/personal-wiki
 export WIKIFY_BASE="$HOME/personal-wiki"
 wikify source add "https://example.com" --type url
 wikify source list
+wikify sync --dry-run
+wikify sync
 wikify check
 wikify stats
 wikify ingest "https://example.com"
@@ -119,9 +122,26 @@ wikify source add ~/notes/research.md --type file
 wikify source add "https://example.com/report" --type url
 wikify source list
 wikify source show src_<id>
+wikify sync --dry-run
+wikify sync
+wikify sync --source src_<id>
 ```
 
 When `WIKIFY_BASE` and `FOKB_BASE` are unset, `wikify` looks for `wikify.json` in the current directory or its parents before falling back to the application root.
+
+## Incremental sync and ingest queue
+
+`wikify sync` discovers registered source items, classifies each item as `new`, `changed`, `unchanged`, `missing`, `skipped`, or `errored`, and writes current control-plane artifacts:
+
+- `.wikify/sync/source-items.json` using `wikify.source-items.v1`
+- `.wikify/sync/last-sync.json` using `wikify.sync-run.v1`
+- `.wikify/queues/ingest-items.json` using `wikify.ingest-queue.v1`
+
+`wikify sync --source src_<id>` limits discovery to one source. `wikify sync --dry-run` returns the same planned status and queue summary without writing `.wikify/sync/`, `.wikify/queues/`, or registry sync metadata.
+
+Sync uses deterministic local fingerprints for files and directories. Re-running without changes reports `unchanged` and does not duplicate queue entries. Only `new` and `changed` items become active pending wikiization work; `missing`, `skipped`, and `errored` items are recorded for status and troubleshooting.
+
+Sync does not fetch URLs, clone repositories, call providers, run `wikify ingest`, generate wiki pages, generate views, or create agent exports. URL and remote repository sources are represented as offline remote items with `network_checked: false`.
 
 ## Try the sample KB
 

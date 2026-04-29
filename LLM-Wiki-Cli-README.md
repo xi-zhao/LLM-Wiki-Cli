@@ -81,6 +81,7 @@ Wikify 的产品目标可以概括成五句话：
 - `source add`
 - `source list`
 - `source show`
+- `sync`
 - `check`
 - `status`
 - `stats`
@@ -124,6 +125,9 @@ wikify source add ~/notes/research.md --type file
 wikify source add "https://example.com/report" --type url
 wikify source list
 wikify source show src_<id>
+wikify sync --dry-run
+wikify sync
+wikify sync --source src_<id>
 ```
 
 base 解析优先级：
@@ -132,6 +136,30 @@ base 解析优先级：
 2. `FOKB_BASE`
 3. 当前目录或父目录中的 `wikify.json`
 4. 应用根目录兼容 fallback
+
+### 增量 sync 与 ingest queue
+
+`wikify sync` 会离线扫描 source registry 中的 source，生成 source item 状态和后续 wiki 化队列。它把每个 item 分类为 `new`、`changed`、`unchanged`、`missing`、`skipped`、`errored`。
+
+写入的控制面 artifact：
+
+- `.wikify/sync/source-items.json`，schema 为 `wikify.source-items.v1`
+- `.wikify/sync/last-sync.json`，schema 为 `wikify.sync-run.v1`
+- `.wikify/queues/ingest-items.json`，schema 为 `wikify.ingest-queue.v1`
+
+常用命令：
+
+```bash
+wikify sync
+wikify sync --source src_<id>
+wikify sync --dry-run
+```
+
+`--dry-run` 只返回计划中的 registry 与 queue 变化，不写 `.wikify/sync/`、`.wikify/queues/`，也不更新 registry sync metadata。重复 sync 且内容没有变化时，item 会变成 `unchanged`，不会重复创建 queue entry。
+
+队列规则：只有 `new` 和 `changed` item 会进入 active pending wikiization work；`missing`、`skipped`、`errored` 只进入状态 artifact，不进入 active queue。
+
+边界规则：`wikify sync` 不会抓取 URL、不会 clone repository、不会调用 provider、不会运行 `wikify ingest`、不会生成 wiki 页面、不会生成 views，也不会生成 agent export。URL 和远程 repository source 只生成 `network_checked: false` 的离线 remote item。
 
 ## 3.2 入库与工作流
 
