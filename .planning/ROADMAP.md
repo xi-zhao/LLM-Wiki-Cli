@@ -115,6 +115,11 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 **Verification:** Unit tests for page generation, source traceability, incremental updates, user-edit protection, review task creation, and external agent handoff artifacts.
 
+**Plans:**
+- [ ] **25-01 Build Source-Backed Wikiization Pipeline** - Implement `wikify wikiize`, dry-run and selectors, deterministic local page generation, source refs, object/front matter writes, object index updates, edit-protection guards, wikiization task queue, explicit agent request/result handoff, docs, and verification.
+
+**Wave 1:** 25-01 can run after Phase 22, Phase 23, and Phase 24.
+
 ### Phase 26: Human Wiki Views And Local Static Output
 
 **Goal:** Make the generated knowledge base readable and navigable for people.

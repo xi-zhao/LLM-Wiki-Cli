@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 25 - Source-Backed Wikiization Pipeline
-Status: Context gathered; ready for planning
-Last activity: 2026-04-29 - Gathered Phase 25 source-backed wikiization context, including `wikify wikiize` command boundary, ingest queue lifecycle, generated page/object layout, source traceability, explicit agent handoff, edit protection, review/task artifacts, and validation gates.
+Status: Planned; ready for execution
+Last activity: 2026-04-29 - Planned Phase 25 source-backed wikiization pipeline, including `wikify wikiize`, queue selection, deterministic page generation, source refs, edit protection, wikiization tasks, explicit agent request/result handoff, docs, and verification gates.
 
 Progress: ████░░░░░░ 43%
 
@@ -187,6 +187,7 @@ Recent decisions affecting current work:
 - Phase 24 planned: 1 TDD plan covering object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification.
 - Phase 24 completed: canonical object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification artifacts shipped.
 - Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
+- Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 
 ## Deferred Items
 
@@ -199,6 +200,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 25 context gathered.
-Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-CONTEXT.md
-Next command: `$gsd-plan-phase 25`
+Stopped at: Phase 25 planned.
+Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-01-PLAN.md
+Next command: `$gsd-execute-phase 25`
