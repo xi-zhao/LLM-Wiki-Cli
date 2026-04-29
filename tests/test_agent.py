@@ -246,6 +246,181 @@ class AgentInterfaceTests(unittest.TestCase):
             self.assertNotIn(str(source_path), llms_full)
             self.assertIn('artifacts/agent/page-index.json', result['completion']['artifacts'])
 
+    def test_agent_context_dry_run_selects_budgeted_source_backed_items_without_writes(self):
+        from wikify.agent import context_pack_dir, context_pack_manifest_path, run_agent_context
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _source_path, source, item = self._write_note_workspace(root)
+            self._write_semantic_object_fixtures(root, source, item)
+
+            result = run_agent_context(root, 'agent context', dry_run=True, max_chars=800, max_pages=2)
+
+            self.assertEqual(result['schema_version'], 'wikify.context-pack.v1')
+            self.assertEqual(result['status'], 'dry_run')
+            self.assertEqual(result['query'], 'agent context')
+            self.assertFalse(context_pack_dir(root).exists())
+            self.assertFalse(context_pack_manifest_path(root).exists())
+            self.assertEqual(result['budget']['requested_max_chars'], 800)
+            self.assertEqual(result['budget']['max_pages'], 2)
+            self.assertLessEqual(result['budget']['included_chars'], 800)
+            self.assertGreater(len(result['items']), 0)
+            selected = result['items'][0]
+            for key in [
+                'object_id',
+                'type',
+                'title',
+                'summary',
+                'body_path',
+                'excerpt',
+                'excerpt_chars',
+                'truncated',
+                'selection_rationale',
+                'source_refs',
+                'citations',
+                'related',
+            ]:
+                self.assertIn(key, selected)
+            self.assertTrue(selected['selection_rationale'])
+            self.assertTrue(selected['source_refs'])
+            self.assertIn('citations', result)
+            self.assertIn('related', result)
+
+            small = run_agent_context(root, 'agent context', dry_run=True, max_chars=80, max_pages=1)
+
+            self.assertTrue(small['budget']['truncated'])
+            self.assertTrue(
+                any(item['truncated'] for item in small['items'])
+                or small['budget']['omitted_count'] > 0
+            )
+
+    def test_agent_context_writes_pack_object_manifest_and_object_index(self):
+        from wikify.agent import (
+            CONTEXT_PACK_MANIFEST_SCHEMA_VERSION,
+            context_pack_dir,
+            context_pack_manifest_path,
+            run_agent_context,
+        )
+        from wikify.object_validation import validate_workspace_objects
+        from wikify.objects import object_artifacts_dir, object_document_path, object_index_path
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _source_path, source, item = self._write_note_workspace(root)
+            self._write_semantic_object_fixtures(root, source, item)
+
+            result = run_agent_context(root, 'agent context', max_chars=800, max_pages=2)
+
+            pack_id = result['id']
+            pack_path = context_pack_dir(root) / f'{pack_id}.json'
+            object_path = object_document_path(root, 'context_pack', pack_id)
+            self.assertEqual(result['schema_version'], 'wikify.context-pack.v1')
+            self.assertEqual(result['status'], 'completed')
+            self.assertTrue(pack_path.is_file())
+            self.assertTrue(object_path.is_file())
+            self.assertTrue(context_pack_manifest_path(root).is_file())
+
+            pack = self._read_json(pack_path)
+            for key in [
+                'schema_version',
+                'query',
+                'object_ids',
+                'source_refs',
+                'items',
+                'budget',
+                'selection',
+                'citations',
+                'related',
+            ]:
+                self.assertIn(key, pack)
+
+            manifest = self._read_json(context_pack_manifest_path(root))
+            self.assertEqual(manifest['schema_version'], CONTEXT_PACK_MANIFEST_SCHEMA_VERSION)
+            self.assertEqual(manifest['latest_pack_id'], pack_id)
+            self.assertIn(pack_id, {entry['id'] for entry in manifest['packs']})
+
+            object_index = self._read_json(object_index_path(root))
+            context_entries = [
+                entry for entry in object_index['objects']
+                if entry.get('id') == pack_id and entry.get('type') == 'context_pack'
+            ]
+            self.assertEqual(len(context_entries), 1)
+
+            validation = validate_workspace_objects(root, path=object_artifacts_dir(root), strict=True, write_report=False)
+            self.assertEqual(validation['summary']['error_count'], 0)
+
+    def test_agent_cite_returns_explicit_and_fallback_evidence_without_fabrication(self):
+        from wikify.agent import query_agent_citations
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _source_path, source, item = self._write_note_workspace(root)
+            page = self._write_semantic_object_fixtures(root, source, item)
+
+            result = query_agent_citations(root, 'Source Title', limit=10)
+
+            self.assertEqual(result['schema_version'], 'wikify.citation-query.v1')
+            evidence = result['evidence']
+            self.assertGreaterEqual(len(evidence), 2)
+            evidence_types = [entry['evidence_type'] for entry in evidence]
+            self.assertLess(evidence_types.index('explicit_citation'), evidence_types.index('page_source_ref'))
+            first = evidence[0]
+            for key in [
+                'source_id',
+                'item_id',
+                'locator',
+                'confidence',
+                'linked_object_ids',
+                'evidence_type',
+            ]:
+                self.assertIn(key, first)
+            self.assertTrue(first.get('snippet') or first.get('span') is not None)
+            self.assertIn(page['id'], set(first['linked_object_ids']))
+
+            empty = query_agent_citations(root, 'no supporting evidence', limit=10)
+
+            self.assertEqual(empty['evidence'], [])
+            self.assertIn('run_wikify_wikiize_or_add_citations', empty['next_actions'])
+
+    def test_agent_related_returns_ranked_signal_explanations(self):
+        from wikify.agent import query_agent_related
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _source_path, source, item = self._write_note_workspace(root)
+            page = self._write_semantic_object_fixtures(root, source, item)
+
+            result = query_agent_related(root, 'agent context', limit=5)
+
+            self.assertEqual(result['schema_version'], 'wikify.related-query.v1')
+            related = result['related']
+            self.assertGreater(len(related), 0)
+            self.assertEqual(
+                [(entry['score'], entry['id']) for entry in related],
+                sorted([(entry['score'], entry['id']) for entry in related], key=lambda item: (-item[0], item[1])),
+            )
+            signals = related[0]['signals']
+            for key in [
+                'direct_object_link',
+                'graph_edge',
+                'shared_source',
+                'citation_overlap',
+                'common_neighbor',
+                'type_affinity',
+                'text_match',
+            ]:
+                self.assertIn(key, signals)
+
+            known = query_agent_related(root, page['id'], limit=5)
+
+            self.assertGreater(len(known['matches']), 0)
+            self.assertTrue(
+                any(
+                    rationale.get('signal') == 'direct_object_id_match'
+                    for rationale in known['matches'][0]['rationale']
+                )
+            )
+
 
 if __name__ == '__main__':
     unittest.main()
