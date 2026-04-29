@@ -29,11 +29,11 @@
 
 ### Wikiization Pipeline
 
-- [ ] **WIK-01**: User can run a wikiization command that turns ingested source items into structured Markdown wiki pages.
-- [ ] **WIK-02**: Generated pages preserve source traceability for summaries, claims, and extracted relationships.
-- [ ] **WIK-03**: Wikiization updates existing generated pages incrementally and avoids overwriting user-edited content without explicit patch/apply flow.
-- [ ] **WIK-04**: Low-confidence, conflicting, or ambiguous transformations create review/maintenance tasks instead of silently merging questionable content.
-- [ ] **WIK-05**: Semantic enrichment that requires an external agent uses explicit request/proposal/bundle artifacts rather than hidden provider calls.
+- [x] **WIK-01**: User can run a wikiization command that turns ingested source items into structured Markdown wiki pages.
+- [x] **WIK-02**: Generated pages preserve source traceability for summaries, claims, and extracted relationships.
+- [x] **WIK-03**: Wikiization updates existing generated pages incrementally and avoids overwriting user-edited content without explicit patch/apply flow.
+- [x] **WIK-04**: Low-confidence, conflicting, or ambiguous transformations create review/maintenance tasks instead of silently merging questionable content.
+- [x] **WIK-05**: Semantic enrichment that requires an external agent uses explicit request/proposal/bundle artifacts rather than hidden provider calls.
 
 ### Human Wiki Views
 
@@ -103,11 +103,11 @@
 | OBJ-02 | Phase 24 | Complete |
 | OBJ-03 | Phase 24 | Complete |
 | OBJ-04 | Phase 24 | Complete |
-| WIK-01 | Phase 25 | Pending |
-| WIK-02 | Phase 25 | Pending |
-| WIK-03 | Phase 25 | Pending |
-| WIK-04 | Phase 25 | Pending |
-| WIK-05 | Phase 25 | Pending |
+| WIK-01 | Phase 25 | Complete |
+| WIK-02 | Phase 25 | Complete |
+| WIK-03 | Phase 25 | Complete |
+| WIK-04 | Phase 25 | Complete |
+| WIK-05 | Phase 25 | Complete |
 | VIEW-01 | Phase 26 | Pending |
 | VIEW-02 | Phase 26 | Pending |
 | VIEW-03 | Phase 26 | Pending |

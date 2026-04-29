@@ -116,7 +116,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Verification:** Unit tests for page generation, source traceability, incremental updates, user-edit protection, review task creation, and external agent handoff artifacts.
 
 **Plans:**
-- [ ] **25-01 Build Source-Backed Wikiization Pipeline** - Implement `wikify wikiize`, dry-run and selectors, deterministic local page generation, source refs, object/front matter writes, object index updates, edit-protection guards, wikiization task queue, explicit agent request/result handoff, docs, and verification.
+- [x] **25-01 Build Source-Backed Wikiization Pipeline** - Implement `wikify wikiize`, dry-run and selectors, deterministic local page generation, source refs, object/front matter writes, object index updates, edit-protection guards, wikiization task queue, explicit agent request/result handoff, docs, and verification.
 
 **Wave 1:** 25-01 can run after Phase 22, Phase 23, and Phase 24.
 
@@ -187,11 +187,11 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 | OBJ-02 | Phase 24 | Complete |
 | OBJ-03 | Phase 24 | Complete |
 | OBJ-04 | Phase 24 | Complete |
-| WIK-01 | Phase 25 | Pending |
-| WIK-02 | Phase 25 | Pending |
-| WIK-03 | Phase 25 | Pending |
-| WIK-04 | Phase 25 | Pending |
-| WIK-05 | Phase 25 | Pending |
+| WIK-01 | Phase 25 | Complete |
+| WIK-02 | Phase 25 | Complete |
+| WIK-03 | Phase 25 | Complete |
+| WIK-04 | Phase 25 | Complete |
+| WIK-05 | Phase 25 | Complete |
 | VIEW-01 | Phase 26 | Pending |
 | VIEW-02 | Phase 26 | Pending |
 | VIEW-03 | Phase 26 | Pending |

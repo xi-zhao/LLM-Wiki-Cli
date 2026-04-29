@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 25 source-backed wikiization pipeline.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 26 human wiki views and local static output.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 25 - Source-Backed Wikiization Pipeline
-Status: Executing 25-01 Build Source-Backed Wikiization Pipeline
-Last activity: 2026-04-29 - Started executing Phase 25 plan 25-01 for `wikify wikiize`, generated source-backed pages, queue lifecycle, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
+Status: Completed
+Last activity: 2026-04-29 - Completed Phase 25 plan 25-01: shipped `wikify wikiize`, source-backed generated pages, queue lifecycle updates, edit protection, wikiization tasks, explicit agent request/result handoff, docs, and verification.
 
-Progress: ████░░░░░░ 43%
+Progress: ██████░░░░ 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
+- Total plans completed: 25
 - Average duration: 1 session
-- Total execution time: 24 sessions
+- Total execution time: 25 sessions
 
 **By Phase:**
 
@@ -51,9 +51,10 @@ Progress: ████░░░░░░ 43%
 | 22. Personal Wiki Workspace And Source Registry | 1/1 | 1 session | 1 session |
 | 23. Incremental Sync And Ingest Queue | 1/1 | 1 session | 1 session |
 | 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
+| 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 20-01, 21-01, 22-01, 23-01, 24-01
+- Last 5 plans: 21-01, 22-01, 23-01, 24-01, 25-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -136,6 +137,11 @@ Recent decisions affecting current work:
 - [Phase 24]: Validation is compatibility-tolerant by default and strict for declared v0.2 object gaps.
 - [Phase 24]: `wikify graph` keeps path-based ids and exposes canonical object ids as additive metadata.
 - [Phase 24]: `artifacts/objects/` is the visible product artifact root for object JSON and validation reports.
+- [Phase 25]: `wikify wikiize` is the explicit queue-to-wiki command; legacy `wikify ingest` remains separate.
+- [Phase 25]: Local text/Markdown source items use deterministic source-backed generation without provider credentials.
+- [Phase 25]: Remote-without-content and unsupported items create wikiization tasks instead of fake pages.
+- [Phase 25]: Generated page updates are hash-guarded and preserve user-edited drift for review.
+- [Phase 25]: External semantic enrichment uses visible request/result artifacts and explicit agent command/profile flags.
 
 ### Pending Todos
 
@@ -188,6 +194,7 @@ Recent decisions affecting current work:
 - Phase 24 completed: canonical object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification artifacts shipped.
 - Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
 - Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
+- Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
 
 ## Deferred Items
 
@@ -200,6 +207,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 25 execution started.
-Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-01-PLAN.md
-Next command: Continue executing `.planning/phases/25-source-backed-wikiization-pipeline/25-01-PLAN.md`
+Stopped at: Phase 25 complete.
+Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-01-SUMMARY.md
+Next command: `$gsd-discuss-phase 26`
