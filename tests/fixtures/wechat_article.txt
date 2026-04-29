@@ -1,0 +1,5 @@
+统一 Ingest 设计
+Wikify 产品笔记
+2026-04-29 12:00
+这篇文章解释为什么 ingest 应该成为 Wikify 的人类入口。
+人类只应该看到整理好的 wiki，agent 才需要看 pipeline artifact。

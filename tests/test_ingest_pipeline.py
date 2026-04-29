@@ -135,3 +135,53 @@ class IngestPipelineContractTests(unittest.TestCase):
         self.assertEqual(item['source_id'], 'ingest:wechat_url')
         self.assertEqual(queue_entry['source_id'], 'ingest:wechat_url')
         self.assertEqual(queue_entry['evidence']['source_id'], 'ingest:wechat_url')
+
+
+class IngestAdapterTests(unittest.TestCase):
+    def test_adapter_registry_resolves_wechat_url(self):
+        from wikify.ingest.adapters import resolve_adapter
+
+        adapter = resolve_adapter('https://mp.weixin.qq.com/s/example')
+
+        self.assertEqual(adapter.name, 'wechat_url')
+
+    def test_wechat_canonical_url_keeps_article_query_identity(self):
+        from wikify.ingest.wechat import WeChatUrlAdapter
+
+        adapter = WeChatUrlAdapter()
+
+        first = adapter.canonicalize('https://mp.weixin.qq.com/s?sn=abc&mid=2&idx=1&scene=7#wechat_redirect')
+        second = adapter.canonicalize('https://mp.weixin.qq.com/s?idx=1&mid=2&sn=abc&scene=8')
+        other = adapter.canonicalize('https://mp.weixin.qq.com/s?sn=other&mid=2&idx=1')
+
+        self.assertEqual(first, 'https://mp.weixin.qq.com/s?idx=1&mid=2&sn=abc')
+        self.assertEqual(first, second)
+        self.assertNotEqual(first, other)
+
+    def test_wechat_adapter_normalizes_fixture_without_chrome(self):
+        from wikify.ingest.documents import FetchedPayload
+        from wikify.ingest.wechat import WeChatUrlAdapter
+
+        fixture_dir = Path(__file__).parent / 'fixtures'
+        payload = FetchedPayload(
+            adapter='wechat_url',
+            original_locator='https://mp.weixin.qq.com/s/example',
+            canonical_locator='https://mp.weixin.qq.com/s/example',
+            html=(fixture_dir / 'wechat_article.html').read_text(encoding='utf-8'),
+            text=(fixture_dir / 'wechat_article.txt').read_text(encoding='utf-8'),
+            metadata={
+                'title': '统一 Ingest 设计',
+                'source_account': 'Wikify 产品笔记',
+                'create_time': '2026-04-29 12:00',
+            },
+        )
+
+        document = WeChatUrlAdapter().normalize(payload, source_id='src_wechat')
+
+        self.assertEqual(document.adapter, 'wechat_url')
+        self.assertEqual(document.source_id, 'src_wechat')
+        self.assertEqual(document.title, '统一 Ingest 设计')
+        self.assertEqual(document.author, 'Wikify 产品笔记')
+        self.assertIn('ingest 应该成为 Wikify 的人类入口', document.markdown)
+        self.assertNotIn('微信公众平台', document.markdown)
+        self.assertTrue(document.fingerprint['sha256'])
