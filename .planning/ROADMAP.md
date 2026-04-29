@@ -210,4 +210,4 @@ Detailed phase plans, summaries, and verification artifacts from v0.1.0a2 remain
 | Milestone | Phases | Plans | Status | Completed |
 |-----------|--------|-------|--------|-----------|
 | v0.1.0a2 Agentic Maintenance Automation | 1-21 | 21/21 | Complete | 2026-04-29 |
-| v0.2.0 Personal Wiki Core & Views | 22-28 | 1/7 | In Progress | — |
+| v0.2.0 Personal Wiki Core & Views | 22-28 | 2/7 | In Progress | — |

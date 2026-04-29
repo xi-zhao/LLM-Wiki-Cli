@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 23 - Incremental Sync And Ingest Queue
-Status: Complete
-Last activity: 2026-04-29 - Completed Phase 23 implementation and verification for `wikify sync`, source item artifacts, and ingest queue semantics.
+Phase: 24 - Wiki Object Model And Validation
+Status: Context gathered; ready to plan
+Last activity: 2026-04-29 - Captured Phase 24 context for canonical wiki object schemas, front matter, validation, citations, graph edges, and compatibility.
 
 Progress: ███░░░░░░░ 29%
 
@@ -177,6 +177,7 @@ Recent decisions affecting current work:
 - Phase 23 context captured: sync command boundary, source item model, freshness classification, artifact paths, queue semantics, and registry sync metadata.
 - Phase 23 planned: 1 TDD plan covering sync module tests, sync implementation, CLI wiring, docs, GSD updates, and verification.
 - Phase 23 completed: `wikify sync`, deterministic source item index, sync report, ingest queue, dry-run, source selection, docs, and verification shipped.
+- Phase 24 context captured: object schema set, object identity, JSON/front matter contract, validation command, source/citation references, graph edge compatibility, and deferred scope.
 
 ## Deferred Items
 
@@ -189,6 +190,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 23 complete.
-Resume file: .planning/ROADMAP.md
-Next command: `$gsd-discuss-phase 24`
+Stopped at: Phase 24 context gathered.
+Resume file: .planning/phases/24-wiki-object-model-and-validation/24-CONTEXT.md
+Next command: `$gsd-plan-phase 24`
