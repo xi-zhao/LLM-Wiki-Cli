@@ -29,7 +29,9 @@ class WeChatUrlAdapter:
 
     def can_handle(self, locator: str, source=None) -> bool:
         parsed = urlsplit((locator or '').strip())
-        return 'mp.weixin.qq.com' in parsed.netloc.lower()
+        host = parsed.hostname or ''
+        host = host.lower()
+        return host == 'mp.weixin.qq.com' or host.endswith('.mp.weixin.qq.com')
 
     def canonicalize(self, locator: str) -> str:
         raw_locator = (locator or '').strip()
@@ -90,7 +92,7 @@ class WeChatUrlAdapter:
                 )
 
             get_result = subprocess.run(
-                ['agent-browser', 'get', mode],
+                ['agent-browser', 'get', mode, 'body'],
                 capture_output=True,
                 text=True,
                 timeout=90,

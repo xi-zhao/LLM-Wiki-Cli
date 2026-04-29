@@ -1,7 +1,9 @@
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 class IngestPipelineContractTests(unittest.TestCase):
@@ -145,6 +147,15 @@ class IngestAdapterTests(unittest.TestCase):
 
         self.assertEqual(adapter.name, 'wechat_url')
 
+    def test_adapter_registry_rejects_wechat_lookalike_host(self):
+        from wikify.ingest.adapters import resolve_adapter
+        from wikify.ingest.errors import IngestError
+
+        with self.assertRaises(IngestError) as context:
+            resolve_adapter('https://mp.weixin.qq.com.evil.example/s/example')
+
+        self.assertEqual(context.exception.code, 'ingest_adapter_not_found')
+
     def test_wechat_canonical_url_keeps_article_query_identity(self):
         from wikify.ingest.wechat import WeChatUrlAdapter
 
@@ -185,3 +196,62 @@ class IngestAdapterTests(unittest.TestCase):
         self.assertIn('ingest 应该成为 Wikify 的人类入口', document.markdown)
         self.assertNotIn('微信公众平台', document.markdown)
         self.assertTrue(document.fingerprint['sha256'])
+
+    def test_wechat_fetch_uses_agent_browser_body_get_command(self):
+        from wikify.ingest.documents import IngestRequest
+        from wikify.ingest.wechat import WeChatUrlAdapter
+
+        locator = 'https://mp.weixin.qq.com/s/example'
+        responses = [
+            subprocess.CompletedProcess(['agent-browser', 'open', locator], 0, stdout=''),
+            subprocess.CompletedProcess(['agent-browser', 'get', 'html', 'body'], 0, stdout='<html></html>'),
+            subprocess.CompletedProcess(['agent-browser', 'close'], 0, stdout=''),
+            subprocess.CompletedProcess(['agent-browser', 'open', locator], 0, stdout=''),
+            subprocess.CompletedProcess(['agent-browser', 'get', 'text', 'body'], 0, stdout='Example text'),
+            subprocess.CompletedProcess(['agent-browser', 'close'], 0, stdout=''),
+        ]
+
+        with patch('subprocess.run', side_effect=responses) as run:
+            WeChatUrlAdapter().fetch(IngestRequest(root='.', locator=locator))
+
+        commands = [call.args[0] for call in run.call_args_list]
+        self.assertEqual(commands[0:3], [
+            ['agent-browser', 'open', locator],
+            ['agent-browser', 'get', 'html', 'body'],
+            ['agent-browser', 'close'],
+        ])
+
+    def test_wechat_fetch_get_failure_is_retryable_and_closes_browser(self):
+        from wikify.ingest.documents import IngestRequest
+        from wikify.ingest.errors import IngestError
+        from wikify.ingest.wechat import WeChatUrlAdapter
+
+        locator = 'https://mp.weixin.qq.com/s/example'
+        responses = [
+            subprocess.CompletedProcess(['agent-browser', 'open', locator], 0, stdout=''),
+            subprocess.CompletedProcess(['agent-browser', 'get', 'html', 'body'], 1, stdout='', stderr='failed'),
+            subprocess.CompletedProcess(['agent-browser', 'close'], 0, stdout=''),
+        ]
+
+        with patch('subprocess.run', side_effect=responses) as run:
+            with self.assertRaises(IngestError) as context:
+                WeChatUrlAdapter().fetch(IngestRequest(root='.', locator=locator))
+
+        self.assertEqual(context.exception.code, 'ingest_fetch_failed')
+        self.assertTrue(context.exception.retryable)
+        self.assertEqual(run.call_args_list[-1].args[0], ['agent-browser', 'close'])
+
+    def test_wechat_browser_close_failure_does_not_mask_successful_get(self):
+        from wikify.ingest.wechat import WeChatUrlAdapter
+
+        locator = 'https://mp.weixin.qq.com/s/example'
+        responses = [
+            subprocess.CompletedProcess(['agent-browser', 'open', locator], 0, stdout=''),
+            subprocess.CompletedProcess(['agent-browser', 'get', 'html', 'body'], 0, stdout='<html>ok</html>'),
+            subprocess.TimeoutExpired(['agent-browser', 'close'], timeout=15),
+        ]
+
+        with patch('subprocess.run', side_effect=responses):
+            output = WeChatUrlAdapter()._run_browser(locator, 'html')
+
+        self.assertEqual(output, '<html>ok</html>')
