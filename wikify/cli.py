@@ -6,6 +6,7 @@ from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
 from wikify.object_validation import validate_workspace_objects
 from wikify.sync import SyncError, sync_workspace
+from wikify.wikiize import WikiizeError, run_wikiization
 from wikify.maintenance.bundle_request import (
     BundleRequestError,
     build_bundle_request,
@@ -241,6 +242,60 @@ def cmd_sync(args):
         'user_message': 'sync completed',
     }
     return envelope_ok('sync', result)
+
+
+def cmd_wikiize(args):
+    try:
+        result = run_wikiization(
+            discover_base(),
+            dry_run=args.dry_run,
+            queue_id=args.queue_id,
+            item_id=args.item,
+            source_id=args.source,
+            limit=args.limit,
+            agent_command=args.agent_command,
+            agent_profile=args.agent_profile,
+            timeout_seconds=args.timeout,
+        )
+    except AgentProfileError as exc:
+        return envelope_error(
+            'wikiize',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except WikiizeError as exc:
+        return envelope_error(
+            'wikiize',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'wikiize',
+            'wikiize_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    summary = result.get('summary', {})
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'wikiization dry run completed' if result.get('dry_run') else 'wikiization completed',
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': 'wikiization dry run completed' if result.get('dry_run') else 'wikiization completed',
+    }
+    if summary.get('needs_review_count'):
+        result['completion']['summary'] = 'wikiization completed with review tasks'
+        result['completion']['user_message'] = 'wikiization completed with review tasks'
+    return envelope_ok('wikiize', result)
 
 
 def cmd_validate(args):
@@ -1194,6 +1249,18 @@ def build_parser() -> argparse.ArgumentParser:
         p_sync.add_argument('--source')
         p_sync.add_argument('--dry-run', action='store_true')
         p_sync.set_defaults(func=cmd_sync)
+
+    if 'wikiize' not in sub.choices:
+        p_wikiize = sub.add_parser('wikiize', help='Generate source-backed wiki pages from queued source items')
+        p_wikiize.add_argument('--dry-run', action='store_true')
+        p_wikiize.add_argument('--queue-id')
+        p_wikiize.add_argument('--item')
+        p_wikiize.add_argument('--source')
+        p_wikiize.add_argument('--limit', type=int)
+        p_wikiize.add_argument('--agent-command')
+        p_wikiize.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_wikiize.add_argument('--timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_wikiize.set_defaults(func=cmd_wikiize)
 
     if 'validate' not in sub.choices:
         p_validate = sub.add_parser('validate', help='Validate Wikify object artifacts and Markdown object metadata')
