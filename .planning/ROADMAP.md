@@ -71,6 +71,8 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 24: Wiki Object Model And Validation
 
+**Status:** Planned; ready to execute.
+
 **Goal:** Define the canonical object model shared by human views, agent interfaces, graph extraction, and maintenance.
 
 **Requirements:** OBJ-01, OBJ-02, OBJ-03, OBJ-04
@@ -85,6 +87,16 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Dependencies:** Phase 22, Phase 23.
 
 **Verification:** Unit tests for schema constructors/parsers, Markdown front matter round trips, object validation, invalid artifact reporting, and graph integration smoke tests.
+
+**Plans:**
+- [ ] **24-01 Build Wiki Object Model And Validation** - Implement canonical object schemas, JSON object artifact helpers, Markdown front matter parsing, structured validation, graph object-id metadata compatibility, `wikify validate`, docs, and verification.
+
+**Wave 1:** 24-01 can run independently after Phase 22 and Phase 23.
+
+**Cross-cutting constraints:**
+- Phase 24 defines and validates object contracts only; queue consumption, wiki page generation, human views, `llms.txt`, context packs, provider calls, semantic inference, and repair flows remain later phases.
+- JSON object artifacts live under visible product artifacts at `artifacts/objects/`, while `.wikify/` remains internal control-plane state for source registry, sync, and queues.
+- Existing graph builders keep path-based node ids; canonical object ids are additive metadata for future human and agent interfaces.
 
 ### Phase 25: Source-Backed Wikiization Pipeline
 

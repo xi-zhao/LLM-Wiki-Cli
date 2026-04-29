@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 24 - Wiki Object Model And Validation
-Status: Context gathered; ready to plan
-Last activity: 2026-04-29 - Captured Phase 24 context for canonical wiki object schemas, front matter, validation, citations, graph edges, and compatibility.
+Status: Planned; ready to execute
+Last activity: 2026-04-29 - Planned Phase 24 object model and validation implementation, including schema contracts, front matter parsing, structured validation, graph compatibility, CLI wiring, docs, and verification.
 
 Progress: ███░░░░░░░ 29%
 
@@ -178,6 +178,7 @@ Recent decisions affecting current work:
 - Phase 23 planned: 1 TDD plan covering sync module tests, sync implementation, CLI wiring, docs, GSD updates, and verification.
 - Phase 23 completed: `wikify sync`, deterministic source item index, sync report, ingest queue, dry-run, source selection, docs, and verification shipped.
 - Phase 24 context captured: object schema set, object identity, JSON/front matter contract, validation command, source/citation references, graph edge compatibility, and deferred scope.
+- Phase 24 planned: 1 TDD plan covering object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification.
 
 ## Deferred Items
 
@@ -190,6 +191,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 24 context gathered.
-Resume file: .planning/phases/24-wiki-object-model-and-validation/24-CONTEXT.md
-Next command: `$gsd-plan-phase 24`
+Stopped at: Phase 24 planned.
+Resume file: .planning/phases/24-wiki-object-model-and-validation/24-01-PLAN.md
+Next command: `$gsd-execute-phase 24`
