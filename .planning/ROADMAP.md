@@ -137,6 +137,11 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 **Verification:** Unit tests for Markdown view generation, HTML output, navigation links, source pages, topic pages, graph/timeline entry files, and missing-data behavior.
 
+**Plans:**
+- [ ] **26-01 Build Human Wiki Views And Static Output** - Implement `wikify views`, dry-run planning, Markdown home/page/source/collection/timeline/graph/review views, hash-guarded view writes, view task conflicts, local static HTML under `views/site/`, CLI wiring, docs, and verification.
+
+**Wave 1:** 26-01 can run after Phase 24 and Phase 25.
+
 ### Phase 27: Agent Wiki Interfaces And Context Packs
 
 **Goal:** Expose the personal wiki as stable machine-readable context for agents.

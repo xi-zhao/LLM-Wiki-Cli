@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 26 - Human Wiki Views And Local Static Output
-Status: Context captured
-Last activity: 2026-04-29 - Captured Phase 26 context for `wikify views`, human Markdown views, local static HTML, object-artifact source of truth, graph/timeline entry points, and view edit protection.
+Status: Ready to execute
+Last activity: 2026-04-29 - Planned Phase 26 plan 26-01: `wikify views`, human Markdown view generation, local static HTML, view manifests, view task conflicts, CLI wiring, docs, and verification.
 
 Progress: ██████░░░░ 57%
 
@@ -52,6 +52,7 @@ Progress: ██████░░░░ 57%
 | 23. Incremental Sync And Ingest Queue | 1/1 | 1 session | 1 session |
 | 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
 | 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
+| 26. Human Wiki Views And Local Static Output | 0/1 | 0 sessions | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 21-01, 22-01, 23-01, 24-01, 25-01
@@ -199,6 +200,7 @@ Recent decisions affecting current work:
 - Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 - Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
 - Phase 26 context captured: `wikify views` command boundary, object-artifact source of truth, human Markdown view set, static HTML output, graph/timeline entry views, missing-data behavior, and view hash guards.
+- Phase 26 planned: 1 TDD plan covering `wikify views`, object/source/control artifact loading, Markdown human views, static HTML rendering, hash-guarded view updates, view task queue, CLI wiring, docs, and verification.
 
 ## Deferred Items
 
@@ -211,6 +213,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 26 context gathered.
-Resume file: .planning/phases/26-human-wiki-views-and-local-static-output/26-CONTEXT.md
-Next command: `$gsd-plan-phase 26`
+Stopped at: Phase 26 planned.
+Resume file: .planning/phases/26-human-wiki-views-and-local-static-output/26-01-PLAN.md
+Next command: `$gsd-execute-phase 26`
