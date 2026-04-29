@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 28 - Maintenance Integration And Compatibility
-Status: Ready to discuss and plan
-Last activity: 2026-04-29 - Completed Phase 27 with agent exports, indexes, context packs, citation queries, related queries, docs, full tests, compile check, and smoke workflow.
+Status: Context captured and ready to plan
+Last activity: 2026-04-30 - Captured Phase 28 discussion context for maintenance integration, v0.2 target resolution, compatibility, verifier/repair preservation, and E2E verification.
 
 Progress: █████████░ 87%
 
@@ -157,6 +157,10 @@ Recent decisions affecting current work:
 - [Phase 27 planning]: Split implementation into three dependent plans so export/index foundations land before context/cite/related queries, and docs/smoke verification run after behavior is stable.
 - [Phase 27]: Agent exports and context packs are explicit `wikify agent` commands; they do not implicitly run sync, wikiize, views, graph, providers, embeddings, or vector stores.
 - [Phase 27]: Context packs are represented both as `artifacts/agent/context-packs/<pack-id>.json` and as `wikify.context-pack.v1` objects under `artifacts/objects/context_packs/`.
+- [Phase 28 planning]: Existing graph maintenance commands and artifacts remain the compatibility anchor; v0.2 maintenance metadata should be additive and optional.
+- [Phase 28 planning]: Maintenance should use an ephemeral target resolver over object, page, view, source, validation, graph, and agent artifacts instead of creating a second knowledge store.
+- [Phase 28 planning]: Findings may target personal wiki pages, source/human views, and agent exports; derived views and agent exports should usually be regenerated explicitly rather than patched directly.
+- [Phase 28 planning]: Verifier and repair flows must deterministically preserve generated page `source_refs` and `review_status` in addition to any external verifier judgment.
 
 ### Pending Todos
 
@@ -216,6 +220,7 @@ Recent decisions affecting current work:
 - Phase 27 context captured: object-aware agent command namespace, `llms.txt`/`llms-full.txt`, `artifacts/agent/` indexes, context pack budget semantics, citation and related query behavior, validation gates, and explicit no-hidden-provider/no-vector boundary.
 - Phase 27 planned: 3 dependent plans covering `wikify agent export`, agent indexes and llms artifacts, deterministic context packs, citation and related query commands, docs, smoke verification, and GSD completion artifacts.
 - Phase 27 completed: `wikify agent export`, `llms.txt`, `llms-full.txt`, page/citation/related indexes, agent graph export, deterministic context packs, citation query, related query, public docs, protocol docs, full test suite, compile check, and smoke workflow shipped.
+- Phase 28 context captured: compatibility-first maintenance integration, v0.2 target resolver, object/view/agent findings, additive task metadata, generated-page preservation checks, and E2E workflow verification.
 
 ## Deferred Items
 
@@ -227,7 +232,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-29
-Stopped at: Phase 27 completed and ready to start Phase 28.
-Resume file: .planning/ROADMAP.md
-Next command: `$gsd-discuss-phase 28`
+Last session: 2026-04-30
+Stopped at: Phase 28 context captured and ready to plan.
+Resume file: .planning/phases/28-maintenance-integration-and-compatibility/28-CONTEXT.md
+Next command: `$gsd-plan-phase 28`
