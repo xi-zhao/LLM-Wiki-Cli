@@ -11,21 +11,25 @@ class IngestPipelineContractTests(unittest.TestCase):
             ingest_queue_id,
             ingest_run_path,
             raw_item_dir,
+            workspace_root,
         )
 
-        root = Path('/tmp/wikify-contract')
+        root = Path(tempfile.mkdtemp()) / 'parent' / '..' / 'wikify-contract'
+        resolved_root = root.resolve()
         item_id = ingest_item_id('wechat_url', 'https://mp.weixin.qq.com/s/example')
 
         self.assertEqual(item_id, ingest_item_id('wechat_url', 'https://mp.weixin.qq.com/s/example'))
         self.assertTrue(item_id.startswith('item_'))
         self.assertTrue(ingest_queue_id(item_id).startswith('queue_'))
+        self.assertEqual(workspace_root(root), resolved_root)
+        self.assertNotIn('..', workspace_root(root).parts)
         self.assertEqual(
             ingest_run_path(root, 'run_abc').as_posix(),
-            '/tmp/wikify-contract/.wikify/ingest/runs/run_abc.json',
+            (resolved_root / '.wikify' / 'ingest' / 'runs' / 'run_abc.json').as_posix(),
         )
         self.assertEqual(
             raw_item_dir(root, 'wechat_url', item_id).as_posix(),
-            f'/tmp/wikify-contract/sources/raw/wechat_url/{item_id}',
+            (resolved_root / 'sources' / 'raw' / 'wechat_url' / item_id).as_posix(),
         )
 
     def test_normalized_document_becomes_queueable_source_item(self):
@@ -67,3 +71,34 @@ class IngestPipelineContractTests(unittest.TestCase):
         self.assertEqual(item['path'], '/tmp/wikify-contract/sources/raw/wechat_url/item_abc/document.md')
         self.assertEqual(item['fingerprint']['kind'], 'fetched')
         self.assertEqual(item['metadata']['adapter'], 'wechat_url')
+
+    def test_normalized_local_document_uses_file_source_type(self):
+        from wikify.ingest.artifacts import source_item_from_normalized
+        from wikify.ingest.documents import NormalizedDocument
+
+        document = NormalizedDocument(
+            item_id='item_local',
+            source_id='src_local',
+            adapter='local_file',
+            original_locator='/tmp/wikify-contract/notes/example.md',
+            canonical_locator='/tmp/wikify-contract/notes/example.md',
+            title='Example Note',
+            body_text='Example body',
+            markdown='Example body',
+            captured_at='2026-04-30T00:00:00Z',
+            published_at=None,
+            author=None,
+            raw_paths={
+                'document': 'sources/raw/local_file/item_local/document.md',
+                'document_path': '/tmp/wikify-contract/sources/raw/local_file/item_local/document.md',
+            },
+            assets=[],
+            warnings=[],
+            fingerprint={'kind': 'fetched', 'sha256': 'local'},
+            metadata={},
+        )
+
+        item = source_item_from_normalized(document, status='new')
+
+        self.assertEqual(item['source_type'], 'file')
+        self.assertEqual(item['locator'], '/tmp/wikify-contract/notes/example.md')

@@ -34,7 +34,7 @@ def ingest_run_id(adapter: str, canonical_locator: str, now: str) -> str:
 
 
 def workspace_root(base: Path | str) -> Path:
-    return Path(base).expanduser().absolute()
+    return Path(base).expanduser().resolve()
 
 
 def ingest_run_path(base: Path | str, run_id: str) -> Path:
@@ -50,7 +50,7 @@ def raw_item_dir(base: Path | str, adapter: str, item_id: str) -> Path:
 
 
 def relative_to_root(base: Path | str, path: Path | str) -> str:
-    return Path(path).expanduser().absolute().relative_to(workspace_root(base)).as_posix()
+    return Path(path).expanduser().resolve().relative_to(workspace_root(base)).as_posix()
 
 
 def write_json_atomic(path: Path | str, document: dict):
@@ -72,6 +72,7 @@ def write_text_atomic(path: Path | str, text: str):
 def source_item_from_normalized(document: NormalizedDocument, status: str) -> dict:
     relative_path = document.raw_paths.get('document')
     absolute_path = document.raw_paths.get('document_path') or relative_path
+    source_type = 'url' if document.canonical_locator.startswith(('http://', 'https://')) else 'file'
     metadata = dict(document.metadata or {})
     metadata.update({
         'adapter': document.adapter,
@@ -87,7 +88,7 @@ def source_item_from_normalized(document: NormalizedDocument, status: str) -> di
         'schema_version': SOURCE_ITEMS_SCHEMA_VERSION,
         'item_id': document.item_id,
         'source_id': document.source_id,
-        'source_type': 'url',
+        'source_type': source_type,
         'item_type': 'file',
         'status': status,
         'locator': document.canonical_locator,
