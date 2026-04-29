@@ -70,6 +70,55 @@ class MaintenancePlanTests(unittest.TestCase):
         )
         self.assertEqual(execution['summary']['dry_run_count'], 2)
 
+    def test_new_artifact_actions_have_expected_risks_and_queueing(self):
+        from wikify.maintenance.executor import apply_plan
+        from wikify.maintenance.planner import build_plan
+
+        findings = [
+            {
+                'id': 'validation',
+                'type': 'object_validation_record',
+                'severity': 'info',
+                'title': 'Validation',
+                'subject': 'wiki/pages/page_alpha.md',
+                'evidence': {},
+                'recommended_action': 'queue_object_validation_repair',
+                'can_auto_apply': False,
+                'policy_minimum': 'conservative',
+            },
+            {
+                'id': 'view',
+                'type': 'view_task',
+                'severity': 'info',
+                'title': 'View',
+                'subject': 'views/pages.md',
+                'evidence': {},
+                'recommended_action': 'queue_view_regeneration',
+                'can_auto_apply': False,
+                'policy_minimum': 'conservative',
+            },
+            {
+                'id': 'agent',
+                'type': 'agent_export_missing',
+                'severity': 'info',
+                'title': 'Agent',
+                'subject': 'artifacts/agent/page-index.json',
+                'evidence': {},
+                'recommended_action': 'queue_agent_export_refresh',
+                'can_auto_apply': False,
+                'policy_minimum': 'conservative',
+            },
+        ]
+
+        plan = build_plan(findings, policy='balanced')
+        risk_by_action = {step['action']: step['risk'] for step in plan['steps']}
+        self.assertEqual(risk_by_action['queue_object_validation_repair'], 'semantic')
+        self.assertEqual(risk_by_action['queue_view_regeneration'], 'generated_content')
+        self.assertEqual(risk_by_action['queue_agent_export_refresh'], 'deterministic')
+
+        execution = apply_plan(plan, dry_run=False)
+        self.assertEqual({result['status'] for result in execution['results']}, {'queued'})
+
 
 if __name__ == '__main__':
     unittest.main()

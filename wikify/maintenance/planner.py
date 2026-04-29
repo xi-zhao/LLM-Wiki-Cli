@@ -8,6 +8,11 @@ ACTION_RISKS = {
     'queue_orphan_attachment': 'semantic',
     'queue_digest_refresh': 'generated_content',
     'queue_community_synthesis': 'generated_content',
+    'queue_object_validation_repair': 'semantic',
+    'queue_generated_page_repair': 'semantic',
+    'queue_view_regeneration': 'generated_content',
+    'queue_agent_export_refresh': 'deterministic',
+    'queue_source_traceability_repair': 'semantic',
     'record_graph_health_snapshot': 'deterministic',
 }
 

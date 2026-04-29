@@ -40,6 +40,31 @@ INSTRUCTIONS = {
         'Propose a synthesis page or topic update only if the cluster is coherent.',
         'Include source links for every proposed synthesis claim.',
     ],
+    'queue_object_validation_repair': [
+        'Inspect the object validation record and the targeted object or page.',
+        'Fix the minimal metadata or leave the task queued when the evidence is ambiguous.',
+        'Preserve generated page source_refs and review_status exactly.',
+    ],
+    'queue_generated_page_repair': [
+        'Inspect the generated page Markdown and matching object JSON.',
+        'Use the patch flow for the smallest safe body repair.',
+        'Preserve source_refs and review_status exactly.',
+    ],
+    'queue_view_regeneration': [
+        'Run or recommend wikify views for derived view refresh.',
+        'Do not manually patch generated views unless the evidence points to a template or content bug.',
+        'Preserve user edits unless the existing view task evidence allows replacement.',
+    ],
+    'queue_agent_export_refresh': [
+        'Run or recommend wikify agent export for derived agent artifacts.',
+        'Do not hand-edit llms.txt or artifacts/agent/*.json.',
+        'Verify exported indexes still point to existing wiki objects and pages.',
+    ],
+    'queue_source_traceability_repair': [
+        'Inspect source ids, item ids, source_refs, and the targeted wiki object.',
+        'Restore source_refs from existing synced/wikiized artifacts only.',
+        'Do not invent source ids, item ids, or unsupported citations.',
+    ],
 }
 
 
@@ -59,6 +84,26 @@ ACCEPTANCE_CHECKS = {
     'queue_community_synthesis': [
         'The synthesis proposal covers the community nodes listed in the evidence.',
         'The task remains queued if the community does not have a coherent shared theme.',
+    ],
+    'queue_object_validation_repair': [
+        'The validation record is resolved or remains queued with an ambiguity note.',
+        'Generated page source_refs and review_status are unchanged.',
+    ],
+    'queue_generated_page_repair': [
+        'The generated page repair preserves source_refs and review_status.',
+        'The matching object JSON remains consistent with the Markdown page.',
+    ],
+    'queue_view_regeneration': [
+        'The view can be regenerated with wikify views or remains queued with a reason.',
+        'The view manifest and generated view path remain consistent.',
+    ],
+    'queue_agent_export_refresh': [
+        'The agent export can be refreshed with wikify agent export or remains queued with a reason.',
+        'llms.txt and artifacts/agent/*.json are not hand-edited by the patch.',
+    ],
+    'queue_source_traceability_repair': [
+        'Every restored source_ref points to an existing source id and item id when available.',
+        'No source traceability claim is invented without artifact evidence.',
     ],
 }
 

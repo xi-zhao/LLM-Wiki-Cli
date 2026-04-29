@@ -77,8 +77,159 @@ def _attach_target_metadata(finding: dict, targets: dict | None) -> dict:
     if not metadata:
         return finding
     enriched = dict(finding)
-    enriched.update(metadata)
+    for key, value in metadata.items():
+        enriched.setdefault(key, value)
     return enriched
+
+
+def _record_severity(record: dict) -> str:
+    if record.get('severity') == 'error':
+        return 'warning'
+    return 'info'
+
+
+def _validation_findings(targets: dict) -> list[dict]:
+    validation = targets.get('object_validation') or {}
+    findings = []
+    for record in validation.get('records') or []:
+        if not isinstance(record, dict):
+            continue
+        if record.get('severity') not in {'warning', 'error'}:
+            continue
+        subject = record.get('path') or record.get('object_id') or 'artifacts/objects/validation.json'
+        finding = _finding(
+            'object-validation:{}:{}:{}:{}'.format(
+                record.get('code') or 'record',
+                record.get('path') or 'unknown-path',
+                record.get('object_id') or 'unknown-object',
+                record.get('field') or 'unknown-field',
+            ),
+            'object_validation_record',
+            _record_severity(record),
+            'Object validation record',
+            subject,
+            dict(record),
+            'queue_object_validation_repair',
+            False,
+        )
+        findings.append(_attach_target_metadata(finding, targets))
+    return findings
+
+
+def _task_body_path(task: dict) -> str | None:
+    target_paths = task.get('target_paths') if isinstance(task.get('target_paths'), dict) else {}
+    planned_paths = task.get('planned_paths') if isinstance(task.get('planned_paths'), dict) else {}
+    return target_paths.get('body_path') or task.get('body_path') or planned_paths.get('body_path')
+
+
+def _wikiization_task_findings(targets: dict) -> list[dict]:
+    queue = targets.get('wikiization_tasks') or {}
+    findings = []
+    for task in queue.get('tasks') or []:
+        if not isinstance(task, dict):
+            continue
+        if task.get('status', 'queued') != 'queued':
+            continue
+        if task.get('reason_code') != 'generated_page_drifted':
+            continue
+        body_path = _task_body_path(task) or 'wiki/pages'
+        finding = _finding(
+            f'wikiization-task:{task.get("id") or body_path}',
+            'generated_page_drift',
+            'warning',
+            'Generated page drift',
+            body_path,
+            dict(task),
+            'queue_generated_page_repair',
+            False,
+        )
+        findings.append(_attach_target_metadata(finding, targets))
+    return findings
+
+
+def _task_view_path(task: dict) -> str | None:
+    target_paths = task.get('target_paths') if isinstance(task.get('target_paths'), dict) else {}
+    evidence = task.get('evidence') if isinstance(task.get('evidence'), dict) else {}
+    return target_paths.get('view_path') or task.get('view_path') or evidence.get('path')
+
+
+def _view_task_findings(targets: dict) -> list[dict]:
+    queue = targets.get('view_tasks') or {}
+    findings = []
+    for task in queue.get('tasks') or []:
+        if not isinstance(task, dict):
+            continue
+        if task.get('status', 'queued') != 'queued':
+            continue
+        view_path = _task_view_path(task) or 'views'
+        finding = _finding(
+            f'view-task:{task.get("id") or view_path}',
+            'view_task',
+            'info',
+            'Generated view task',
+            view_path,
+            dict(task),
+            'queue_view_regeneration',
+            False,
+        )
+        finding.update({
+            'target_kind': 'view',
+            'target_family': 'human_view',
+            'view_path': view_path,
+            'write_scope': [view_path],
+            'regeneration_command': 'wikify views',
+        })
+        findings.append(_attach_target_metadata(finding, targets))
+    return findings
+
+
+def _agent_export_findings(targets: dict) -> list[dict]:
+    if targets.get('summary', {}).get('object_count', 0) <= 0:
+        return []
+    findings = []
+    for path in targets.get('missing_agent_artifacts') or []:
+        finding = _finding(
+            f'agent-export-missing:{path}',
+            'agent_export_missing',
+            'info',
+            'Agent export artifact missing',
+            path,
+            {'path': path},
+            'queue_agent_export_refresh',
+            False,
+        )
+        finding.update({
+            'target_kind': 'agent_artifact',
+            'target_family': 'agent_export',
+            'agent_artifact_path': path,
+            'write_scope': [path],
+            'regeneration_command': 'wikify agent export',
+        })
+        findings.append(_attach_target_metadata(finding, targets))
+    return findings
+
+
+def _artifact_findings(targets: dict | None) -> list[dict]:
+    if not targets:
+        return []
+    return (
+        _validation_findings(targets)
+        + _wikiization_task_findings(targets)
+        + _view_task_findings(targets)
+        + _agent_export_findings(targets)
+    )
+
+
+def _dedupe_findings(findings: list[dict]) -> list[dict]:
+    deduped = []
+    seen = set()
+    for finding in findings:
+        finding_id = finding.get('id')
+        if finding_id in seen:
+            continue
+        seen.add(finding_id)
+        deduped.append(finding)
+    return deduped
 
 
 def build_findings(graph: dict, targets: dict | None = None) -> list[dict]:
@@ -183,7 +334,8 @@ def build_findings(graph: dict, targets: dict | None = None) -> list[dict]:
             )
         )
 
-    return [_attach_target_metadata(finding, targets) for finding in findings]
+    graph_findings = [_attach_target_metadata(finding, targets) for finding in findings]
+    return _dedupe_findings(graph_findings + _artifact_findings(targets))
 
 
 def summarize_findings(findings: list[dict]) -> dict:

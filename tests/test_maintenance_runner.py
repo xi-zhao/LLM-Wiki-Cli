@@ -105,6 +105,98 @@ class MaintenanceRunnerTests(unittest.TestCase):
             task_queue = json.loads((root / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
             self.assertEqual(task_queue['schema_version'], 'wikify.graph-agent-tasks.v1')
 
+    def test_run_maintenance_writes_artifact_health_findings_and_tasks(self):
+        from wikify.maintenance.runner import run_maintenance
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_json(
+                root / 'artifacts' / 'objects' / 'wiki_pages' / 'page_alpha.json',
+                {
+                    'schema_version': 'wikify.wiki-page.v1',
+                    'id': 'page_alpha',
+                    'type': 'wiki_page',
+                    'title': 'Alpha',
+                    'summary': 'Alpha summary.',
+                    'body_path': 'wiki/pages/page_alpha.md',
+                    'source_refs': [{'source_id': 'src_notes', 'item_id': 'item_alpha', 'confidence': 0.9}],
+                    'outbound_links': [],
+                    'backlinks': [],
+                    'created_at': '2026-04-30T00:00:00Z',
+                    'updated_at': '2026-04-30T00:00:00Z',
+                    'confidence': 0.9,
+                    'review_status': 'generated',
+                },
+            )
+            self._write_json(
+                root / 'artifacts' / 'objects' / 'validation.json',
+                {
+                    'schema_version': 'wikify.object-validation.v1',
+                    'status': 'warnings',
+                    'summary': {'object_count': 1, 'record_count': 1, 'error_count': 0, 'warning_count': 1},
+                    'records': [
+                        {
+                            'code': 'source_refs_missing_item',
+                            'message': 'source ref item is missing',
+                            'path': 'wiki/pages/page_alpha.md',
+                            'object_id': 'page_alpha',
+                            'field': 'source_refs',
+                            'severity': 'warning',
+                            'details': {},
+                        }
+                    ],
+                },
+            )
+            self._write_json(
+                root / '.wikify' / 'queues' / 'view-tasks.json',
+                {
+                    'schema_version': 'wikify.view-tasks.v1',
+                    'generated_at': '2026-04-30T00:00:00Z',
+                    'summary': {'task_count': 1, 'by_reason': {'generated_view_drifted': 1}},
+                    'tasks': [
+                        {
+                            'id': 'view-task-alpha',
+                            'target_paths': {'view_path': 'views/sources/src_notes.md'},
+                            'reason_code': 'generated_view_drifted',
+                            'status': 'queued',
+                        }
+                    ],
+                },
+            )
+
+            run_maintenance(root, policy='balanced', dry_run=False)
+
+            findings_doc = json.loads((root / 'sorted' / 'graph-findings.json').read_text(encoding='utf-8'))
+            finding_types = {finding['type'] for finding in findings_doc['findings']}
+            self.assertIn('object_validation_record', finding_types)
+            self.assertIn('view_task', finding_types)
+            self.assertIn('agent_export_missing', finding_types)
+
+            task_queue = json.loads((root / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+            actions = {task['action'] for task in task_queue['tasks']}
+            self.assertIn('queue_object_validation_repair', actions)
+            self.assertIn('queue_view_regeneration', actions)
+            self.assertIn('queue_agent_export_refresh', actions)
+
+            by_action = {task['action']: task for task in task_queue['tasks']}
+            self.assertEqual(by_action['queue_view_regeneration']['regeneration_command'], 'wikify views')
+            self.assertEqual(by_action['queue_agent_export_refresh']['regeneration_command'], 'wikify agent export')
+            for task in task_queue['tasks']:
+                for key in [
+                    'id',
+                    'source_finding_id',
+                    'action',
+                    'priority',
+                    'target',
+                    'evidence',
+                    'write_scope',
+                    'agent_instructions',
+                    'acceptance_checks',
+                    'requires_user',
+                    'status',
+                ]:
+                    self.assertIn(key, task)
+
 
 if __name__ == '__main__':
     unittest.main()
