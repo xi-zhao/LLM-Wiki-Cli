@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, next up Phase 23 incremental source sync and ingest queue.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 23 incremental source sync and ingest queue.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 22 - Personal Wiki Workspace And Source Registry
-Status: Complete
-Last activity: 2026-04-29 - Implemented and verified `wikify init` plus `wikify source add/list/show`.
+Phase: 23 - Incremental Sync And Ingest Queue
+Status: Context gathered; ready to plan
+Last activity: 2026-04-29 - Captured Phase 23 decisions for `wikify sync`, source item classification, sync artifacts, and ingest queue semantics.
 
 Progress: █░░░░░░░░░ 14%
 
@@ -125,6 +125,9 @@ Recent decisions affecting current work:
 - [Phase 21]: Standalone verification artifacts close the milestone audit gap without changing product code.
 - [Phase 22]: `source add` is shallow registration only; sync, wikiization, views, graph, and agent exports remain explicit later commands.
 - [Phase 22]: Source identity uses opaque `src_` ids with duplicate detection through canonical `locator_key`.
+- [Phase 23]: `wikify sync` discovers and classifies registered source items, but does not run ingest, fetch URLs, clone repositories, generate wiki pages, or call providers.
+- [Phase 23]: Source items use deterministic ids derived from source id and item locator so repeated syncs can detect unchanged items.
+- [Phase 23]: Sync writes current-state JSON artifacts under `.wikify/sync/` and `.wikify/queues/`, keeping human wiki directories separate from control-plane state.
 
 ### Pending Todos
 
@@ -169,6 +172,7 @@ Recent decisions affecting current work:
 - Phase 22 context captured: workspace manifest, source identity, registration scope, CLI shape, and registry artifact decisions.
 - Phase 22 planned: 1 plan covering workspace initialization, source registry module, CLI commands, docs, and verification.
 - Phase 22 completed: workspace manifest, source registry module, CLI commands, docs, and verification shipped.
+- Phase 23 context captured: sync command boundary, source item model, freshness classification, artifact paths, queue semantics, and registry sync metadata.
 
 ## Deferred Items
 
@@ -181,6 +185,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 22 complete.
-Resume file: .planning/phases/22-personal-wiki-workspace-and-source-registry/22-01-SUMMARY.md
-Next command: `$gsd-discuss-phase 23`
+Stopped at: Phase 23 context gathered.
+Resume file: .planning/phases/23-incremental-sync-and-ingest-queue/23-CONTEXT.md
+Next command: `$gsd-plan-phase 23`
