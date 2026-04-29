@@ -9,6 +9,7 @@ __pycache__/
 # Local temp and scratch
 temp/
 *.tmp
+.worktrees/
 
 # Runtime state
 sorted/last-ingest-payload.json
