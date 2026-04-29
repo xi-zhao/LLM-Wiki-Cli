@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 21 complete: milestone verification artifacts.
+**Current focus:** v0.1.0a2 shipped; ready for next milestone planning.
 
 ## Current Position
 
-Phase: 21 of 21 (Milestone Verification Artifacts)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-29 - Completed Phase 21 and updated v0.1.0a1 audit to passed.
+Milestone: v0.1.0a2 Agentic Maintenance Automation
+Phase: None active
+Status: Milestone archived
+Last activity: 2026-04-29 - Archived v0.1.0a2 milestone and prepared for next milestone planning.
 
 Progress: ██████████ 100%
 
@@ -172,6 +172,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-28
-Stopped at: Phase 13 complete.
+Last session: 2026-04-29
+Stopped at: v0.1.0a2 milestone archived.
 Resume file: None
+Next command: `$gsd-new-milestone`

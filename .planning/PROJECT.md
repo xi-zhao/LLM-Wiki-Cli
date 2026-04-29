@@ -10,6 +10,19 @@ The current product direction fuses LLM Wiki-style markdown-first knowledge mana
 
 Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
 
+## Current State
+
+**Shipped milestone:** v0.1.0a2 Agentic Maintenance Automation (2026-04-29)
+
+Wikify now has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback. The milestone audit passed with 20 standalone phase verification artifacts for phases 1-20 plus Phase 21 closure metadata.
+
+## Next Milestone Goals
+
+- Decide whether the next milestone should focus on provider-backed semantic generation, release packaging, or a narrower hardening pass.
+- Define fresh requirements before implementation; `.planning/REQUIREMENTS.md` is intentionally removed during milestone close and should be recreated by `$gsd-new-milestone`.
+- Preserve the existing explicit-agent boundary unless a future requirements phase deliberately designs provider/key/retry semantics.
+
+
 ## Requirements
 
 ### Validated
@@ -93,4 +106,4 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Repair rejected bundles before provider SDKs | Feedback-fed repair improves automation while preserving explicit external command boundaries | ✓ Good |
 
 ---
-*Last updated: 2026-04-29 for Phase 20 completion*
+*Last updated: 2026-04-29 after v0.1.0a2 milestone completion*

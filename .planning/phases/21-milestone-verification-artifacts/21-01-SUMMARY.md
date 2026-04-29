@@ -104,7 +104,7 @@ None - no external service configuration required.
 - `python3 -m unittest discover -s tests -v` passed: 240 tests.
 - `python3 -m compileall -q wikify` passed.
 - `git diff --check` passed.
-- `find .planning/phases -name '*-VERIFICATION.md' | wc -l` returned 20.
+- `find .planning/phases -name '*-VERIFICATION.md' | wc -l` returned 21 after adding Phase 21 verification.
 - `.planning/v0.1.0a1-MILESTONE-AUDIT.md` now has `status: passed`.
 - `GSV-01` through `GSV-04` traceability rows are complete.
 
