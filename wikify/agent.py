@@ -7,7 +7,15 @@ from pathlib import Path
 
 from wikify.frontmatter import split_front_matter
 from wikify.object_validation import validate_workspace_objects, validation_report_path
-from wikify.objects import SCHEMA_VERSIONS, object_artifacts_dir, object_index_path
+from wikify.objects import (
+    SCHEMA_VERSIONS,
+    make_context_pack_object,
+    make_object_index,
+    object_artifacts_dir,
+    object_document_path,
+    object_index_path,
+    stable_object_id,
+)
 from wikify.sync import SOURCE_ITEMS_SCHEMA_VERSION, source_items_path
 from wikify.views import views_manifest_path, views_report_path
 from wikify.workspace import load_workspace
@@ -18,6 +26,7 @@ PAGE_INDEX_SCHEMA_VERSION = 'wikify.page-index.v1'
 CITATION_INDEX_SCHEMA_VERSION = 'wikify.citation-index.v1'
 RELATED_INDEX_SCHEMA_VERSION = 'wikify.related-index.v1'
 AGENT_GRAPH_SCHEMA_VERSION = 'wikify.agent-graph.v1'
+CONTEXT_PACK_MANIFEST_SCHEMA_VERSION = 'wikify.context-pack-manifest.v1'
 
 RELATED_WEIGHTS = {
     'direct_object_link': 4.0,
@@ -72,6 +81,14 @@ def related_index_path(base: Path | str) -> Path:
 
 def agent_graph_path(base: Path | str) -> Path:
     return agent_artifact_dir(base) / 'graph.json'
+
+
+def context_pack_dir(base: Path | str) -> Path:
+    return agent_artifact_dir(base) / 'context-packs'
+
+
+def context_pack_manifest_path(base: Path | str) -> Path:
+    return _root(base) / '.wikify' / 'agent' / 'context-pack-manifest.json'
 
 
 def _llms_path(base: Path | str) -> Path:
@@ -731,6 +748,559 @@ def _build_indexes(snapshot: dict) -> dict:
         'related_index': related_index,
         'agent_graph': agent_graph,
     }
+
+
+def _normalize_query_terms(query: str) -> list[str]:
+    terms = sorted({part for part in re.findall(r'[a-z0-9]+', (query or '').lower()) if len(part) > 1})
+    if not terms:
+        raise AgentInterfaceError(
+            'agent query must contain at least one alphanumeric term',
+            code='agent_query_invalid',
+            details={'query': query},
+        )
+    return terms
+
+
+def _object_search_text(root: Path, obj: dict) -> str:
+    fields = [
+        obj.get('id'),
+        _object_type(obj),
+        obj.get('title'),
+        obj.get('summary'),
+        obj.get('status'),
+    ]
+    for ref in obj.get('source_refs') or []:
+        if isinstance(ref, dict):
+            fields.append(_source_ref_text(ref))
+    if _object_type(obj) == 'wiki_page':
+        fields.append(_read_page_body(root, obj.get('body_path')))
+    return ' '.join(str(field) for field in fields if field)
+
+
+def _object_match(root: Path, obj: dict, target: str, terms: list[str]) -> dict | None:
+    obj_id = str(obj.get('id') or '')
+    title_terms = _text_terms(str(obj.get('title') or ''))
+    summary_terms = _text_terms(str(obj.get('summary') or ''))
+    id_terms = _text_terms(obj_id)
+    body_terms = _text_terms(_read_page_body(root, obj.get('body_path')) if _object_type(obj) == 'wiki_page' else '')
+    source_terms = _text_terms(' '.join(_source_ref_text(ref) for ref in obj.get('source_refs') or [] if isinstance(ref, dict)))
+    target_value = (target or '').strip()
+    rationale = []
+    score = 0.0
+    if target_value and obj_id == target_value:
+        score += 100.0
+        rationale.append({'signal': 'direct_object_id_match', 'score': 100.0, 'object_id': obj_id})
+    title_matches = sorted(set(terms) & title_terms)
+    if title_matches:
+        value = len(title_matches) * 5.0
+        score += value
+        rationale.append({'signal': 'title_term_match', 'terms': title_matches, 'score': value})
+    summary_matches = sorted(set(terms) & summary_terms)
+    if summary_matches:
+        value = len(summary_matches) * 3.0
+        score += value
+        rationale.append({'signal': 'summary_term_match', 'terms': summary_matches, 'score': value})
+    id_matches = sorted(set(terms) & id_terms)
+    if id_matches:
+        value = len(id_matches) * 2.0
+        score += value
+        rationale.append({'signal': 'id_term_match', 'terms': id_matches, 'score': value})
+    body_matches = sorted(set(terms) & body_terms)
+    if body_matches:
+        value = len(body_matches) * 1.5
+        score += value
+        rationale.append({'signal': 'body_term_match', 'terms': body_matches[:20], 'score': value})
+    source_matches = sorted(set(terms) & source_terms)
+    if source_matches:
+        value = len(source_matches) * 1.0
+        score += value
+        rationale.append({'signal': 'source_ref_term_match', 'terms': source_matches, 'score': value})
+    if score <= 0:
+        return None
+    return {
+        'id': obj_id,
+        'type': _object_type(obj),
+        'title': obj.get('title') or obj_id,
+        'summary': obj.get('summary'),
+        'score': round(score, 4),
+        'rationale': rationale,
+        'object': obj,
+    }
+
+
+def _source_refs_for_object(obj: dict) -> list[dict]:
+    refs = [dict(ref) for ref in obj.get('source_refs') or [] if isinstance(ref, dict)]
+    refs.sort(key=_source_ref_key)
+    return refs
+
+
+def _dedupe_source_refs(refs: list[dict]) -> list[dict]:
+    unique = {}
+    for ref in refs:
+        if not isinstance(ref, dict):
+            continue
+        unique[_source_ref_key(ref)] = dict(ref)
+    return [unique[key] for key in sorted(unique)]
+
+
+def _evidence_search_text(evidence: dict, objects_by_id: dict[str, dict], root: Path) -> str:
+    fields = [
+        evidence.get('id'),
+        evidence.get('object_id'),
+        evidence.get('evidence_type'),
+        evidence.get('source_id'),
+        evidence.get('item_id'),
+        evidence.get('locator'),
+        evidence.get('snippet'),
+        json.dumps(evidence.get('span') or {}, sort_keys=True),
+    ]
+    for object_id in evidence.get('linked_object_ids') or []:
+        obj = objects_by_id.get(object_id)
+        if obj:
+            fields.append(_object_search_text(root, obj))
+    return ' '.join(str(field) for field in fields if field)
+
+
+def _evidence_match_score(evidence: dict, query: str, terms: list[str], objects_by_id: dict[str, dict], root: Path) -> tuple[float, list[str], list[dict]]:
+    text_terms = _text_terms(_evidence_search_text(evidence, objects_by_id, root))
+    matched_terms = sorted(set(terms) & text_terms)
+    score = float(len(matched_terms))
+    rationale = []
+    if matched_terms:
+        rationale.append({'signal': 'evidence_term_match', 'terms': matched_terms, 'score': score})
+    if query in {evidence.get('object_id'), evidence.get('id')} or query in set(evidence.get('linked_object_ids') or []):
+        score += 100.0
+        rationale.append({'signal': 'direct_object_id_match', 'score': 100.0, 'object_id': query})
+    return score, matched_terms, rationale
+
+
+def query_agent_citations(base: Path | str, query_or_object_id: str, limit: int = 10) -> dict:
+    root = _root(base)
+    terms = _normalize_query_terms(query_or_object_id)
+    limit = max(0, int(limit))
+    snapshot = _load_snapshot(root)
+    indexes = _build_indexes(snapshot)
+    objects_by_id = _objects_by_id(snapshot)
+    evidence = []
+    for item in indexes['citation_index']['evidence']:
+        score, matched_terms, rationale = _evidence_match_score(item, query_or_object_id, terms, objects_by_id, root)
+        if score <= 0:
+            continue
+        entry = dict(item)
+        entry['match_score'] = round(score, 4)
+        entry['matched_terms'] = matched_terms
+        entry['rationale'] = rationale
+        evidence.append(entry)
+    evidence.sort(key=lambda item: (
+        0 if item.get('evidence_type') == 'explicit_citation' else 1,
+        -float(item.get('match_score') or 0),
+        -float(item.get('confidence') or 0),
+        str(item.get('id') or ''),
+    ))
+    evidence = evidence[:limit] if limit else []
+    next_actions = _next_actions(snapshot.get('warnings') or [])
+    if not evidence:
+        next_actions = list(dict.fromkeys(next_actions + ['run_wikify_wikiize_or_add_citations']))
+    return {
+        'schema_version': 'wikify.citation-query.v1',
+        'status': 'completed',
+        'query': query_or_object_id,
+        'limit': limit,
+        'evidence': evidence,
+        'summary': {
+            'evidence_count': len(evidence),
+            'available_evidence_count': len(indexes['citation_index']['evidence']),
+        },
+        'warnings': snapshot.get('warnings') or [],
+        'next_actions': next_actions,
+    }
+
+
+def _rank_object_matches(root: Path, objects: list[dict], target: str, terms: list[str], limit: int = 10) -> list[dict]:
+    matches = []
+    for obj in objects:
+        if not obj.get('id') or _object_type(obj) == 'graph_edge':
+            continue
+        match = _object_match(root, obj, target, terms)
+        if match:
+            matches.append(match)
+    matches.sort(key=lambda item: (-item['score'], item['id']))
+    return matches[:limit]
+
+
+def _related_entry_object_fields(obj: dict | None) -> dict:
+    if not obj:
+        return {}
+    return {
+        'type': _object_type(obj),
+        'title': obj.get('title') or obj.get('id'),
+        'summary': obj.get('summary'),
+        'source_refs': _source_refs_for_object(obj),
+    }
+
+
+def query_agent_related(base: Path | str, target: str, limit: int = 10) -> dict:
+    root = _root(base)
+    terms = _normalize_query_terms(target)
+    limit = max(0, int(limit))
+    snapshot = _load_snapshot(root)
+    indexes = _build_indexes(snapshot)
+    objects_by_id = _objects_by_id(snapshot)
+    matches = _rank_object_matches(root, snapshot.get('objects') or [], target, terms, limit=max(limit, 10))
+    aggregated: dict[str, dict] = {}
+    by_object = indexes['related_index'].get('by_object') or {}
+    for match in matches:
+        source_id = match['id']
+        for relation in by_object.get(source_id, []):
+            target_id = relation.get('id')
+            if not target_id:
+                continue
+            entry = aggregated.get(target_id)
+            score = float(relation.get('score') or 0)
+            if entry is None or score > entry['score']:
+                obj = objects_by_id.get(target_id)
+                entry = {
+                    'id': target_id,
+                    'score': score,
+                    'confidence': relation.get('confidence') or _confidence(score),
+                    'signals': relation.get('signals') or {},
+                    'source_match_ids': [source_id],
+                    'match_rationale': list(match.get('rationale') or []),
+                }
+                entry.update(_related_entry_object_fields(obj))
+                aggregated[target_id] = entry
+            elif source_id not in entry['source_match_ids']:
+                entry['source_match_ids'].append(source_id)
+                entry['source_match_ids'].sort()
+    related = list(aggregated.values())
+    related.sort(key=lambda item: (-item['score'], item['id']))
+    related = related[:limit] if limit else []
+    next_actions = _next_actions(snapshot.get('warnings') or [])
+    if not related:
+        next_actions = list(dict.fromkeys(next_actions + ['run_wikify_agent_export_or_add_links']))
+    return {
+        'schema_version': 'wikify.related-query.v1',
+        'status': 'completed',
+        'target': target,
+        'limit': limit,
+        'matches': [
+            {
+                'id': match['id'],
+                'type': match['type'],
+                'title': match['title'],
+                'summary': match.get('summary'),
+                'score': match['score'],
+                'rationale': match['rationale'],
+            }
+            for match in matches
+        ],
+        'related': related,
+        'weights': indexes['related_index'].get('weights') or {},
+        'warnings': snapshot.get('warnings') or [],
+        'next_actions': next_actions,
+        'summary': {
+            'match_count': len(matches),
+            'related_count': len(related),
+            'available_related_pair_count': len(indexes['related_index'].get('related') or []),
+        },
+    }
+
+
+def _context_candidate_score(root: Path, obj: dict, query: str, terms: list[str], citation_result: dict, related_result: dict) -> dict | None:
+    match = _object_match(root, obj, query, terms)
+    rationale = list((match or {}).get('rationale') or [])
+    score = float((match or {}).get('score') or 0)
+    obj_id = obj.get('id')
+    if _object_type(obj) == 'wiki_page' and obj.get('body_path'):
+        score += 2.0
+        rationale.append({'signal': 'source_backed_page_priority', 'score': 2.0})
+    if obj.get('source_refs'):
+        score += 1.0
+        rationale.append({'signal': 'source_ref_available', 'count': len(obj.get('source_refs') or []), 'score': 1.0})
+    citation_hits = [
+        evidence for evidence in citation_result.get('evidence') or []
+        if obj_id in set(evidence.get('linked_object_ids') or [])
+    ]
+    if citation_hits:
+        value = len(citation_hits) * 2.0
+        score += value
+        rationale.append({'signal': 'citation_evidence_match', 'count': len(citation_hits), 'score': value})
+    related_hits = [
+        entry for entry in related_result.get('related') or []
+        if entry.get('id') == obj_id or obj_id in set(entry.get('source_match_ids') or [])
+    ]
+    if related_hits:
+        value = len(related_hits) * 1.0
+        score += value
+        rationale.append({'signal': 'related_query_match', 'count': len(related_hits), 'score': value})
+    if score <= 0:
+        return None
+    return {
+        'object': obj,
+        'score': round(score, 4),
+        'selection_rationale': rationale,
+    }
+
+
+def _bounded_context_excerpt(text: str, limit: int) -> tuple[str, bool]:
+    limit = max(0, int(limit))
+    if len(text) <= limit:
+        return text, False
+    marker = '\n[truncated]'
+    if limit <= len(marker):
+        return marker[-limit:] if limit else '', True
+    return text[:limit - len(marker)].rstrip() + marker, True
+
+
+def _source_refs_overlap(left: list[dict], right: list[dict]) -> bool:
+    return bool({_source_ref_key(ref) for ref in left if isinstance(ref, dict)} & {_source_ref_key(ref) for ref in right if isinstance(ref, dict)})
+
+
+def _citations_for_object(obj: dict, citation_result: dict) -> list[dict]:
+    obj_id = obj.get('id')
+    obj_refs = _source_refs_for_object(obj)
+    citations = []
+    for evidence in citation_result.get('evidence') or []:
+        linked = set(evidence.get('linked_object_ids') or [])
+        evidence_ref = {
+            'source_id': evidence.get('source_id'),
+            'item_id': evidence.get('item_id'),
+            'locator': evidence.get('locator'),
+        }
+        if obj_id in linked or _sources_ref_matches_any(evidence_ref, obj_refs):
+            citations.append(evidence)
+    citations.sort(key=lambda item: (
+        0 if item.get('evidence_type') == 'explicit_citation' else 1,
+        -float(item.get('confidence') or 0),
+        str(item.get('id') or ''),
+    ))
+    return citations[:10]
+
+
+def _sources_ref_matches_any(evidence_ref: dict, refs: list[dict]) -> bool:
+    evidence_source = evidence_ref.get('source_id')
+    evidence_item = evidence_ref.get('item_id')
+    if not evidence_source:
+        return False
+    for ref in refs:
+        if ref.get('source_id') != evidence_source:
+            continue
+        if evidence_item and ref.get('item_id') and ref.get('item_id') != evidence_item:
+            continue
+        return True
+    return False
+
+
+def _related_for_object(obj: dict, related_result: dict) -> list[dict]:
+    obj_id = obj.get('id')
+    matches = []
+    for entry in related_result.get('related') or []:
+        if entry.get('id') == obj_id or obj_id in set(entry.get('source_match_ids') or []):
+            matches.append(entry)
+    matches.sort(key=lambda item: (-float(item.get('score') or 0), str(item.get('id') or '')))
+    return matches[:10]
+
+
+def _make_context_pack_id(query: str, selected_items: list[dict], budget: dict) -> str:
+    locator = json.dumps({
+        'query': query,
+        'object_ids': [item.get('object_id') for item in selected_items],
+        'budget': {
+            'requested_max_chars': budget.get('requested_max_chars'),
+            'max_pages': budget.get('max_pages'),
+            'include_full_pages': budget.get('include_full_pages'),
+        },
+    }, sort_keys=True)
+    return stable_object_id('context_pack', locator)
+
+
+def _context_artifacts(root: Path, pack_id: str) -> dict:
+    return {
+        'context_pack': context_pack_dir(root) / f'{pack_id}.json',
+        'context_pack_object': object_document_path(root, 'context_pack', pack_id),
+        'context_pack_manifest': context_pack_manifest_path(root),
+        'object_index': object_index_path(root),
+    }
+
+
+def _write_context_pack_object(root: Path, pack: dict) -> dict:
+    object_path = object_document_path(root, 'context_pack', pack['id'])
+    relative_path = _relative(root, object_path)
+    context_object = make_context_pack_object(
+        object_id=pack['id'],
+        title=f"Context Pack: {pack['query']}",
+        summary=f"Agent context pack for query: {pack['query']}",
+        object_ids=pack.get('object_ids') or [],
+        source_refs=pack.get('source_refs') or [],
+        relative_path=relative_path,
+        query=pack.get('query'),
+        pack_path=_relative(root, context_pack_dir(root) / f"{pack['id']}.json"),
+        budget=pack.get('budget') or {},
+        generated_at=pack.get('generated_at'),
+    )
+    _write_json_atomic(object_path, context_object)
+    objects = _load_object_documents(root)
+    by_id = {obj.get('id'): obj for obj in objects if obj.get('id')}
+    by_id[context_object['id']] = context_object
+    _write_json_atomic(object_index_path(root), make_object_index(root, sorted(by_id.values(), key=_object_sort_key)))
+    validation = validate_workspace_objects(root, path=object_artifacts_dir(root), strict=True, write_report=True)
+    if validation.get('summary', {}).get('error_count', 0):
+        raise AgentInterfaceError(
+            'object validation failed after context pack object generation',
+            code='agent_validation_failed',
+            details={'validation': validation},
+        )
+    return context_object
+
+
+def _write_context_pack_manifest(root: Path, pack: dict, now: str) -> dict:
+    path = context_pack_manifest_path(root)
+    existing = _read_optional_json(path, schema_version=CONTEXT_PACK_MANIFEST_SCHEMA_VERSION, code='agent_context_pack_manifest_invalid') or {}
+    records = [dict(record) for record in existing.get('packs') or [] if record.get('id') != pack['id']]
+    record = {
+        'id': pack['id'],
+        'query': pack['query'],
+        'pack_path': _relative(root, context_pack_dir(root) / f"{pack['id']}.json"),
+        'object_path': _relative(root, object_document_path(root, 'context_pack', pack['id'])),
+        'selected_object_ids': list(pack.get('object_ids') or []),
+        'budget': dict(pack.get('budget') or {}),
+        'generated_at': pack.get('generated_at') or now,
+        'latest': True,
+    }
+    for item in records:
+        item['latest'] = False
+    records.append(record)
+    records.sort(key=lambda item: (item.get('generated_at') or '', item.get('id') or ''))
+    manifest = {
+        'schema_version': CONTEXT_PACK_MANIFEST_SCHEMA_VERSION,
+        'generated_at': now,
+        'latest_pack_id': pack['id'],
+        'packs': records,
+    }
+    _write_json_atomic(path, manifest)
+    return manifest
+
+
+def run_agent_context(
+    base: Path | str,
+    query: str,
+    dry_run: bool = False,
+    max_chars: int = 12000,
+    max_pages: int = 8,
+    include_full_pages: bool = False,
+) -> dict:
+    root = _root(base)
+    terms = _normalize_query_terms(query)
+    max_chars = max(0, int(max_chars))
+    max_pages = max(0, int(max_pages))
+    if not dry_run:
+        _validate_before_write(root)
+    snapshot = _load_snapshot(root)
+    citation_result = query_agent_citations(root, query, limit=50)
+    related_result = query_agent_related(root, query, limit=50)
+    candidates = []
+    for obj in snapshot.get('objects') or []:
+        if not obj.get('id') or _object_type(obj) == 'graph_edge':
+            continue
+        if _object_type(obj) != 'wiki_page':
+            continue
+        candidate = _context_candidate_score(root, obj, query, terms, citation_result, related_result)
+        if candidate:
+            candidates.append(candidate)
+    candidates.sort(key=lambda item: (-item['score'], _object_sort_key(item['object'])))
+    selected_items = []
+    included_chars = 0
+    omitted_count = 0
+    any_truncated = False
+    for candidate in candidates:
+        if len(selected_items) >= max_pages:
+            omitted_count += 1
+            continue
+        remaining = max_chars - included_chars
+        if remaining <= 0:
+            omitted_count += 1
+            continue
+        obj = candidate['object']
+        body = _read_page_body(root, obj.get('body_path'))
+        excerpt_source = body if include_full_pages else '\n\n'.join(part for part in [obj.get('summary'), body] if part)
+        excerpt, truncated = _bounded_context_excerpt(excerpt_source, remaining)
+        included_chars += len(excerpt)
+        any_truncated = any_truncated or truncated
+        item_citations = _citations_for_object(obj, citation_result)
+        item_related = _related_for_object(obj, related_result)
+        selected_items.append({
+            'object_id': obj.get('id'),
+            'type': _object_type(obj),
+            'title': obj.get('title') or obj.get('id'),
+            'summary': obj.get('summary'),
+            'body_path': obj.get('body_path'),
+            'excerpt': excerpt,
+            'excerpt_chars': len(excerpt),
+            'truncated': truncated,
+            'selection_rationale': candidate['selection_rationale'],
+            'source_refs': _source_refs_for_object(obj),
+            'citations': item_citations,
+            'related': item_related,
+        })
+    object_ids = [item['object_id'] for item in selected_items]
+    source_refs = _dedupe_source_refs([ref for item in selected_items for ref in item.get('source_refs') or []])
+    budget = {
+        'requested_max_chars': max_chars,
+        'included_chars': included_chars,
+        'max_pages': max_pages,
+        'selected_count': len(selected_items),
+        'omitted_count': omitted_count,
+        'truncated': bool(any_truncated or omitted_count),
+        'include_full_pages': include_full_pages,
+    }
+    pack_id = _make_context_pack_id(query, selected_items, budget)
+    now = _utc_now()
+    artifacts = _context_artifacts(root, pack_id)
+    pack = {
+        'schema_version': SCHEMA_VERSIONS['context_pack'],
+        'id': pack_id,
+        'type': 'context_pack',
+        'status': 'dry_run' if dry_run else 'completed',
+        'dry_run': dry_run,
+        'generated_at': now,
+        'query': query,
+        'object_ids': object_ids,
+        'source_refs': source_refs,
+        'items': selected_items,
+        'budget': budget,
+        'selection': {
+            'query_terms': terms,
+            'candidate_count': len(candidates),
+            'selected_object_ids': object_ids,
+            'selection_strategy': 'deterministic_lexical_source_backed_pages',
+        },
+        'citations': citation_result.get('evidence') or [],
+        'related': related_result.get('related') or [],
+        'warnings': list(dict.fromkeys((warning.get('code'), warning.get('message'), warning.get('path')) for warning in snapshot.get('warnings') or [])),
+        'next_actions': list(dict.fromkeys((citation_result.get('next_actions') or []) + (related_result.get('next_actions') or []))),
+    }
+    pack['warnings'] = [
+        {'code': code, 'message': message, 'path': path}
+        for code, message, path in pack['warnings']
+    ]
+    if dry_run:
+        pack['planned'] = [
+            {'path': _relative(root, artifacts['context_pack']), 'kind': 'json'},
+            {'path': _relative(root, artifacts['context_pack_object']), 'kind': 'json'},
+            {'path': _relative(root, artifacts['context_pack_manifest']), 'kind': 'json'},
+        ]
+        pack['generated'] = []
+        return pack
+    _write_json_atomic(artifacts['context_pack'], pack)
+    _write_context_pack_object(root, pack)
+    _write_context_pack_manifest(root, pack, now)
+    pack['generated'] = [
+        {'path': _relative(root, artifacts['context_pack']), 'kind': 'json'},
+        {'path': _relative(root, artifacts['context_pack_object']), 'kind': 'json'},
+        {'path': _relative(root, artifacts['context_pack_manifest']), 'kind': 'json'},
+        {'path': _relative(root, artifacts['object_index']), 'kind': 'json'},
+    ]
+    return pack
 
 
 def run_agent_export(
