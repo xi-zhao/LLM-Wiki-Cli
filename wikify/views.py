@@ -306,6 +306,8 @@ def _link(label: str, target: str) -> str:
 
 
 def _markdown_rel(source_path: str, target_path: str) -> str:
+    if not target_path:
+        return '#'
     source_dir = posixpath.dirname(source_path)
     rel = posixpath.relpath(target_path, source_dir or '.')
     if not rel.startswith('.'):
@@ -931,10 +933,13 @@ def run_view_generation(
     objects = _load_object_documents(root)
     groups = _group_objects(objects)
     snapshot = _load_workspace_snapshot(root, warnings)
+    validation = None
+    if not dry_run:
+        validation = _validate_before_write(root)
+        snapshot['validation_report'] = validation
     views = _filter_views(_build_views(root, groups, snapshot, warnings), section)
     html_items = _planned_html(views) if include_html else []
     sources = _sources(snapshot)
-    validation = None
     conflicts: list[dict] = []
     generated_markdown: list[dict] = []
     generated_html: list[dict] = []
@@ -959,7 +964,6 @@ def run_view_generation(
     if dry_run:
         return result
 
-    validation = _validate_before_write(root)
     manifest = _load_manifest(root)
     generated_markdown, conflicts, conflict_tasks = _write_views(root, views, manifest, now)
     if include_html:

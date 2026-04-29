@@ -639,6 +639,17 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.timeout, 30.0)
         self.assertEqual(profile_args.agent_profile, '@default')
 
+    def test_build_parser_accepts_views_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args(['views', '--dry-run', '--no-html', '--section', 'sources'])
+
+        self.assertEqual(args.command, 'views')
+        self.assertTrue(args.dry_run)
+        self.assertTrue(args.no_html)
+        self.assertEqual(args.section, 'sources')
+
     def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -1042,6 +1053,141 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'wikiize')
                 self.assertEqual(payload['error']['code'], 'wikiize_source_items_missing')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_views_command_dry_run_returns_json_without_writing_views(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import sync_workspace
+        from wikify.views import views_manifest_path, views_report_path
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import run_wikiization
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Note\n\nQueued source.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                run_wikiization(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'views', '--dry-run', '--no-html'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'views')
+                self.assertTrue(payload['result']['dry_run'])
+                self.assertEqual(payload['result']['summary']['planned_html_count'], 0)
+                self.assertIn('views/index.md', {view['path'] for view in payload['result']['views']})
+                self.assertFalse((base / 'views' / 'index.md').exists())
+                self.assertFalse(views_report_path(base).exists())
+                self.assertFalse(views_manifest_path(base).exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_views_command_writes_markdown_html_and_reports(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.sync import sync_workspace
+        from wikify.views import views_manifest_path, views_report_path
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import run_wikiization
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Note\n\nQueued source.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                run_wikiization(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'views'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'views')
+                self.assertEqual(payload['result']['status'], 'completed')
+                self.assertEqual(payload['result']['summary']['generated_view_count'], len(payload['result']['views']))
+                self.assertTrue((base / 'views' / 'index.md').is_file())
+                self.assertTrue((base / 'views' / 'site' / 'index.html').is_file())
+                self.assertTrue(views_report_path(base).is_file())
+                self.assertTrue(views_manifest_path(base).is_file())
+                self.assertIn('views/index.md', payload['result']['completion']['artifacts'])
+                self.assertIn('views/site/index.html', payload['result']['completion']['artifacts'])
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_views_command_validation_errors_return_exit_code_2(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                self._write_json(
+                    base / 'artifacts' / 'objects' / 'wiki_pages' / 'page_bad.json',
+                    {
+                        'schema_version': 'wikify.wiki-page.v1',
+                        'id': 'page_bad',
+                        'type': 'wiki_page',
+                        'title': 'Bad',
+                    },
+                )
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'views'])
+
+                self.assertEqual(raised.exception.code, 2)
+                payload = json.loads(stdout.getvalue())
+                self.assertFalse(payload['ok'])
+                self.assertEqual(payload['command'], 'views')
+                self.assertEqual(payload['error']['code'], 'views_validation_failed')
+                self.assertEqual(payload['error']['details']['validation']['schema_version'], 'wikify.object-validation.v1')
+                self.assertFalse((base / 'views' / 'index.md').exists())
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)

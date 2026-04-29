@@ -6,6 +6,7 @@ from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
 from wikify.object_validation import validate_workspace_objects
 from wikify.sync import SyncError, sync_workspace
+from wikify.views import SECTION_CHOICES, ViewGenerationError, run_view_generation
 from wikify.wikiize import WikiizeError, run_wikiization
 from wikify.maintenance.bundle_request import (
     BundleRequestError,
@@ -296,6 +297,50 @@ def cmd_wikiize(args):
         result['completion']['summary'] = 'wikiization completed with review tasks'
         result['completion']['user_message'] = 'wikiization completed with review tasks'
     return envelope_ok('wikiize', result)
+
+
+def cmd_views(args):
+    try:
+        result = run_view_generation(
+            discover_base(),
+            dry_run=args.dry_run,
+            include_html=not args.no_html,
+            section=args.section,
+        )
+    except WorkspaceError as exc:
+        return _workspace_error('views', exc)
+    except ViewGenerationError as exc:
+        return envelope_error(
+            'views',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'views',
+            'views_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    artifacts = [item['path'] for item in result.get('generated', []) if item.get('path')]
+    if result.get('dry_run'):
+        summary = 'views dry run completed'
+    elif result.get('conflicts'):
+        summary = 'views completed with conflicts'
+    else:
+        summary = 'views completed'
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': summary,
+    }
+    return envelope_ok('views', result)
 
 
 def cmd_validate(args):
@@ -1268,6 +1313,13 @@ def build_parser() -> argparse.ArgumentParser:
         p_validate.add_argument('--strict', action='store_true')
         p_validate.add_argument('--write-report', action='store_true')
         p_validate.set_defaults(func=cmd_validate)
+
+    if 'views' not in sub.choices:
+        p_views = sub.add_parser('views', help='Render human-facing Markdown views and local static HTML')
+        p_views.add_argument('--dry-run', action='store_true')
+        p_views.add_argument('--no-html', action='store_true')
+        p_views.add_argument('--section', choices=sorted(SECTION_CHOICES), default='all')
+        p_views.set_defaults(func=cmd_views)
 
     if 'graph' not in sub.choices:
         p_graph = sub.add_parser('graph', help='Build graph artifacts from compiled Markdown wiki files')
