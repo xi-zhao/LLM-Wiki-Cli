@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 19 complete: verifier rejection feedback.
+**Current focus:** Phase 20 planned: verifier repair automation.
 
 ## Current Position
 
-Phase: 19 of 19 (Verifier Rejection Feedback)
+Phase: 20 of 20 (Verifier Repair Automation)
 Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-04-29 - Completed Phase 19 verifier rejection feedback.
+Status: Planned
+Last activity: 2026-04-29 - Planned Phase 20 verifier repair automation.
 
-Progress: ██████████ 100%
+Progress: █████████░ 95%
 
 ## Performance Metrics
 
@@ -46,9 +46,10 @@ Progress: ██████████ 100%
 | 17. Maintenance Loop Automation | 1/1 | 1 session | 1 session |
 | 18. Agent Verifier Gate | 1/1 | 1 session | 1 session |
 | 19. Verifier Rejection Feedback | 1/1 | 1 session | 1 session |
+| 20. Verifier Repair Automation | 0/1 | planned | planned |
 
 **Recent Trend:**
-- Last 5 plans: 15-01, 16-01, 17-01, 18-01, 19-01
+- Last 5 plans: 16-01, 17-01, 18-01, 19-01, 20-01 planned
 - Trend: Stable
 
 ## Accumulated Context
@@ -115,6 +116,7 @@ Recent decisions affecting current work:
 - [Planning]: Verifier rejection should block tasks with durable feedback so later agents can inspect and retry.
 - [Phase 19]: Verifier rejection in `run-task` marks tasks blocked with `blocked_feedback`.
 - [Phase 19]: Retry and restore clear stale verifier rejection feedback before the next attempt.
+- [Planning]: Repair automation should reuse explicit producer/verifier command boundaries before any provider-backed SDK work.
 
 ### Pending Todos
 
@@ -149,6 +151,7 @@ Recent decisions affecting current work:
 - Phase 18 completed: Agent Verifier Gate.
 - Phase 19 added: Verifier Rejection Feedback.
 - Phase 19 completed: Verifier Rejection Feedback.
+- Phase 20 added: Verifier Repair Automation.
 
 ## Deferred Items
 

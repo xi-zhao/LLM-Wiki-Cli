@@ -193,6 +193,16 @@
 - [x] **VRF-06**: Retrying or restoring blocked work clears stale verifier rejection metadata.
 - [x] **VRF-07**: Docs and tests describe rejection feedback and retry behavior.
 
+### Verifier Repair Automation
+
+- [ ] **RPR-01**: `run-task` with an explicit producer command can repair a verifier-blocked task without user handoff.
+- [ ] **RPR-02**: Repair runs regenerate a previously rejected default patch bundle instead of reusing it.
+- [ ] **RPR-03**: Patch bundle requests include repair context from the latest verifier rejection feedback.
+- [ ] **RPR-04**: Repair runs preserve deterministic verifier/apply gates and only mark done after accepted verification and successful apply.
+- [ ] **RPR-05**: Batch execution can repair selected blocked verifier tasks through the same audited single-task path.
+- [ ] **RPR-06**: Repair failures remain bounded: content is unchanged, application records are not written, and fresh rejection feedback is persisted.
+- [ ] **RPR-07**: Docs and tests describe verifier repair automation and the explicit command boundary.
+
 ### Agent Consumer
 
 - **AGT-01**: A future command can generate provider-backed patch bundles with explicit provider/key/retry semantics.
@@ -335,6 +345,13 @@
 | VRF-05 | Phase 19 | Complete |
 | VRF-06 | Phase 19 | Complete |
 | VRF-07 | Phase 19 | Complete |
+| RPR-01 | Phase 20 | Planned |
+| RPR-02 | Phase 20 | Planned |
+| RPR-03 | Phase 20 | Planned |
+| RPR-04 | Phase 20 | Planned |
+| RPR-05 | Phase 20 | Planned |
+| RPR-06 | Phase 20 | Planned |
+| RPR-07 | Phase 20 | Planned |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -352,9 +369,10 @@
 - v2 maintenance loop requirements: 8 total
 - v2 agent verifier gate requirements: 8 total
 - v2 verifier rejection feedback requirements: 7 total
-- Mapped to phases: 122
+- v2 verifier repair automation requirements: 7 total
+- Mapped to phases: 129
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 for Phase 19 completion*
+*Last updated: 2026-04-29 for Phase 20 planning*

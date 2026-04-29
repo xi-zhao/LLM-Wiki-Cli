@@ -2,7 +2,7 @@
 
 ## Overview
 
-The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, an explicit agent verifier gate, and durable verifier rejection feedback.
+The current milestone turns graph maintenance from "audit artifacts exist" into "agents can safely drive the next maintenance action." Phase 1 created an agent task queue. Phase 2 exposed a read-only task API. The sequence then added scoped proposals, lifecycle state, graph relevance, purpose-aware proposal rationale, deterministic patch bundle apply/rollback, low-interruption task workflow orchestration, a bounded maintenance automation entrypoint, explicit agent command profiles, an explicit default-profile shorthand, bounded maintenance loop automation, an explicit agent verifier gate, durable verifier rejection feedback, and verifier repair automation.
 
 The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving Wikify's CLI-first, stdlib-only, MIT-compatible direction.
 
@@ -31,6 +31,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
 - [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
 - [x] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
+- [ ] **Phase 20: Verifier Repair Automation** - Feed verifier rejection feedback back into explicit producer runs so blocked tasks can be repaired.
 
 ## Phase Details
 
@@ -369,6 +370,24 @@ Plans:
 Plans:
 - [x] 19-01: Build verifier rejection feedback loop
 
+### Phase 20: Verifier Repair Automation
+**Goal**: `run-task --agent-command` can repair verifier-blocked work by regenerating rejected bundles with feedback, then re-running verifier and apply gates.
+**Depends on**: Phase 19
+**Requirements**: RPR-01, RPR-02, RPR-03, RPR-04, RPR-05, RPR-06, RPR-07
+**Why after Phase 19**: Rejection feedback is now durable. The next automation step is feeding that feedback back into the producer so repair can happen without asking the user to manually clean up stale bundles.
+**Success Criteria** (what must be TRUE):
+  1. A blocked verifier-rejected task can be repaired by `run-task --id <id> --agent-command ... --verifier-command ...`.
+  2. Existing rejected default bundles are regenerated during repair instead of being reused.
+  3. Patch bundle requests expose latest verifier feedback as repair context.
+  4. Accepted repair bundles still pass deterministic verifier and apply gates before task completion.
+  5. Batch execution can repair selected blocked tasks through the same single-task runner.
+  6. Rejected repair attempts keep content unchanged and persist fresh blocked feedback.
+  7. Full unittest suite passes.
+**Plans**: 1 plan
+
+Plans:
+- [ ] 20-01: Build verifier repair automation
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -392,3 +411,4 @@ Plans:
 | 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
 | 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |
 | 19. Verifier Rejection Feedback | 1/1 | Complete | 2026-04-29 |
+| 20. Verifier Repair Automation | 0/1 | Planned | - |
