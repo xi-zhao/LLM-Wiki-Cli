@@ -158,7 +158,11 @@ def _collect_entries(root: Path, focus: Path | None, records: list[ValidationRec
     paths = []
     artifact_root = object_artifacts_dir(root)
     if artifact_root.exists():
-        paths.extend(path for path in sorted(artifact_root.rglob('*.json')) if path.name != 'validation.json')
+        paths.extend(
+            path
+            for path in sorted(artifact_root.rglob('*.json'))
+            if path.name not in {'object-index.json', 'validation.json'}
+        )
     entries = _entries_from_paths(root, paths, records)
     entries.extend(_entries_from_markdown_index(root, records))
     return entries
@@ -168,7 +172,11 @@ def _focused_paths(focus: Path) -> list[Path]:
     if focus.is_file():
         return [focus]
     if focus.is_dir():
-        return sorted(path for path in focus.rglob('*') if path.suffix in {'.json', '.md'} and path.name != 'validation.json')
+        return sorted(
+            path
+            for path in focus.rglob('*')
+            if path.suffix in {'.json', '.md'} and path.name not in {'object-index.json', 'validation.json'}
+        )
     return [focus]
 
 
