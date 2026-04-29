@@ -42,6 +42,8 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 23: Incremental Sync And Ingest Queue
 
+**Status:** Planned; ready to execute
+
 **Goal:** Detect source changes and produce deterministic ingest queue/status artifacts.
 
 **Requirements:** ING-01, ING-02, ING-03, ING-04
@@ -56,6 +58,16 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Dependencies:** Phase 22.
 
 **Verification:** Unit tests for file, directory, URL metadata, repository path, dry-run, unchanged repeat sync, missing source handling, and queue artifact shape.
+
+**Plans:**
+- [ ] **23-01 Build Incremental Sync And Ingest Queue** - Implement `wikify sync`, source item discovery/classification, source item index, sync report, ingest queue artifact, registry sync metadata, docs, and verification.
+
+**Wave 1:** 23-01 can run independently after Phase 22.
+
+**Cross-cutting constraints:**
+- Sync must not fetch URLs, clone repositories, call providers, run `wikify ingest`, generate wiki pages, generate views, build graph artifacts, or export agent context.
+- Sync artifacts are internal control-plane state under `.wikify/sync/` and `.wikify/queues/`.
+- Source item identity must be deterministic so repeated syncs are stable and queue entries do not duplicate.
 
 ### Phase 24: Wiki Object Model And Validation
 
