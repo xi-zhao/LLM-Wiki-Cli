@@ -239,7 +239,7 @@ class SyncWorkspaceTests(unittest.TestCase):
 
             self.assertEqual(report['summary']['item_status_counts']['missing'], 1)
             self.assertEqual(report['summary']['queued_count'], 0)
-            self.assertEqual(self._queue_entries(queue)[0]['item_status'], 'new')
+            self.assertEqual(self._queue_entries(queue), [])
 
     def test_single_source_sync_updates_only_selected_source_items(self):
         from wikify.sync import source_items_path, sync_workspace
