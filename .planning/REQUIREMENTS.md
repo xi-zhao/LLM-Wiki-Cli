@@ -195,13 +195,13 @@
 
 ### Verifier Repair Automation
 
-- [ ] **RPR-01**: `run-task` with an explicit producer command can repair a verifier-blocked task without user handoff.
-- [ ] **RPR-02**: Repair runs regenerate a previously rejected default patch bundle instead of reusing it.
-- [ ] **RPR-03**: Patch bundle requests include repair context from the latest verifier rejection feedback.
-- [ ] **RPR-04**: Repair runs preserve deterministic verifier/apply gates and only mark done after accepted verification and successful apply.
-- [ ] **RPR-05**: Batch execution can repair selected blocked verifier tasks through the same audited single-task path.
-- [ ] **RPR-06**: Repair failures remain bounded: content is unchanged, application records are not written, and fresh rejection feedback is persisted.
-- [ ] **RPR-07**: Docs and tests describe verifier repair automation and the explicit command boundary.
+- [x] **RPR-01**: `run-task` with an explicit producer command can repair a verifier-blocked task without user handoff.
+- [x] **RPR-02**: Repair runs regenerate a previously rejected default patch bundle instead of reusing it.
+- [x] **RPR-03**: Patch bundle requests include repair context from the latest verifier rejection feedback.
+- [x] **RPR-04**: Repair runs preserve deterministic verifier/apply gates and only mark done after accepted verification and successful apply.
+- [x] **RPR-05**: Batch execution can repair selected blocked verifier tasks through the same audited single-task path.
+- [x] **RPR-06**: Repair failures remain bounded: content is unchanged, application records are not written, and fresh rejection feedback is persisted.
+- [x] **RPR-07**: Docs and tests describe verifier repair automation and the explicit command boundary.
 
 ### Agent Consumer
 
@@ -345,13 +345,13 @@
 | VRF-05 | Phase 19 | Complete |
 | VRF-06 | Phase 19 | Complete |
 | VRF-07 | Phase 19 | Complete |
-| RPR-01 | Phase 20 | Planned |
-| RPR-02 | Phase 20 | Planned |
-| RPR-03 | Phase 20 | Planned |
-| RPR-04 | Phase 20 | Planned |
-| RPR-05 | Phase 20 | Planned |
-| RPR-06 | Phase 20 | Planned |
-| RPR-07 | Phase 20 | Planned |
+| RPR-01 | Phase 20 | Complete |
+| RPR-02 | Phase 20 | Complete |
+| RPR-03 | Phase 20 | Complete |
+| RPR-04 | Phase 20 | Complete |
+| RPR-05 | Phase 20 | Complete |
+| RPR-06 | Phase 20 | Complete |
+| RPR-07 | Phase 20 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -375,4 +375,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 for Phase 20 planning*
+*Last updated: 2026-04-29 for Phase 20 completion*

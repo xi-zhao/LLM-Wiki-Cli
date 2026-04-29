@@ -665,6 +665,13 @@ run-task feedback:
 - error details: `verification_path`, `agent_tasks`, `task_events`, `verdict`
 - retry/restore: clears stale `blocked_feedback`
 
+repair context:
+- request field: `repair_context`
+- `available=false` when there is no prior verifier feedback
+- `available=true` includes `feedback` and producer-facing repair `instructions`
+- source is `task_blocked_feedback`, `latest_block_event`, or `runner_repair_feedback`
+- explicit producer repair overwrites `suggested_bundle_path`; hidden provider execution is still not allowed
+
 安全规则：verifier gate 不会绕过 deterministic preflight，也不会直接修改正文。它只在 apply 前增加显式外部 agent review。dry-run 不执行 verifier command，也不写 verification artifact。
 
 Graph relevance contract:
@@ -1222,6 +1229,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - 如果 bundle 已存在，即使提供 `--agent-command` 也不会执行 producer command
 - 如果调用方提供 `--verifier-command` 或 `--verifier-profile`，bundle 会在 apply 前经过 verifier gate
 - verifier rejection 会写 verification artifact，把 task 标记为 `blocked`，并在 task/event/error details 中暴露反馈和 artifact 路径
+- 如果 task 是 verifier-blocked 且调用方显式提供 producer command/profile，runner 会 retry task、生成带 `repair_context` 的 request，并重新生产默认 bundle，避免复用旧 rejected bundle
 - bundle 存在时通过 deterministic `apply` 合约应用
 - apply 成功后通过 lifecycle 标记 task 为 `done`
 
@@ -1259,6 +1267,24 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 }
 ```
 
+repair request 片段：
+
+```json
+{
+  "repair_context": {
+    "available": true,
+    "source": "runner_repair_feedback",
+    "feedback": {
+      "summary": "rejected",
+      "findings": []
+    },
+    "instructions": [
+      "Address every verifier finding before writing a replacement patch bundle."
+    ]
+  }
+}
+```
+
 状态：
 - `waiting_for_patch_bundle`
   - runner 已尽可能推进，并已写入 patch bundle request；下一步由 agent 读取 request 生成 patch bundle，或调用 `produce-bundle` 委托显式外部 command 生成 patch bundle
@@ -1277,7 +1303,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 - apply 阶段错误沿用 `patch_*` code，exit code 为 `2`
 - lifecycle 阶段错误沿用 `invalid_agent_task_transition` 等 code，exit code 为 `2`
 
-安全规则：`run-task` 只编排现有 audited primitives。默认情况下它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批。只有调用方显式传入 `--agent-command` 时，它才会执行外部 producer command；只有显式传入 `--verifier-command` 或 `--verifier-profile` 时才会执行外部 verifier command。provider、模型、密钥、retry 均不由 Wikify 隐式决定。
+安全规则：`run-task` 只编排现有 audited primitives。默认情况下它可以生成 patch bundle request，但不生成 patch bundle，不调用隐藏 LLM，不提示用户审批。只有调用方显式传入 `--agent-command` 时，它才会执行外部 producer command；只有显式传入 `--verifier-command` 或 `--verifier-profile` 时才会执行外部 verifier command。repair 模式也遵守同一边界，只是把 verifier feedback 放入 request 并强制 producer 替换旧 rejected bundle。provider、模型、密钥、retry 均不由 Wikify 隐式决定。
 
 ### `run-tasks`
 推荐用作 bounded batch task automation。
@@ -1291,6 +1317,7 @@ rollback 成功返回 `wikify.patch-rollback.v1`。
 默认行为：
 - 读取 `sorted/graph-agent-tasks.json`
 - 默认选择 `status=queued`
+- 选择 `--status blocked` 可批量 repair verifier-blocked tasks
 - 默认 `limit=5`
 - 按队列顺序顺序执行
 - 每个 task 都调用现有 `run-task` 工作流

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 from wikify.maintenance.proposal import build_patch_proposal
+from wikify.maintenance.task_reader import load_task_queue, select_tasks
 
 
 SCHEMA_VERSION = 'wikify.patch-bundle-request.v1'
@@ -74,6 +75,78 @@ def _target_snapshot(root: Path, relative_path: str, max_chars: int) -> dict:
     }
 
 
+def _task_blocked_feedback(root: Path, task_id: str) -> dict | None:
+    try:
+        queue = load_task_queue(root)
+        selected = select_tasks(queue, task_id=task_id)
+    except Exception:
+        return None
+    feedback = selected['tasks'][0].get('blocked_feedback')
+    return feedback if isinstance(feedback, dict) else None
+
+
+def _latest_block_event_feedback(root: Path, task_id: str) -> dict | None:
+    from wikify.maintenance.task_lifecycle import events_path
+
+    path = events_path(root)
+    try:
+        document = json.loads(path.read_text(encoding='utf-8'))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    for event in reversed(document.get('events') or []):
+        if event.get('task_id') == task_id and event.get('action') == 'block':
+            details = event.get('details')
+            return details if isinstance(details, dict) else None
+    return None
+
+
+def _repair_context(root: Path, task_id: str, feedback_override: dict | None = None) -> dict:
+    if feedback_override:
+        return {
+            'available': True,
+            'source': 'runner_repair_feedback',
+            'feedback': feedback_override,
+            'instructions': [
+                'Address every verifier finding before writing a replacement patch bundle.',
+                'Use the verifier summary and verdict to avoid repeating the rejected change.',
+                'Overwrite suggested_bundle_path with a fresh wikify.patch-bundle.v1 artifact.',
+            ],
+        }
+
+    task_feedback = _task_blocked_feedback(root, task_id)
+    if task_feedback:
+        return {
+            'available': True,
+            'source': 'task_blocked_feedback',
+            'feedback': task_feedback,
+            'instructions': [
+                'Address every verifier finding before writing a replacement patch bundle.',
+                'Use the verifier summary and verdict to avoid repeating the rejected change.',
+                'Overwrite suggested_bundle_path with a fresh wikify.patch-bundle.v1 artifact.',
+            ],
+        }
+
+    event_feedback = _latest_block_event_feedback(root, task_id)
+    if event_feedback:
+        return {
+            'available': True,
+            'source': 'latest_block_event',
+            'feedback': event_feedback,
+            'instructions': [
+                'Address every verifier finding before writing a replacement patch bundle.',
+                'Use the verifier summary and verdict to avoid repeating the rejected change.',
+                'Overwrite suggested_bundle_path with a fresh wikify.patch-bundle.v1 artifact.',
+            ],
+        }
+
+    return {
+        'available': False,
+        'source': None,
+        'feedback': None,
+        'instructions': [],
+    }
+
+
 def request_path(base: Path | str, task_id: str) -> Path:
     return Path(base).expanduser().resolve() / REQUEST_DIR_RELATIVE_PATH / f'{task_id}.json'
 
@@ -87,6 +160,7 @@ def build_bundle_request(
     task_id: str,
     *,
     max_target_chars: int = DEFAULT_MAX_TARGET_CHARS,
+    repair_feedback: dict | None = None,
 ) -> dict:
     root = Path(base).expanduser().resolve()
     proposal = build_patch_proposal(root, task_id)
@@ -103,6 +177,7 @@ def build_bundle_request(
         'suggested_bundle_path': str(suggested_bundle_path(root, task_id)),
         'proposal': proposal,
         'targets': targets,
+        'repair_context': _repair_context(root, task_id, repair_feedback),
         'allowed_operations': [
             {
                 'operation': 'replace_text',

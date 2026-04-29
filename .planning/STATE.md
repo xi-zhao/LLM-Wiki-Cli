@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-28)
 
 **Core value:** Agents can maintain and improve a local Markdown wiki through deterministic, auditable command outputs without repeatedly interrupting the user.
-**Current focus:** Phase 20 planned: verifier repair automation.
+**Current focus:** Phase 20 complete: verifier repair automation.
 
 ## Current Position
 
 Phase: 20 of 20 (Verifier Repair Automation)
 Plan: 1 of 1 in current phase
-Status: Planned
-Last activity: 2026-04-29 - Planned Phase 20 verifier repair automation.
+Status: Complete
+Last activity: 2026-04-29 - Completed Phase 20 verifier repair automation.
 
-Progress: █████████░ 95%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
@@ -46,10 +46,10 @@ Progress: █████████░ 95%
 | 17. Maintenance Loop Automation | 1/1 | 1 session | 1 session |
 | 18. Agent Verifier Gate | 1/1 | 1 session | 1 session |
 | 19. Verifier Rejection Feedback | 1/1 | 1 session | 1 session |
-| 20. Verifier Repair Automation | 0/1 | planned | planned |
+| 20. Verifier Repair Automation | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 16-01, 17-01, 18-01, 19-01, 20-01 planned
+- Last 5 plans: 16-01, 17-01, 18-01, 19-01, 20-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -117,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase 19]: Verifier rejection in `run-task` marks tasks blocked with `blocked_feedback`.
 - [Phase 19]: Retry and restore clear stale verifier rejection feedback before the next attempt.
 - [Planning]: Repair automation should reuse explicit producer/verifier command boundaries before any provider-backed SDK work.
+- [Phase 20]: Bundle requests include `repair_context` from verifier rejection feedback.
+- [Phase 20]: Explicit repair runs regenerate rejected default bundles before verifier/apply.
 
 ### Pending Todos
 
@@ -152,6 +154,7 @@ Recent decisions affecting current work:
 - Phase 19 added: Verifier Rejection Feedback.
 - Phase 19 completed: Verifier Rejection Feedback.
 - Phase 20 added: Verifier Repair Automation.
+- Phase 20 completed: Verifier Repair Automation.
 
 ## Deferred Items
 

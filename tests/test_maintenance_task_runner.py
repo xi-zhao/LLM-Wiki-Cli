@@ -79,6 +79,35 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
         )
         return script
 
+    def _write_repair_bundle_agent(self, kb: Path):
+        script = kb / 'repair_bundle_agent.py'
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'assert request["repair_context"]["available"] is True',
+                'assert request["repair_context"]["feedback"]["summary"] == "rejected"',
+                'bundle = {',
+                '    "schema_version": "wikify.patch-bundle.v1",',
+                '    "proposal_task_id": request["task_id"],',
+                '    "proposal_path": request["proposal_path"],',
+                '    "operations": [',
+                '        {',
+                '            "operation": "replace_text",',
+                '            "path": "topics/a.md",',
+                '            "find": "[[Missing]]",',
+                '            "replace": "[[Existing]]",',
+                '            "rationale": "repair verifier rejection"',
+                '        }',
+                '    ]',
+                '}',
+                'print(json.dumps(bundle))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
+
     def _write_verifier(self, kb: Path, accepted: bool = True):
         script = kb / ('accept_verifier.py' if accepted else 'reject_verifier.py')
         verdict = {
@@ -101,6 +130,41 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
 
     def _read_queue(self, kb: Path):
         return json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
+
+    def _write_rejected_default_bundle(self, kb: Path):
+        bundle = {
+            'schema_version': 'wikify.patch-bundle.v1',
+            'proposal_task_id': 'agent-task-1',
+            'proposal_path': 'sorted/graph-patch-proposals/agent-task-1.json',
+            'operations': [
+                {
+                    'operation': 'replace_text',
+                    'path': 'topics/a.md',
+                    'find': '[[Missing]]',
+                    'replace': '[[Rejected]]',
+                    'rationale': 'previous rejected repair',
+                }
+            ],
+        }
+        path = kb / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json'
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(bundle), encoding='utf-8')
+        return path
+
+    def _write_blocked_feedback_queue(self, kb: Path):
+        feedback = {
+            'source': 'bundle_verifier',
+            'reason': 'patch_bundle_verification_rejected',
+            'summary': 'rejected',
+            'findings': [{'severity': 'high', 'message': 'bad replacement'}],
+            'verification_path': str(kb / 'sorted' / 'graph-patch-verifications' / 'agent-task-1.json'),
+            'verdict': {'accepted': False, 'summary': 'rejected'},
+        }
+        self._write_queue(kb, status='blocked')
+        queue = self._read_queue(kb)
+        queue['tasks'][0]['blocked_feedback'] = feedback
+        (kb / 'sorted' / 'graph-agent-tasks.json').write_text(json.dumps(queue), encoding='utf-8')
+        return feedback
 
     def test_run_agent_task_dry_run_waits_for_bundle_without_writes(self):
         from wikify.maintenance.task_runner import run_agent_task
@@ -333,6 +397,106 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
             self.assertFalse(sentinel.exists())
             self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
             self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'done')
+
+    def test_run_agent_task_repairs_blocked_verifier_task_with_agent_command(self):
+        from wikify.maintenance.task_runner import run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_blocked_feedback_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            rejected_bundle = self._write_rejected_default_bundle(kb)
+            agent = self._write_repair_bundle_agent(kb)
+            verifier = self._write_verifier(kb, accepted=True)
+
+            result = run_agent_task(
+                kb,
+                'agent-task-1',
+                agent_command=[sys.executable, str(agent)],
+                verifier_command=[sys.executable, str(verifier)],
+            )
+
+            events = json.loads((kb / 'sorted' / 'graph-agent-task-events.json').read_text(encoding='utf-8'))
+            queue = self._read_queue(kb)
+            repaired_bundle = json.loads(rejected_bundle.read_text(encoding='utf-8'))
+            request = json.loads((kb / 'sorted' / 'graph-patch-bundle-requests' / 'agent-task-1.json').read_text(encoding='utf-8'))
+            self.assertEqual(result['status'], 'completed')
+            self.assertIn('bundle_producer', [step['name'] for step in result['steps']])
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+            self.assertEqual(repaired_bundle['operations'][0]['replace'], '[[Existing]]')
+            self.assertTrue(request['repair_context']['available'])
+            self.assertEqual(queue['tasks'][0]['status'], 'done')
+            self.assertNotIn('blocked_feedback', queue['tasks'][0])
+            self.assertEqual([event['action'] for event in events['events']], ['retry', 'mark_proposed', 'mark_done'])
+
+    def test_run_agent_task_repairs_retried_verifier_task_from_event_feedback(self):
+        from wikify.maintenance.task_lifecycle import apply_lifecycle_action
+        from wikify.maintenance.task_runner import run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb, status='proposed')
+            feedback = {
+                'source': 'bundle_verifier',
+                'summary': 'rejected',
+                'findings': [{'severity': 'high', 'message': 'bad replacement'}],
+                'verification_path': str(kb / 'sorted' / 'graph-patch-verifications' / 'agent-task-1.json'),
+                'verdict': {'accepted': False, 'summary': 'rejected'},
+            }
+            apply_lifecycle_action(kb, 'agent-task-1', 'block', details=feedback)
+            apply_lifecycle_action(kb, 'agent-task-1', 'retry')
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            rejected_bundle = self._write_rejected_default_bundle(kb)
+            agent = self._write_repair_bundle_agent(kb)
+            verifier = self._write_verifier(kb, accepted=True)
+
+            result = run_agent_task(
+                kb,
+                'agent-task-1',
+                agent_command=[sys.executable, str(agent)],
+                verifier_command=[sys.executable, str(verifier)],
+            )
+
+            repaired_bundle = json.loads(rejected_bundle.read_text(encoding='utf-8'))
+            self.assertEqual(result['status'], 'completed')
+            self.assertEqual(repaired_bundle['operations'][0]['replace'], '[[Existing]]')
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'done')
+
+    def test_run_agent_task_repair_rejection_refreshes_blocked_feedback_without_apply(self):
+        from wikify.maintenance.task_runner import TaskRunError, run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_blocked_feedback_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            self._write_rejected_default_bundle(kb)
+            agent = self._write_repair_bundle_agent(kb)
+            verifier = self._write_verifier(kb, accepted=False)
+
+            with self.assertRaises(TaskRunError) as raised:
+                run_agent_task(
+                    kb,
+                    'agent-task-1',
+                    agent_command=[sys.executable, str(agent)],
+                    verifier_command=[sys.executable, str(verifier)],
+                )
+
+            queue = self._read_queue(kb)
+            events = json.loads((kb / 'sorted' / 'graph-agent-task-events.json').read_text(encoding='utf-8'))
+            task = queue['tasks'][0]
+            self.assertEqual(raised.exception.code, 'patch_bundle_verification_rejected')
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
+            self.assertFalse((kb / 'sorted' / 'graph-patch-applications').exists())
+            self.assertEqual(task['status'], 'blocked')
+            self.assertEqual(task['blocked_feedback']['summary'], 'rejected')
+            self.assertEqual([event['action'] for event in events['events']], ['retry', 'mark_proposed', 'block'])
 
     def test_run_agent_task_agent_command_failure_is_structured(self):
         from wikify.maintenance.task_runner import TaskRunError, run_agent_task

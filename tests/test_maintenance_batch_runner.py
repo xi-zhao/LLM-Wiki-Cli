@@ -74,6 +74,56 @@ class MaintenanceBatchRunnerTests(unittest.TestCase):
         )
         return script
 
+    def _write_blocked_repair_agent(self, kb: Path):
+        script = kb / 'batch_blocked_repair_agent.py'
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'assert request["repair_context"]["available"] is True',
+                'target = request["targets"][0]',
+                'missing = target["content"].split("[[", 1)[1].split("]]", 1)[0]',
+                'bundle = {',
+                '    "schema_version": "wikify.patch-bundle.v1",',
+                '    "proposal_task_id": request["task_id"],',
+                '    "proposal_path": request["proposal_path"],',
+                '    "operations": [',
+                '        {',
+                '            "operation": "replace_text",',
+                '            "path": target["path"],',
+                '            "find": f"[[{missing}]]",',
+                '            "replace": f"[[Existing{missing[-1]}]]",',
+                '            "rationale": "repair verifier rejection"',
+                '        }',
+                '    ]',
+                '}',
+                'print(json.dumps(bundle))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
+
+    def _write_rejected_bundle(self, kb: Path, task_id: str, target: str, missing: str):
+        bundle = {
+            'schema_version': 'wikify.patch-bundle.v1',
+            'proposal_task_id': task_id,
+            'proposal_path': f'sorted/graph-patch-proposals/{task_id}.json',
+            'operations': [
+                {
+                    'operation': 'replace_text',
+                    'path': target,
+                    'find': f'[[{missing}]]',
+                    'replace': '[[Rejected]]',
+                    'rationale': 'previous rejected repair',
+                }
+            ],
+        }
+        path = kb / 'sorted' / 'graph-patch-bundles' / f'{task_id}.json'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(bundle), encoding='utf-8')
+        return path
+
     def _write_verifier(self, kb: Path, accepted: bool = True):
         script = kb / ('batch_accept_verifier.py' if accepted else 'batch_reject_verifier.py')
         verdict = {
@@ -181,6 +231,39 @@ class MaintenanceBatchRunnerTests(unittest.TestCase):
             self.assertEqual(task['blocked_feedback']['summary'], 'rejected')
             self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing1]].\n')
             self.assertFalse((kb / 'sorted' / 'graph-patch-applications').exists())
+
+    def test_run_agent_tasks_repairs_blocked_verifier_tasks(self):
+        from wikify.maintenance.batch_runner import run_agent_tasks
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            target = self._write_target(kb, 'topics/a.md', 'Missing1')
+            task = self._task('agent-task-1', 'topics/a.md', 'Missing1', status='blocked')
+            task['blocked_feedback'] = {
+                'source': 'bundle_verifier',
+                'summary': 'rejected',
+                'findings': [{'severity': 'high', 'message': 'bad replacement'}],
+                'verification_path': str(kb / 'sorted' / 'graph-patch-verifications' / 'agent-task-1.json'),
+                'verdict': {'accepted': False, 'summary': 'rejected'},
+            }
+            self._write_queue(kb, [task])
+            self._write_rejected_bundle(kb, 'agent-task-1', 'topics/a.md', 'Missing1')
+            agent = self._write_blocked_repair_agent(kb)
+            verifier = self._write_verifier(kb, accepted=True)
+
+            result = run_agent_tasks(
+                kb,
+                status='blocked',
+                limit=1,
+                agent_command=[sys.executable, str(agent)],
+                verifier_command=[sys.executable, str(verifier)],
+            )
+
+            queue = self._read_queue(kb)
+            self.assertEqual(result['status'], 'completed')
+            self.assertTrue(result['items'][0]['ok'])
+            self.assertEqual(queue['tasks'][0]['status'], 'done')
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing1]].\n')
 
     def test_run_agent_tasks_defaults_to_queued_limit_five(self):
         from wikify.maintenance.batch_runner import run_agent_tasks

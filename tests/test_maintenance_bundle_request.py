@@ -56,6 +56,47 @@ class MaintenanceBundleRequestTests(unittest.TestCase):
             self.assertEqual(request['targets'][0]['sha256'], hashlib.sha256(content.encode('utf-8')).hexdigest())
             self.assertEqual(request['targets'][0]['content'], content)
             self.assertFalse(request['targets'][0]['truncated'])
+            self.assertFalse(request['repair_context']['available'])
+
+    def test_build_bundle_request_includes_latest_verifier_feedback_after_retry(self):
+        from wikify.maintenance.bundle_request import build_bundle_request
+        from wikify.maintenance.task_lifecycle import apply_lifecycle_action
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb, task={
+                'id': 'agent-task-1',
+                'source_finding_id': 'broken-link:topics/a.md:1:Missing',
+                'source_step_id': 'step-1',
+                'action': 'queue_link_repair',
+                'priority': 'high',
+                'target': 'topics/a.md',
+                'evidence': {'source': 'topics/a.md', 'line': 1, 'target': 'Missing'},
+                'write_scope': ['topics/a.md'],
+                'agent_instructions': ['repair link'],
+                'acceptance_checks': ['link resolves'],
+                'requires_user': False,
+                'status': 'proposed',
+            })
+            (kb / 'topics').mkdir()
+            (kb / 'topics' / 'a.md').write_text('See [[Missing]].\n', encoding='utf-8')
+            feedback = {
+                'source': 'bundle_verifier',
+                'summary': 'rejected',
+                'findings': [{'severity': 'high', 'message': 'bad replacement'}],
+                'verification_path': '/tmp/verification.json',
+                'verdict': {'accepted': False, 'summary': 'rejected'},
+            }
+
+            apply_lifecycle_action(kb, 'agent-task-1', 'block', details=feedback)
+            apply_lifecycle_action(kb, 'agent-task-1', 'retry')
+
+            request = build_bundle_request(kb, 'agent-task-1')
+
+            self.assertTrue(request['repair_context']['available'])
+            self.assertEqual(request['repair_context']['source'], 'latest_block_event')
+            self.assertEqual(request['repair_context']['feedback'], feedback)
+            self.assertIn('Address every verifier finding', request['repair_context']['instructions'][0])
 
     def test_write_bundle_request_writes_artifact(self):
         from wikify.maintenance.bundle_request import build_bundle_request, write_bundle_request
@@ -74,6 +115,7 @@ class MaintenanceBundleRequestTests(unittest.TestCase):
             written = json.loads(path.read_text(encoding='utf-8'))
             self.assertEqual(written['schema_version'], 'wikify.patch-bundle-request.v1')
             self.assertEqual(written['task_id'], 'agent-task-1')
+            self.assertIn('repair_context', written)
 
     def test_build_bundle_request_does_not_write_artifacts(self):
         from wikify.maintenance.bundle_request import build_bundle_request

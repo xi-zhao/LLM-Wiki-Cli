@@ -31,7 +31,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
 - [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
 - [x] **Phase 19: Verifier Rejection Feedback** - Convert verifier rejections into blocked task feedback that agents can inspect and retry.
-- [ ] **Phase 20: Verifier Repair Automation** - Feed verifier rejection feedback back into explicit producer runs so blocked tasks can be repaired.
+- [x] **Phase 20: Verifier Repair Automation** - Feed verifier rejection feedback back into explicit producer runs so blocked tasks can be repaired.
 
 ## Phase Details
 
@@ -386,7 +386,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 20-01: Build verifier repair automation
+- [x] 20-01: Build verifier repair automation
 
 ## Progress
 
@@ -411,4 +411,4 @@ Plans:
 | 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
 | 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |
 | 19. Verifier Rejection Feedback | 1/1 | Complete | 2026-04-29 |
-| 20. Verifier Repair Automation | 0/1 | Planned | - |
+| 20. Verifier Repair Automation | 1/1 | Complete | 2026-04-29 |

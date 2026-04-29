@@ -840,6 +840,19 @@ Wikify 会暴露环境变量：
 
 后续 agent 可以读取这些 artifact 修复 bundle，再用 `wikify tasks --id <id> --retry` 或 `--restore` 回到 `queued`；retry / restore 会清理旧的 `blocked_feedback`，避免新一轮执行背着过期审核结论。
 
+自动 repair 路径：
+- 对 verifier-blocked task 再次调用 `run-task --id <id> --agent-command ... --verifier-command ...`
+- runner 会先把 blocked task retry 回可执行状态
+- 新的 bundle request 会带 `repair_context`
+- 即使默认 bundle 路径已有旧 rejected bundle，也会重新执行 producer 并覆盖该 bundle
+- 新 bundle 仍必须通过 verifier，之后才会 apply 和 mark-done
+
+批量 repair 用同一条单任务路径：
+
+```bash
+wikify run-tasks --status blocked --limit 5 --agent-profile default --verifier-profile reviewer
+```
+
 安全规则：verifier gate 不替代 deterministic preflight，也不直接修改内容。它只是在 apply 前增加一个显式外部 review command。dry-run 会构造 request 和 preflight，但不执行 verifier、不写 verification artifact。
 
 ---
