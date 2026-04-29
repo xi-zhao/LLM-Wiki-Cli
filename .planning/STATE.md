@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 27 - Agent Wiki Interfaces And Context Packs
-Status: Context gathered
-Last activity: 2026-04-29 - Captured Phase 27 context: object-aware `wikify agent` namespace, root `llms.txt`, visible `artifacts/agent/` indexes, deterministic context packs, citation evidence, related queries, validation gates, and no hidden provider/vector behavior.
+Status: Ready to execute
+Last activity: 2026-04-29 - Planned Phase 27 as three dependent plans: agent export/index core, context/cite/related query commands, and documentation plus end-to-end verification.
 
 Progress: ███████░░░ 71%
 
@@ -53,7 +53,7 @@ Progress: ███████░░░ 71%
 | 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
 | 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
 | 26. Human Wiki Views And Local Static Output | 1/1 | 1 session | 1 session |
-| 27. Agent Wiki Interfaces And Context Packs | 0/1 | 0 sessions | TBD |
+| 27. Agent Wiki Interfaces And Context Packs | 0/3 | 0 sessions | TBD |
 
 **Recent Trend:**
 - Last 5 plans: 22-01, 23-01, 24-01, 25-01, 26-01
@@ -154,6 +154,7 @@ Recent decisions affecting current work:
 - [Phase 27]: Context packs should be deterministic, budgeted, source-backed, and explainable using local object metadata, citations/source refs, links, and graph/relevance signals; embeddings and hidden LLM selection stay deferred.
 - [Phase 27]: Citation queries should distinguish explicit `citation` objects from weaker page-level `source_refs` and return empty evidence honestly when none exists.
 - [Phase 27]: Non-dry-run agent exports/context packs should validate object artifacts before writing and degrade gracefully when optional graph/view/citation artifacts are missing.
+- [Phase 27 planning]: Split implementation into three dependent plans so export/index foundations land before context/cite/related queries, and docs/smoke verification run after behavior is stable.
 
 ### Pending Todos
 
@@ -211,6 +212,7 @@ Recent decisions affecting current work:
 - Phase 26 planned: 1 TDD plan covering `wikify views`, object/source/control artifact loading, Markdown human views, static HTML rendering, hash-guarded view updates, view task queue, CLI wiring, docs, and verification.
 - Phase 26 completed: `wikify views`, dry-run planning, artifact loading, home/page/source/collection/timeline/graph/review Markdown views, stdlib static HTML, view manifest hash guards, view drift task queue, CLI wiring, docs, and verification shipped.
 - Phase 27 context captured: object-aware agent command namespace, `llms.txt`/`llms-full.txt`, `artifacts/agent/` indexes, context pack budget semantics, citation and related query behavior, validation gates, and explicit no-hidden-provider/no-vector boundary.
+- Phase 27 planned: 3 dependent plans covering `wikify agent export`, agent indexes and llms artifacts, deterministic context packs, citation and related query commands, docs, smoke verification, and GSD completion artifacts.
 
 ## Deferred Items
 
@@ -223,6 +225,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 27 context gathered.
-Resume file: .planning/phases/27-agent-wiki-interfaces-and-context-packs/27-CONTEXT.md
-Next command: `$gsd-plan-phase 27`
+Stopped at: Phase 27 planned and ready to execute.
+Resume file: .planning/phases/27-agent-wiki-interfaces-and-context-packs/27-01-PLAN.md
+Next command: `$gsd-execute-phase 27`

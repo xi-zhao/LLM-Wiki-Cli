@@ -148,6 +148,8 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 27: Agent Wiki Interfaces And Context Packs
 
+**Status:** Planned 2026-04-29
+
 **Goal:** Expose the personal wiki as stable machine-readable context for agents.
 
 **Requirements:** AGT-01, AGT-02, AGT-03, AGT-04, AGT-05
@@ -162,6 +164,24 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 **Dependencies:** Phase 24, Phase 25, Phase 26.
 
 **Verification:** Unit tests for llms exports, graph/citation/page indexes, context-pack budgeting, cite query output, related query ranking, and JSON envelope stability.
+
+**Plans:**
+- [ ] **27-01 Build Agent Export Core And Index Artifacts** - Implement `wikify agent export`, root `llms.txt` / `llms-full.txt`, page/citation/related/agent-graph indexes under `artifacts/agent/`, `.wikify/agent/last-agent-export.json`, CLI wiring, and export tests.
+- [ ] **27-02 Build Context Packs, Citation Query, And Related Query** - Implement `wikify agent context`, `wikify agent cite`, and `wikify agent related` with deterministic context-pack budgeting, citation/source-ref evidence, related explanation signals, context pack object writes, CLI wiring, and tests.
+- [ ] **27-03 Document Agent Wiki Interfaces And Verify End-To-End Flow** - Document command usage, artifact/schema contracts, no-hidden-provider boundaries, protocol behavior, full test suite, smoke workflow, GSD summaries, and Phase 27 completion artifacts.
+
+**Wave 1:** 27-01 can run after Phase 24, Phase 25, and Phase 26.
+
+**Wave 2 *(blocked on Wave 1 completion)*:** 27-02 extends the `wikify.agent` module and CLI namespace created by 27-01.
+
+**Wave 3 *(blocked on Waves 1 and 2 completion)*:** 27-03 documents and verifies the completed agent interface after implementation is stable.
+
+**Cross-cutting constraints:**
+- The `wikify agent` namespace must remain separate from `wikify agent-profile`, legacy `wikify query/search`, and `wikify graph`.
+- Agent artifacts are derived from the existing object/source/wiki/view/graph model and must not create a second knowledge store.
+- Non-dry-run export/context writes validate object artifacts first and return structured exit-code-2 errors on hard validation failures.
+- Context selection and related ranking are deterministic, stdlib-only, and do not use hidden providers, embeddings, vector databases, or raw source rereads.
+- Citation outputs distinguish explicit citation objects from weaker page source-ref fallback evidence and return empty evidence honestly when unsupported.
 
 ### Phase 28: Maintenance Integration And Compatibility
 
