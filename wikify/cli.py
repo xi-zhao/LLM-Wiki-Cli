@@ -3,6 +3,7 @@ import os
 
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
+from wikify.agent import AgentInterfaceError, run_agent_export
 from wikify.graph.builder import build_graph_artifacts
 from wikify.object_validation import validate_workspace_objects
 from wikify.sync import SyncError, sync_workspace
@@ -341,6 +342,47 @@ def cmd_views(args):
         'user_message': summary,
     }
     return envelope_ok('views', result)
+
+
+def cmd_agent_export(args):
+    try:
+        result = run_agent_export(
+            discover_base(),
+            dry_run=args.dry_run,
+            include_full=not args.no_full,
+            max_full_chars=args.max_full_chars,
+            max_page_chars=args.max_page_chars,
+        )
+    except WorkspaceError as exc:
+        return _workspace_error('agent.export', exc)
+    except AgentInterfaceError as exc:
+        return envelope_error(
+            'agent.export',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'agent.export',
+            'agent_export_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [item['path'] for item in (result.get('generated') or result.get('planned') or []) if item.get('path')]
+    summary = 'agent export dry run completed' if result.get('dry_run') else 'agent export completed'
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': summary,
+    }
+    return envelope_ok('agent.export', result)
 
 
 def cmd_validate(args):
@@ -1332,6 +1374,17 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain.add_argument('--policy', choices=['conservative', 'balanced', 'aggressive'], default='balanced')
         p_maintain.add_argument('--dry-run', action='store_true')
         p_maintain.set_defaults(func=cmd_maintain)
+
+    if 'agent' not in sub.choices:
+        p_agent = sub.add_parser('agent', help='Generate and query agent-facing wiki artifacts')
+        agent_sub = p_agent.add_subparsers(dest='agent_action', required=True)
+
+        p_agent_export = agent_sub.add_parser('export', help='Export llms files and agent indexes from wiki artifacts')
+        p_agent_export.add_argument('--dry-run', action='store_true')
+        p_agent_export.add_argument('--no-full', action='store_true')
+        p_agent_export.add_argument('--max-full-chars', type=int, default=60000)
+        p_agent_export.add_argument('--max-page-chars', type=int, default=4000)
+        p_agent_export.set_defaults(func=cmd_agent_export)
 
     if 'agent-profile' not in sub.choices:
         p_agent_profile = sub.add_parser('agent-profile', help='Manage explicit external agent command profiles')
