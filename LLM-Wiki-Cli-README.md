@@ -82,6 +82,7 @@ Wikify 的产品目标可以概括成五句话：
 - `source list`
 - `source show`
 - `sync`
+- `wikiize`
 - `check`
 - `status`
 - `stats`
@@ -128,6 +129,8 @@ wikify source show src_<id>
 wikify sync --dry-run
 wikify sync
 wikify sync --source src_<id>
+wikify wikiize --dry-run
+wikify wikiize
 ```
 
 base 解析优先级：
@@ -161,9 +164,47 @@ wikify sync --dry-run
 
 边界规则：`wikify sync` 不会抓取 URL、不会 clone repository、不会调用 provider、不会运行 `wikify ingest`、不会生成 wiki 页面、不会生成 views，也不会生成 agent export。URL 和远程 repository source 只生成 `network_checked: false` 的离线 remote item。
 
+### Source-backed wikiization
+
+`wikify wikiize` 是 `source add -> sync -> wikiize` 这条产品闭环里的 wiki 化步骤。它读取 `.wikify/queues/ingest-items.json` 和 `.wikify/sync/source-items.json`，把 eligible 的本地文本/Markdown source item 转成可读 wiki 页面和机器可读对象。
+
+常用命令：
+
+```bash
+wikify wikiize --dry-run
+wikify wikiize
+wikify wikiize --queue-id queue_<id>
+wikify wikiize --item item_<id>
+wikify wikiize --source src_<id>
+wikify wikiize --limit 5
+wikify wikiize --agent-command "python3 agent.py"
+wikify wikiize --agent-profile default
+wikify wikiize --agent-profile
+```
+
+主要产物：
+
+- `wiki/pages/`：给人看的 source-backed Markdown 页面
+- `artifacts/objects/wiki_pages/`：给 agent 和工具读的 `wikify.wiki-page.v1` 对象
+- `artifacts/objects/object-index.json`：对象索引
+- `artifacts/objects/validation.json`：严格验证报告
+- `.wikify/wikiization/last-wikiize.json`：本次 wikiize run report
+- `.wikify/queues/wikiization-tasks.json`：低置信、冲突、远程未抓取、用户编辑漂移等后续任务
+- `.wikify/wikiization/requests/` 和 `.wikify/wikiization/results/`：显式 external agent handoff 产物
+
+`--dry-run` 只报告会处理哪些 queue entry、计划写哪些 page/object/request/result path，不写页面、不写对象、不更新 queue，也不写 run report。
+
+默认 deterministic baseline 不依赖 provider：本地 Markdown 取第一个 H1 作为标题，否则用文件名；summary 来自源文本的前几行有效内容；页面包含 source references 和 bounded excerpt。每个生成页面和对象都必须带 `source_refs`，至少包含 `source_id`、`item_id`、locator/path evidence、fingerprint evidence 和 confidence。
+
+增量更新有 hash guard：Wikify 会在对象里记录 generation metadata，只有当现有生成页仍匹配上一次 generated hash 时才覆盖。只要用户改过页面，下一次 wikiize 会保留用户内容，把 queue entry 标成 `needs_review`，并写入 `.wikify/queues/wikiization-tasks.json`。
+
+远程 URL 和远程 repository 默认不抓取、不 clone，不会伪造页面；没有显式 agent enrichment 时会生成 wikiization task。语义增强必须显式传 `--agent-command` 或 `--agent-profile`。Wikify 写出 `wikify.wikiization-request.v1`，通过 stdin 交给外部 agent，接收 `wikify.wikiization-result.v1`，然后由 Wikify 自己完成路径校验、front matter 渲染、对象写入和 strict validation。不存在隐藏 provider 调用。
+
+Phase 25 只负责 source-backed page pipeline；首页、source 页、topic/project/person/decision 浏览页和静态站点属于 Phase 26；`llms.txt`、context pack 和 agent query export 属于 Phase 27。
+
 ## 3.2 Wiki object model 与验证
 
-Phase 24 只定义 v0.2 对象模型和验证面，不消费 `.wikify/queues/ingest-items.json`，不生成 wiki 页面，不调用 provider，也不生成 human views。队列消费和页面生成从阶段 25 开始。
+Phase 24 定义 v0.2 对象模型和验证面；Phase 25 通过 `wikify wikiize` 消费 `.wikify/queues/ingest-items.json` 并生成 source-backed wiki 页面。human views、agent exports、provider runtime 和更广泛 maintenance repair flow 仍属于后续阶段。
 
 对象产物是知识库成果的一部分，放在可见目录 `artifacts/objects/`，而不是只藏在 `.wikify/` 控制面里：
 

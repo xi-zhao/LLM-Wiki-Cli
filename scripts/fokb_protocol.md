@@ -115,6 +115,21 @@
 - `agent_task_run_failed`
 - `object_validation_failed`
 - `object_validation_command_failed`
+- `wikiize_source_items_missing`
+- `wikiize_source_items_invalid`
+- `wikiize_ingest_queue_missing`
+- `wikiize_ingest_queue_invalid`
+- `wikiize_limit_invalid`
+- `wikiize_validation_failed`
+- `wikiize_agent_command_invalid`
+- `wikiize_agent_command_failed`
+- `wikiize_agent_timeout`
+- `wikiize_agent_output_invalid`
+- `wikiize_agent_result_missing`
+- `wikiize_agent_result_invalid`
+- `wikiize_agent_result_schema_invalid`
+- `wikiize_agent_result_queue_mismatch`
+- `wikiization_task_queue_invalid`
 - `object_required_field_missing`
 - `object_duplicate_id`
 - `object_link_unresolved`
@@ -149,6 +164,14 @@
 - `sync`
 - `sync --source <source-id>`
 - `sync --dry-run`
+- `wikiize`
+- `wikiize --dry-run`
+- `wikiize --queue-id <queue-id>`
+- `wikiize --item <item-id>`
+- `wikiize --source <source-id>`
+- `wikiize --limit <n>`
+- `wikiize --agent-command <command>`
+- `wikiize --agent-profile <name>`
 
 ### 运行 / 状态层
 - `status`
@@ -338,9 +361,105 @@ ingest queue 规则：
 - URL 和远程 repository source 只生成 `network_checked: false` 的离线 remote item
 - local repository source 按目录语义扫描 regular files，不调用 repository 工具
 
-## 6. Wiki object model and validation schema v1
+## 6. Source-backed wikiization schema v1
 
-Phase 24 只定义对象模型、Markdown front matter metadata bridge、JSON artifact contract 和验证协议。它不消费 ingest queue，不生成 wiki 页面，不调用 provider，不生成 views；队列消费和页面生成从 Phase 25 开始。
+`wikify wikiize` 是 queue-to-wiki 协议层。它读取 `.wikify/queues/ingest-items.json` 与 `.wikify/sync/source-items.json`，把 eligible source item 生成可读 Markdown 页面和机器可读 wiki page object。
+
+命令：
+
+```bash
+wikify wikiize
+wikify wikiize --dry-run
+wikify wikiize --queue-id queue_<id>
+wikify wikiize --item item_<id>
+wikify wikiize --source src_<id>
+wikify wikiize --limit 5
+wikify wikiize --agent-command "python3 agent.py"
+wikify wikiize --agent-profile default
+wikify wikiize --agent-profile
+```
+
+Run report schema 固定为 `wikify.wikiization-run.v1`。成功 envelope 的 `command` 固定为 `wikiize`：
+
+```json
+{
+  "ok": true,
+  "command": "wikiize",
+  "exit_code": 0,
+  "result": {
+    "schema_version": "wikify.wikiization-run.v1",
+    "status": "completed",
+    "dry_run": false,
+    "summary": {
+      "selected_count": 1,
+      "planned_count": 0,
+      "completed_count": 1,
+      "needs_review_count": 0,
+      "failed_count": 0,
+      "skipped_count": 0
+    },
+    "artifacts": {
+      "wiki_pages": "wiki/pages",
+      "wiki_page_objects": "artifacts/objects/wiki_pages",
+      "object_index": "artifacts/objects/object-index.json",
+      "validation_report": "artifacts/objects/validation.json",
+      "wikiization_report": ".wikify/wikiization/last-wikiize.json",
+      "wikiization_tasks": ".wikify/queues/wikiization-tasks.json",
+      "wikiization_requests": ".wikify/wikiization/requests",
+      "wikiization_results": ".wikify/wikiization/results",
+      "ingest_queue": ".wikify/queues/ingest-items.json"
+    }
+  }
+}
+```
+
+Generated artifacts:
+
+- `wiki/pages/<page-id>-<slug>.md`
+- `artifacts/objects/wiki_pages/<page-id>.json`
+- `artifacts/objects/object-index.json`
+- `artifacts/objects/validation.json`
+- `.wikify/wikiization/last-wikiize.json`
+
+Generated page and object requirements:
+
+- Markdown front matter mirrors `wikify.wiki-page.v1`
+- JSON object is machine-authoritative
+- `source_refs` include `source_id`, `item_id`, locator or path evidence, fingerprint evidence, and confidence
+- `generation` metadata records source item fingerprint and generated Markdown hash
+- completed queue entries include `completed_at`, `object_ids`, and generated paths
+
+`--dry-run` reports selected queue entries and planned paths but writes nothing: no pages, no object artifacts, no queue updates, no task queue, no run report.
+
+Incremental update rule:
+
+- if target page does not exist, Wikify may write it
+- if target page exists and matches stored `generation.markdown_sha256`, Wikify may replace it
+- if target page exists but the hash does not match, Wikify preserves it, marks the queue entry `needs_review`, and writes `.wikify/queues/wikiization-tasks.json`
+
+Task queue schema is `wikify.wikiization-tasks.v1`. Tasks include `source_id`, `item_id`, `queue_id`, target paths, evidence, `reason_code`, agent instructions, acceptance checks, `requires_user`, and status. Common reason codes include `remote_without_content`, `source_text_unreadable`, `unsupported_source_item`, `generated_page_drifted`, `source_item_missing`, and `wikiization_failed`.
+
+External agent handoff:
+
+- no external agent or provider runs unless `--agent-command` or `--agent-profile` is explicit
+- Wikify writes `wikify.wikiization-request.v1` under `.wikify/wikiization/requests/`
+- request JSON is sent to the agent on stdin
+- the agent returns `wikify.wikiization-result.v1` on stdout or writes the suggested result path
+- Wikify writes final Markdown/object artifacts itself and runs strict validation before queue completion
+- passing both `--agent-command` and `--agent-profile` returns `agent_profile_ambiguous`
+
+Boundary rules:
+
+- no hidden URL fetch
+- no hidden repository clone
+- no provider SDK calls
+- no human home/source/topic/static views
+- no `llms.txt`, context packs, or agent query exports
+- no graph maintenance repair flow
+
+## 7. Wiki object model and validation schema v1
+
+Phase 24 定义对象模型、Markdown front matter metadata bridge、JSON artifact contract 和验证协议。Phase 25 通过 `wikify wikiize` 消费 ingest queue 并生成 source-backed wiki 页面；human views、agent exports、provider runtime 和更广泛 maintenance repair flow 属于后续阶段。
 
 对象产物根目录固定为 `artifacts/objects/`：
 
@@ -480,7 +599,7 @@ Compatibility:
 - legacy `fokb` commands remain available
 - existing sample KB layouts remain readable
 
-## 7. Maintenance schema v1
+## 8. Maintenance schema v1
 
 `maintenance` 是 `wikify` 当前最重要的增量知识维护协议层之一。`graph` 是结构理解协议层，负责把已编译 Markdown wiki 转成可审计图谱产物。`maintain` 是自动图谱维护入口，负责把 graph analytics 转成 findings、plan、execution classification 和 append-only history。
 

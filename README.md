@@ -29,6 +29,7 @@ In short:
 - Initialize a personal wiki workspace with a source registry
 - Register source files, directories, URLs, repositories, and notes without hidden fetch/sync work
 - Sync registered sources into deterministic source item and ingest queue artifacts
+- Wikiize queued source items into source-backed Markdown pages and wiki page objects
 - Ingest URLs into a local wiki
 - Maintain parsed articles, briefs, topics, timelines, and digests
 - Return stable JSON envelopes for automation
@@ -48,6 +49,8 @@ wikify source add "https://example.com" --type url
 wikify source list
 wikify sync --dry-run
 wikify sync
+wikify wikiize --dry-run
+wikify wikiize
 wikify validate
 wikify check
 wikify stats
@@ -144,9 +147,60 @@ Sync uses deterministic local fingerprints for files and directories. Re-running
 
 Sync does not fetch URLs, clone repositories, call providers, run `wikify ingest`, generate wiki pages, generate views, or create agent exports. URL and remote repository sources are represented as offline remote items with `network_checked: false`.
 
+## Source-backed wikiization
+
+`wikify wikiize` consumes active `.wikify/queues/ingest-items.json` entries and turns eligible local text/Markdown source items into generated wiki pages.
+
+Primary flow:
+
+```bash
+wikify source add ~/notes/research.md --type file
+wikify sync
+wikify wikiize --dry-run
+wikify wikiize
+wikify validate --strict --write-report
+```
+
+Generated human-readable pages live under:
+- `wiki/pages/`
+
+Generated machine-readable objects live under:
+- `artifacts/objects/wiki_pages/`
+- `artifacts/objects/object-index.json`
+- `artifacts/objects/validation.json`
+
+Wikiization control artifacts live under:
+- `.wikify/wikiization/last-wikiize.json`
+- `.wikify/queues/wikiization-tasks.json`
+- `.wikify/wikiization/requests/`
+- `.wikify/wikiization/results/`
+
+Useful options:
+
+```bash
+wikify wikiize --dry-run
+wikify wikiize --queue-id queue_<id>
+wikify wikiize --item item_<id>
+wikify wikiize --source src_<id>
+wikify wikiize --limit 5
+wikify wikiize --agent-command "python3 agent.py"
+wikify wikiize --agent-profile default
+wikify wikiize --agent-profile
+```
+
+`--dry-run` reports selected queue entries and planned page/object/request/result paths without writing pages, objects, queue updates, task queues, or run reports.
+
+Local text and Markdown sources use a deterministic baseline: title from the first Markdown H1 or filename, conservative summary from source text, source reference section, and bounded excerpt. Every generated page and object includes `source_refs` with source id, item id, locator/path evidence, fingerprint evidence, and confidence.
+
+Incremental updates are hash guarded. Wikify stores generation metadata on generated page objects and only overwrites an existing generated page when the current file still matches the previous generated hash. If the page drifted, Wikify preserves the user edit, marks the queue entry `needs_review`, and writes a task to `.wikify/queues/wikiization-tasks.json`.
+
+Remote URLs and remote repositories are not fetched by default. Without explicit enrichment they create wikiization tasks, not weak pages. Semantic enrichment requires an explicit `--agent-command` or `--agent-profile`; Wikify writes a `wikify.wikiization-request.v1` artifact, sends it on stdin, accepts a `wikify.wikiization-result.v1` result, then performs final path checks, rendering, object writes, and strict validation itself. There are no hidden provider calls.
+
+Phase 25 only creates source-backed pages. Human home/source/topic/static views belong to Phase 26; `llms.txt`, context packs, and agent query exports belong to Phase 27.
+
 ## Wiki object model and validation
 
-Phase 24 defines the v0.2 wiki object contract and validation surface only. It does not consume `.wikify/queues/ingest-items.json`, generate wiki pages, call providers, or build human views. Queue consumption and page generation start in Phase 25.
+Phase 24 defines the v0.2 wiki object contract and validation surface. Phase 25 consumes `.wikify/queues/ingest-items.json` through `wikify wikiize` to generate source-backed wiki pages. Human views, agent exports, provider-backed runtime integration, and broad maintenance repair flows remain separate later phases.
 
 Visible object artifacts live under `artifacts/objects/`:
 - `artifacts/objects/object-index.json` uses `wikify.object-index.v1`
