@@ -4,6 +4,7 @@ import os
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
 from wikify.graph.builder import build_graph_artifacts
+from wikify.sync import SyncError, sync_workspace
 from wikify.maintenance.bundle_request import (
     BundleRequestError,
     build_bundle_request,
@@ -208,6 +209,37 @@ def cmd_source_show(args):
         )
     _attach_workspace_completion(result, 'source shown')
     return envelope_ok('source.show', result)
+
+
+def cmd_sync(args):
+    try:
+        result = sync_workspace(discover_base(), source_id=args.source, dry_run=args.dry_run)
+    except SyncError as exc:
+        return envelope_error(
+            'sync',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'sync',
+            'sync_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': 'sync completed',
+        'artifacts': artifacts,
+        'next_actions': [],
+        'user_message': 'sync completed',
+    }
+    return envelope_ok('sync', result)
 
 
 def cmd_maintain(args):
@@ -1110,6 +1142,12 @@ def build_parser() -> argparse.ArgumentParser:
         p_source_show = source_sub.add_parser('show', help='Show one registered source by id or locator')
         p_source_show.add_argument('target')
         p_source_show.set_defaults(func=cmd_source_show)
+
+    if 'sync' not in sub.choices:
+        p_sync = sub.add_parser('sync', help='Discover changed source items and update the ingest queue')
+        p_sync.add_argument('--source')
+        p_sync.add_argument('--dry-run', action='store_true')
+        p_sync.set_defaults(func=cmd_sync)
 
     if 'graph' not in sub.choices:
         p_graph = sub.add_parser('graph', help='Build graph artifacts from compiled Markdown wiki files')
