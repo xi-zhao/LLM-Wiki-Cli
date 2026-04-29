@@ -145,6 +145,8 @@ def run_maintenance_loop(
     dry_run: bool = False,
     agent_command: str | list[str] | None = None,
     producer_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+    verifier_command: str | list[str] | None = None,
+    verifier_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
     continue_on_error: bool = False,
 ) -> dict:
     _validate_positive(limit, 'limit')
@@ -170,6 +172,8 @@ def run_maintenance_loop(
                 dry_run=dry_run,
                 agent_command=agent_command,
                 producer_timeout_seconds=producer_timeout_seconds,
+                verifier_command=verifier_command,
+                verifier_timeout_seconds=verifier_timeout_seconds,
                 continue_on_error=continue_on_error,
             )
         except MaintenanceRunError as exc:
@@ -218,6 +222,7 @@ def run_maintenance_loop(
             'continue_on_error': continue_on_error,
             'stop_on_error': not continue_on_error,
             'agent_command_explicit': agent_command is not None,
+            'verifier_command_explicit': verifier_command is not None,
         },
         'artifacts': _artifacts(rounds),
         'rounds': rounds,

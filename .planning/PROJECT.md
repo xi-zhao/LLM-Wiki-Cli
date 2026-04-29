@@ -34,7 +34,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 - [x] `wikify agent-profile` stores named external command profiles that automation commands can use explicitly.
 - [x] `wikify agent-profile --set-default` lets bare `--agent-profile` resolve a default while preserving explicit execution intent.
 - [x] `wikify maintain-loop` repeats bounded maintenance runs until no work remains or a configured stop condition is reached.
-- [ ] `wikify verify-bundle` lets an explicit verifier agent review patch bundles before apply.
+- [x] `wikify verify-bundle` lets an explicit verifier agent review patch bundles before apply.
 
 ### Out of Scope
 
@@ -86,7 +86,7 @@ Agents can maintain and improve a local Markdown wiki through deterministic, aud
 | Agent profiles are aliases, not providers | Reduces repeated command input while keeping provider/model/key/retry behavior outside hidden Wikify defaults | ✓ Good |
 | Default profiles require explicit flags | A default profile reduces typing only when `--agent-profile` is present; it must not silently trigger external execution | ✓ Good |
 | Maintenance loop composes maintain-run | Repeating the audited primitive keeps automation useful without broadening patch or provider semantics | ✓ Good |
-| Verifier gate runs before apply | Agent review should block unsafe bundles before content mutation while keeping user interruption low | Planned |
+| Verifier gate runs before apply | Agent review should block unsafe bundles before content mutation while keeping user interruption low | ✓ Good |
 
 ---
-*Last updated: 2026-04-29 for Phase 18 planning*
+*Last updated: 2026-04-29 after Phase 18 completion*

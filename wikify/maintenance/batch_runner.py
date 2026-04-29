@@ -125,6 +125,8 @@ def run_agent_tasks(
     dry_run: bool = False,
     agent_command: str | list[str] | None = None,
     producer_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+    verifier_command: str | list[str] | None = None,
+    verifier_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
     continue_on_error: bool = False,
 ) -> dict:
     root = Path(base).expanduser().resolve()
@@ -157,6 +159,8 @@ def run_agent_tasks(
                 dry_run=dry_run,
                 agent_command=agent_command,
                 producer_timeout_seconds=producer_timeout_seconds,
+                verifier_command=verifier_command,
+                verifier_timeout_seconds=verifier_timeout_seconds,
             )
         except TaskRunError as exc:
             result['items'].append(_error_item(selected_task_id, exc))

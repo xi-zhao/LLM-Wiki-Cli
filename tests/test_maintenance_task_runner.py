@@ -79,6 +79,26 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
         )
         return script
 
+    def _write_verifier(self, kb: Path, accepted: bool = True):
+        script = kb / ('accept_verifier.py' if accepted else 'reject_verifier.py')
+        verdict = {
+            'schema_version': 'wikify.patch-bundle-verdict.v1',
+            'accepted': accepted,
+            'summary': 'accepted' if accepted else 'rejected',
+            'findings': [] if accepted else [{'severity': 'high', 'message': 'test rejection'}],
+        }
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'assert request["schema_version"] == "wikify.patch-bundle-verification-request.v1"',
+                f'print(json.dumps({verdict!r}))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
+
     def _read_queue(self, kb: Path):
         return json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
 
@@ -182,6 +202,50 @@ class MaintenanceTaskRunnerTests(unittest.TestCase):
             self.assertTrue(application_path.exists())
             self.assertEqual(task['status'], 'done')
             self.assertEqual([event['action'] for event in events['events']], ['mark_proposed', 'mark_done'])
+
+    def test_run_agent_task_with_verifier_acceptance_applies_patch(self):
+        from wikify.maintenance.task_runner import run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            self._write_bundle(kb)
+            verifier = self._write_verifier(kb, accepted=True)
+
+            result = run_agent_task(kb, 'agent-task-1', verifier_command=[sys.executable, str(verifier)])
+
+            self.assertEqual(result['status'], 'completed')
+            self.assertIn('bundle_verifier', [step['name'] for step in result['steps']])
+            self.assertEqual(result['steps'][-3]['name'], 'bundle_verifier')
+            self.assertEqual(result['steps'][-3]['status'], 'accepted')
+            self.assertTrue(Path(result['artifacts']['verification']).exists())
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Existing]].\n')
+            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'done')
+
+    def test_run_agent_task_with_verifier_rejection_blocks_apply(self):
+        from wikify.maintenance.task_runner import TaskRunError, run_agent_task
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_queue(kb)
+            (kb / 'topics').mkdir()
+            target = kb / 'topics' / 'a.md'
+            target.write_text('See [[Missing]].\n', encoding='utf-8')
+            self._write_bundle(kb)
+            verifier = self._write_verifier(kb, accepted=False)
+
+            with self.assertRaises(TaskRunError) as raised:
+                run_agent_task(kb, 'agent-task-1', verifier_command=[sys.executable, str(verifier)])
+
+            self.assertEqual(raised.exception.code, 'patch_bundle_verification_rejected')
+            self.assertEqual(raised.exception.details['phase'], 'bundle_verifier')
+            self.assertTrue(Path(raised.exception.details['verification_path']).exists())
+            self.assertEqual(target.read_text(encoding='utf-8'), 'See [[Missing]].\n')
+            self.assertFalse((kb / 'sorted' / 'graph-patch-applications').exists())
+            self.assertEqual(self._read_queue(kb)['tasks'][0]['status'], 'proposed')
 
     def test_run_agent_task_with_agent_command_produces_bundle_applies_and_marks_done(self):
         from wikify.maintenance.task_runner import run_agent_task

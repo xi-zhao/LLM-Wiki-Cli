@@ -11,6 +11,7 @@ from wikify.maintenance.bundle_producer import (
     BundleProducerError,
     produce_patch_bundle,
 )
+from wikify.maintenance.bundle_verifier import BundleVerifierError, verify_patch_bundle
 from wikify.maintenance.patch_apply import PatchApplyError, apply_patch_bundle, preflight_patch_bundle
 from wikify.maintenance.proposal import ProposalError, build_patch_proposal, proposal_path, write_patch_proposal
 from wikify.maintenance.task_lifecycle import TaskLifecycleError, apply_lifecycle_action
@@ -95,6 +96,7 @@ def _base_result(root: Path, task_id: str, dry_run: bool, proposal_file: Path, b
         'artifacts': {
             'proposal': str(proposal_file) if proposal_file.exists() else None,
             'bundle': str(bundle_file) if bundle_file.exists() else None,
+            'verification': None,
             'patch_bundle_request': None,
             'application': None,
             'agent_tasks': None,
@@ -114,6 +116,8 @@ def run_agent_task(
     dry_run: bool = False,
     agent_command: str | list[str] | None = None,
     producer_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+    verifier_command: str | list[str] | None = None,
+    verifier_timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
 ) -> dict:
     root = Path(base).expanduser().resolve()
     proposal_file = proposal_path(root, task_id)
@@ -205,11 +209,27 @@ def run_agent_task(
             except PatchApplyError as exc:
                 raise _wrap_error(exc, 'apply') from exc
             result['steps'].append(_step('apply', 'preflight_passed', preflight=preflight))
+            if verifier_command:
+                result['steps'].append(_step('bundle_verifier', 'would_execute'))
             result['status'] = 'ready_to_apply'
         else:
             result['steps'].append(_step('apply', 'would_preflight_after_proposal_write'))
             result['status'] = 'waiting_for_proposal_write'
         return result
+
+    if verifier_command:
+        try:
+            verification = verify_patch_bundle(
+                root,
+                proposal_file,
+                bundle_file,
+                verifier_command,
+                timeout_seconds=verifier_timeout_seconds,
+            )
+        except BundleVerifierError as exc:
+            raise _wrap_error(exc, 'bundle_verifier') from exc
+        result['steps'].append(_step('bundle_verifier', 'accepted', verification=verification))
+        result['artifacts']['verification'] = verification['artifacts']['verification']
 
     try:
         application = apply_patch_bundle(root, proposal_file, bundle_file)

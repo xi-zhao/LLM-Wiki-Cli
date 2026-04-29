@@ -697,7 +697,7 @@ stop reasons：
 - `max_rounds_reached`
 - `dry_run_preview`
 
-安全规则：`maintain-loop` 只是多轮组合层。它不新增 apply 语义，不并发执行，不隐藏 provider、模型、密钥或 retry。只有调用方显式传入 `--agent-command` 或 `--agent-profile` 时，每轮 task 才可能执行外部 command。仅配置 default profile 不会触发外部 command。
+安全规则：`maintain-loop` 只是多轮组合层。它不新增 apply 语义，不并发执行，不隐藏 provider、模型、密钥或 retry。只有调用方显式传入 `--agent-command` 或 `--agent-profile` 时，每轮 task 才可能执行外部 producer command；只有显式传入 `--verifier-command` 或 `--verifier-profile` 时，每轮 task 才可能执行外部 verifier command。仅配置 default profile 不会触发外部 command。
 
 ## 3.18 Agent Profile Configuration
 
@@ -707,6 +707,7 @@ stop reasons：
 - 把外部 agent command 保存为命名 profile
 - 避免每次 `run-task`、`run-tasks`、`maintain-run` 或 `produce-bundle` 都重复输入长命令
 - 同样可用于 `maintain-loop`
+- 同一个 profile store 也可通过 `--verifier-profile` 用于 verifier agent
 - profile 解析后仍然走现有 producer/preflight/apply/lifecycle 流程
 - 不保存 API key，不选择模型，不内置 retry，不隐藏 provider 行为
 
@@ -724,6 +725,7 @@ wikify maintain-run --limit 5 --agent-profile default
 wikify maintain-run --limit 5 --agent-profile
 wikify maintain-loop --max-rounds 3 --task-budget 15 --limit 5 --agent-profile
 wikify run-task --id agent-task-1 --agent-profile default
+wikify run-task --id agent-task-1 --agent-profile default --verifier-profile reviewer
 wikify produce-bundle --request-path sorted/graph-patch-bundle-requests/agent-task-1.json --agent-profile default
 ```
 
@@ -752,9 +754,84 @@ profile artifact 写在 wiki root：
 - 指定 profile 不存在返回 `agent_profile_missing`
 - 裸 `--agent-profile` 但没有配置 default profile 时返回 `agent_profile_default_missing`
 
-默认 profile 只是省略 profile 名称的显式 shorthand：`maintain-loop --agent-profile` 或 `maintain-run --agent-profile` 等价于读取 `default_profile` 后再执行对应 profile。仅仅配置了 `default_profile` 不会让 `maintain-loop`、`maintain-run`、`run-task`、`run-tasks` 或 `produce-bundle` 自动执行外部 command。
+默认 profile 只是省略 profile 名称的显式 shorthand：`maintain-loop --agent-profile` 或 `maintain-run --agent-profile` 等价于读取 `default_profile` 后再执行对应 profile。`--verifier-profile` 也支持同一个裸 flag shorthand。仅仅配置了 `default_profile` 不会让 `maintain-loop`、`maintain-run`、`run-task`、`run-tasks`、`verify-bundle` 或 `produce-bundle` 自动执行外部 command。
 
 安全规则：profile 是显式命令的项目级别别名，不是 provider adapter。不要把 API key 或 token 直接写进 `wikify-agent-profiles.json`；如果外部 agent 需要密钥，应由外部 command 自己从环境变量或它自己的安全配置读取。
+
+## 3.19 Agent Verifier Gate
+
+- `verify-bundle`
+- `run-task --verifier-command`
+- `run-task --verifier-profile`
+- `run-tasks --verifier-command`
+- `maintain-run --verifier-profile`
+- `maintain-loop --verifier-profile`
+
+作用：
+- 在 deterministic preflight 通过之后、真正 apply 之前，让另一个显式 agent 审核 patch bundle
+- 审核通过才继续 apply 和 mark-done
+- 审核拒绝时写 audit artifact，然后返回结构化错误，不修改正文
+- 减少人工审批打扰，但不把审核藏成默认 provider 行为
+
+默认命令：
+
+```bash
+wikify verify-bundle --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json --verifier-command "python3 verifier.py"
+wikify verify-bundle --proposal-path sorted/graph-patch-proposals/agent-task-1.json --bundle-path sorted/graph-patch-bundles/agent-task-1.json --verifier-profile reviewer
+wikify run-task --id agent-task-1 --agent-profile default --verifier-profile reviewer
+wikify maintain-loop --agent-profile default --verifier-profile reviewer
+```
+
+verifier command 从 stdin 读取 `wikify.patch-bundle-verification-request.v1`：
+
+```json
+{
+  "schema_version": "wikify.patch-bundle-verification-request.v1",
+  "task_id": "agent-task-1",
+  "proposal_path": "/abs/kb/sorted/graph-patch-proposals/agent-task-1.json",
+  "bundle_path": "/abs/kb/sorted/graph-patch-bundles/agent-task-1.json",
+  "proposal": {},
+  "bundle": {},
+  "preflight": {
+    "ready": true
+  },
+  "response_schema": {
+    "schema_version": "wikify.patch-bundle-verdict.v1",
+    "accepted": true,
+    "summary": "short rationale",
+    "findings": []
+  }
+}
+```
+
+verifier command 必须向 stdout 输出：
+
+```json
+{
+  "schema_version": "wikify.patch-bundle-verdict.v1",
+  "accepted": true,
+  "summary": "looks safe",
+  "findings": []
+}
+```
+
+Wikify 会暴露环境变量：
+- `WIKIFY_BASE`
+- `WIKIFY_PATCH_PROPOSAL`
+- `WIKIFY_PATCH_BUNDLE`
+- `WIKIFY_PATCH_BUNDLE_VERIFICATION`
+
+返回 / artifact 使用 `wikify.patch-bundle-verification.v1`，写入：
+- `sorted/graph-patch-verifications/<task-id>.json`
+
+错误：
+- verifier 拒绝返回 `patch_bundle_verification_rejected`
+- stdout 非 JSON 返回 `bundle_verifier_invalid_output`
+- schema 错误返回 `bundle_verifier_verdict_schema_invalid`
+- command 失败返回 `bundle_verifier_command_failed`
+- timeout 返回 `bundle_verifier_timeout`
+
+安全规则：verifier gate 不替代 deterministic preflight，也不直接修改内容。它只是在 apply 前增加一个显式外部 review command。dry-run 会构造 request 和 preflight，但不执行 verifier、不写 verification artifact。
 
 ---
 

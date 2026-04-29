@@ -269,6 +269,30 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.timeout, 30.0)
         self.assertTrue(args.dry_run)
 
+    def test_build_parser_accepts_verify_bundle_command(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'verify-bundle',
+            '--proposal-path',
+            'sorted/graph-patch-proposals/agent-task-1.json',
+            '--bundle-path',
+            'sorted/graph-patch-bundles/agent-task-1.json',
+            '--verifier-command',
+            'python3 verifier.py',
+            '--verifier-timeout',
+            '30',
+            '--dry-run',
+        ])
+
+        self.assertEqual(args.command, 'verify-bundle')
+        self.assertEqual(args.proposal_path, 'sorted/graph-patch-proposals/agent-task-1.json')
+        self.assertEqual(args.bundle_path, 'sorted/graph-patch-bundles/agent-task-1.json')
+        self.assertEqual(args.verifier_command, 'python3 verifier.py')
+        self.assertEqual(args.verifier_timeout, 30.0)
+        self.assertTrue(args.dry_run)
+
     def test_build_parser_accepts_apply_and_rollback_commands(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -305,15 +329,21 @@ class WikifyCliTests(unittest.TestCase):
             'sorted/graph-patch-bundles/agent-task-1.json',
             '--agent-command',
             'python3 agent.py',
+            '--verifier-command',
+            'python3 verifier.py',
             '--producer-timeout',
             '30',
+            '--verifier-timeout',
+            '45',
             '--dry-run',
         ])
 
         self.assertEqual(args.command, 'run-task')
         self.assertEqual(args.id, 'agent-task-1')
         self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.verifier_command, 'python3 verifier.py')
         self.assertEqual(args.producer_timeout, 30.0)
+        self.assertEqual(args.verifier_timeout, 45.0)
         self.assertTrue(args.dry_run)
 
     def test_build_parser_accepts_run_tasks_command(self):
@@ -332,8 +362,12 @@ class WikifyCliTests(unittest.TestCase):
             '3',
             '--agent-command',
             'python3 agent.py',
+            '--verifier-command',
+            'python3 verifier.py',
             '--producer-timeout',
             '30',
+            '--verifier-timeout',
+            '45',
             '--continue-on-error',
             '--dry-run',
         ])
@@ -344,7 +378,9 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.id, 'agent-task-1')
         self.assertEqual(args.limit, 3)
         self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.verifier_command, 'python3 verifier.py')
         self.assertEqual(args.producer_timeout, 30.0)
+        self.assertEqual(args.verifier_timeout, 45.0)
         self.assertTrue(args.continue_on_error)
         self.assertTrue(args.dry_run)
 
@@ -366,8 +402,12 @@ class WikifyCliTests(unittest.TestCase):
             '3',
             '--agent-command',
             'python3 agent.py',
+            '--verifier-command',
+            'python3 verifier.py',
             '--producer-timeout',
             '30',
+            '--verifier-timeout',
+            '45',
             '--continue-on-error',
             '--dry-run',
         ])
@@ -379,7 +419,9 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.id, 'agent-task-1')
         self.assertEqual(args.limit, 3)
         self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.verifier_command, 'python3 verifier.py')
         self.assertEqual(args.producer_timeout, 30.0)
+        self.assertEqual(args.verifier_timeout, 45.0)
         self.assertTrue(args.continue_on_error)
         self.assertTrue(args.dry_run)
 
@@ -405,8 +447,12 @@ class WikifyCliTests(unittest.TestCase):
             '12',
             '--agent-command',
             'python3 agent.py',
+            '--verifier-command',
+            'python3 verifier.py',
             '--producer-timeout',
             '30',
+            '--verifier-timeout',
+            '45',
             '--continue-on-error',
             '--dry-run',
         ])
@@ -420,7 +466,9 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.max_rounds, 4)
         self.assertEqual(args.task_budget, 12)
         self.assertEqual(args.agent_command, 'python3 agent.py')
+        self.assertEqual(args.verifier_command, 'python3 verifier.py')
         self.assertEqual(args.producer_timeout, 30.0)
+        self.assertEqual(args.verifier_timeout, 45.0)
         self.assertTrue(args.continue_on_error)
         self.assertTrue(args.dry_run)
 
@@ -473,16 +521,33 @@ class WikifyCliTests(unittest.TestCase):
         run_tasks_args = parser.parse_args(['run-tasks', '--agent-profile', 'default'])
         maintain_run_args = parser.parse_args(['maintain-run', '--agent-profile', 'default'])
         maintain_loop_args = parser.parse_args(['maintain-loop', '--agent-profile', 'default'])
+        verify_args = parser.parse_args([
+            'verify-bundle',
+            '--proposal-path',
+            'sorted/graph-patch-proposals/agent-task-1.json',
+            '--bundle-path',
+            'sorted/graph-patch-bundles/agent-task-1.json',
+            '--verifier-profile',
+            'reviewer',
+        ])
         bare_profile_args = parser.parse_args(['maintain-run', '--agent-profile'])
         bare_loop_profile_args = parser.parse_args(['maintain-loop', '--agent-profile'])
+        bare_verifier_profile_args = parser.parse_args([
+            'run-task',
+            '--id',
+            'agent-task-1',
+            '--verifier-profile',
+        ])
 
         self.assertEqual(produce_args.agent_profile, 'default')
         self.assertEqual(run_task_args.agent_profile, 'default')
         self.assertEqual(run_tasks_args.agent_profile, 'default')
         self.assertEqual(maintain_run_args.agent_profile, 'default')
         self.assertEqual(maintain_loop_args.agent_profile, 'default')
+        self.assertEqual(verify_args.verifier_profile, 'reviewer')
         self.assertEqual(bare_profile_args.agent_profile, '@default')
         self.assertEqual(bare_loop_profile_args.agent_profile, '@default')
+        self.assertEqual(bare_verifier_profile_args.verifier_profile, '@default')
 
     def test_graph_command_writes_json_and_report_without_html(self):
         cli = importlib.import_module('wikify.cli')

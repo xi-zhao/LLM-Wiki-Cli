@@ -174,14 +174,14 @@
 
 ### Agent Verifier Gate
 
-- [ ] **VFG-01**: `wikify verify-bundle` builds a verifier request from proposal, patch bundle, and deterministic preflight output.
-- [ ] **VFG-02**: Verifier commands receive JSON on stdin and must return a `wikify.patch-bundle-verdict.v1` JSON verdict.
-- [ ] **VFG-03**: Accepted verifier verdicts write `sorted/graph-patch-verifications/<task-id>.json` and allow downstream apply.
-- [ ] **VFG-04**: Rejected verifier verdicts write an audit artifact and block apply before content mutation or lifecycle mark-done.
-- [ ] **VFG-05**: `run-task`, `run-tasks`, `maintain-run`, and `maintain-loop` accept explicit `--verifier-command` and `--verifier-profile` flags.
-- [ ] **VFG-06**: Dry-run paths do not execute verifier commands or write verification artifacts.
-- [ ] **VFG-07**: Invalid verifier output, command failure, and timeout return structured non-retryable errors.
-- [ ] **VFG-08**: Docs and tests cover verifier contract, profile shorthand, and explicit external-agent boundaries.
+- [x] **VFG-01**: `wikify verify-bundle` builds a verifier request from proposal, patch bundle, and deterministic preflight output.
+- [x] **VFG-02**: Verifier commands receive JSON on stdin and must return a `wikify.patch-bundle-verdict.v1` JSON verdict.
+- [x] **VFG-03**: Accepted verifier verdicts write `sorted/graph-patch-verifications/<task-id>.json` and allow downstream apply.
+- [x] **VFG-04**: Rejected verifier verdicts write an audit artifact and block apply before content mutation or lifecycle mark-done.
+- [x] **VFG-05**: `run-task`, `run-tasks`, `maintain-run`, and `maintain-loop` accept explicit `--verifier-command` and `--verifier-profile` flags.
+- [x] **VFG-06**: Dry-run paths do not execute verifier commands or write verification artifacts.
+- [x] **VFG-07**: Invalid verifier output, command failure, and timeout return structured non-retryable errors.
+- [x] **VFG-08**: Docs and tests cover verifier contract, profile shorthand, and explicit external-agent boundaries.
 
 ### Agent Consumer
 
@@ -310,14 +310,14 @@
 | MLP-06 | Phase 17 | Complete |
 | MLP-07 | Phase 17 | Complete |
 | MLP-08 | Phase 17 | Complete |
-| VFG-01 | Phase 18 | Planned |
-| VFG-02 | Phase 18 | Planned |
-| VFG-03 | Phase 18 | Planned |
-| VFG-04 | Phase 18 | Planned |
-| VFG-05 | Phase 18 | Planned |
-| VFG-06 | Phase 18 | Planned |
-| VFG-07 | Phase 18 | Planned |
-| VFG-08 | Phase 18 | Planned |
+| VFG-01 | Phase 18 | Complete |
+| VFG-02 | Phase 18 | Complete |
+| VFG-03 | Phase 18 | Complete |
+| VFG-04 | Phase 18 | Complete |
+| VFG-05 | Phase 18 | Complete |
+| VFG-06 | Phase 18 | Complete |
+| VFG-07 | Phase 18 | Complete |
+| VFG-08 | Phase 18 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -339,4 +339,4 @@
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-29 for Phase 18 planning*
+*Last updated: 2026-04-29 after Phase 18 completion*

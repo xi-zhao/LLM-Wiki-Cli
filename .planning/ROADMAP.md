@@ -29,7 +29,7 @@ The roadmap incorporates product lessons from `nashsu/llm_wiki` while preserving
 - [x] **Phase 15: Agent Profile Configuration** - Persist named external agent command profiles and allow automation commands to use them explicitly.
 - [x] **Phase 16: Explicit Default Agent Profile** - Let projects designate a default profile that automation commands can use only when `--agent-profile` is explicitly present.
 - [x] **Phase 17: Maintenance Loop Automation** - Repeat maintenance refresh plus bounded task execution until no work remains or a configured stop condition is reached.
-- [ ] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
+- [x] **Phase 18: Agent Verifier Gate** - Let an explicit verifier agent review generated patch bundles before apply.
 
 ## Phase Details
 
@@ -348,7 +348,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 18-01: Build explicit agent verifier gate
+- [x] 18-01: Build explicit agent verifier gate
 
 ## Progress
 
@@ -371,4 +371,4 @@ Plans:
 | 15. Agent Profile Configuration | 1/1 | Complete | 2026-04-28 |
 | 16. Explicit Default Agent Profile | 1/1 | Complete | 2026-04-29 |
 | 17. Maintenance Loop Automation | 1/1 | Complete | 2026-04-29 |
-| 18. Agent Verifier Gate | 0/1 | Planned | - |
+| 18. Agent Verifier Gate | 1/1 | Complete | 2026-04-29 |

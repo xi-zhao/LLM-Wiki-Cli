@@ -15,6 +15,10 @@ from wikify.maintenance.bundle_producer import (
     BundleProducerError,
     produce_patch_bundle,
 )
+from wikify.maintenance.bundle_verifier import (
+    BundleVerifierError,
+    verify_patch_bundle,
+)
 from wikify.maintenance.batch_runner import (
     DEFAULT_LIMIT as DEFAULT_BATCH_LIMIT,
     DEFAULT_STATUS as DEFAULT_BATCH_STATUS,
@@ -241,12 +245,48 @@ def _resolve_agent_execution_or_error(command: str, base, args, *, require_comma
     return execution, None
 
 
+def _resolve_verifier_execution_or_error(command: str, base, args, *, require_command: bool = False):
+    try:
+        execution = resolve_agent_execution(
+            base,
+            agent_command=getattr(args, 'verifier_command', None),
+            agent_profile=getattr(args, 'verifier_profile', None),
+            producer_timeout_seconds=getattr(args, 'verifier_timeout', DEFAULT_TIMEOUT_SECONDS),
+        )
+    except AgentProfileError as exc:
+        return None, envelope_error(
+            command,
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    if require_command and not execution['agent_command']:
+        return None, envelope_error(
+            command,
+            'verifier_command_required',
+            'verifier command or verifier profile is required',
+            2,
+            retryable=False,
+        )
+    return execution, None
+
+
 def _attach_agent_execution(result: dict, execution: dict):
     result.setdefault('execution', {})
     result['execution']['agent_command_source'] = execution.get('source')
     result['execution']['agent_profile'] = execution.get('profile')
     if execution.get('profile_path'):
         result['execution']['agent_profile_path'] = execution.get('profile_path')
+
+
+def _attach_verifier_execution(result: dict, execution: dict):
+    result.setdefault('execution', {})
+    result['execution']['verifier_command_source'] = execution.get('source')
+    result['execution']['verifier_profile'] = execution.get('profile')
+    if execution.get('profile_path'):
+        result['execution']['verifier_profile_path'] = execution.get('profile_path')
 
 
 def _collect_artifact_paths(value, paths: list[str]):
@@ -598,6 +638,50 @@ def cmd_produce_bundle(args):
     return envelope_ok('produce-bundle', result)
 
 
+def cmd_verify_bundle(args):
+    base = discover_base()
+    verifier_execution, error = _resolve_verifier_execution_or_error('verify-bundle', base, args, require_command=True)
+    if error:
+        return error
+    try:
+        result = verify_patch_bundle(
+            base,
+            args.proposal_path,
+            args.bundle_path,
+            verifier_execution['agent_command'],
+            timeout_seconds=verifier_execution['producer_timeout_seconds'],
+            dry_run=args.dry_run,
+        )
+    except BundleVerifierError as exc:
+        return envelope_error(
+            'verify-bundle',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'verify-bundle',
+            'bundle_verifier_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    _attach_verifier_execution(result, verifier_execution)
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': 'patch bundle verification completed',
+        'artifacts': artifacts,
+        'next_actions': ['apply'] if result.get('status') == 'accepted' else [],
+        'user_message': 'patch bundle verification completed',
+    }
+    return envelope_ok('verify-bundle', result)
+
+
 def cmd_apply(args):
     base = discover_base()
     try:
@@ -675,6 +759,9 @@ def cmd_run_task(args):
     agent_execution, error = _resolve_agent_execution_or_error('run-task', base, args)
     if error:
         return error
+    verifier_execution, error = _resolve_verifier_execution_or_error('run-task', base, args)
+    if error:
+        return error
     try:
         result = run_agent_task(
             base,
@@ -683,6 +770,8 @@ def cmd_run_task(args):
             dry_run=args.dry_run,
             agent_command=agent_execution['agent_command'],
             producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
+            verifier_command=verifier_execution['agent_command'],
+            verifier_timeout_seconds=verifier_execution['producer_timeout_seconds'],
         )
     except TaskRunError as exc:
         return envelope_error(
@@ -704,6 +793,7 @@ def cmd_run_task(args):
 
     artifacts = [path for path in result.get('artifacts', {}).values() if path]
     _attach_agent_execution(result, agent_execution)
+    _attach_verifier_execution(result, verifier_execution)
     result['completion'] = {
         'status': result.get('status'),
         'summary': 'agent task workflow advanced',
@@ -719,6 +809,9 @@ def cmd_run_tasks(args):
     agent_execution, error = _resolve_agent_execution_or_error('run-tasks', base, args)
     if error:
         return error
+    verifier_execution, error = _resolve_verifier_execution_or_error('run-tasks', base, args)
+    if error:
+        return error
     try:
         result = run_agent_tasks(
             base,
@@ -729,6 +822,8 @@ def cmd_run_tasks(args):
             dry_run=args.dry_run,
             agent_command=agent_execution['agent_command'],
             producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
+            verifier_command=verifier_execution['agent_command'],
+            verifier_timeout_seconds=verifier_execution['producer_timeout_seconds'],
             continue_on_error=args.continue_on_error,
         )
     except BatchTaskRunError as exc:
@@ -751,6 +846,7 @@ def cmd_run_tasks(args):
 
     artifacts = [path for path in result.get('artifacts', {}).values() if path]
     _attach_agent_execution(result, agent_execution)
+    _attach_verifier_execution(result, verifier_execution)
     result['completion'] = {
         'status': result.get('status'),
         'summary': 'agent task batch workflow advanced',
@@ -766,6 +862,9 @@ def cmd_maintain_run(args):
     agent_execution, error = _resolve_agent_execution_or_error('maintain-run', base, args)
     if error:
         return error
+    verifier_execution, error = _resolve_verifier_execution_or_error('maintain-run', base, args)
+    if error:
+        return error
     try:
         result = run_maintenance_workflow(
             base,
@@ -777,6 +876,8 @@ def cmd_maintain_run(args):
             dry_run=args.dry_run,
             agent_command=agent_execution['agent_command'],
             producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
+            verifier_command=verifier_execution['agent_command'],
+            verifier_timeout_seconds=verifier_execution['producer_timeout_seconds'],
             continue_on_error=args.continue_on_error,
         )
     except MaintenanceRunError as exc:
@@ -799,6 +900,7 @@ def cmd_maintain_run(args):
 
     artifacts = []
     _attach_agent_execution(result, agent_execution)
+    _attach_verifier_execution(result, verifier_execution)
     for group in result.get('artifacts', {}).values():
         if isinstance(group, dict):
             artifacts.extend(path for path in group.values() if path)
@@ -819,6 +921,9 @@ def cmd_maintain_loop(args):
     agent_execution, error = _resolve_agent_execution_or_error('maintain-loop', base, args)
     if error:
         return error
+    verifier_execution, error = _resolve_verifier_execution_or_error('maintain-loop', base, args)
+    if error:
+        return error
     try:
         result = run_maintenance_loop(
             base,
@@ -832,6 +937,8 @@ def cmd_maintain_loop(args):
             dry_run=args.dry_run,
             agent_command=agent_execution['agent_command'],
             producer_timeout_seconds=agent_execution['producer_timeout_seconds'],
+            verifier_command=verifier_execution['agent_command'],
+            verifier_timeout_seconds=verifier_execution['producer_timeout_seconds'],
             continue_on_error=args.continue_on_error,
         )
     except MaintenanceLoopError as exc:
@@ -854,6 +961,7 @@ def cmd_maintain_loop(args):
 
     artifacts: list[str] = []
     _attach_agent_execution(result, agent_execution)
+    _attach_verifier_execution(result, verifier_execution)
     _collect_artifact_paths(result.get('artifacts', {}), artifacts)
     result['completion'] = {
         'status': result.get('status'),
@@ -945,6 +1053,16 @@ def build_parser() -> argparse.ArgumentParser:
         p_produce_bundle.add_argument('--dry-run', action='store_true')
         p_produce_bundle.set_defaults(func=cmd_produce_bundle)
 
+    if 'verify-bundle' not in sub.choices:
+        p_verify_bundle = sub.add_parser('verify-bundle', help='Invoke an explicit verifier command before patch apply')
+        p_verify_bundle.add_argument('--proposal-path', required=True)
+        p_verify_bundle.add_argument('--bundle-path', required=True)
+        p_verify_bundle.add_argument('--verifier-command')
+        p_verify_bundle.add_argument('--verifier-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_verify_bundle.add_argument('--verifier-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_verify_bundle.add_argument('--dry-run', action='store_true')
+        p_verify_bundle.set_defaults(func=cmd_verify_bundle)
+
     if 'apply' not in sub.choices:
         p_apply = sub.add_parser('apply', help='Validate and apply an agent-generated patch bundle')
         p_apply.add_argument('--proposal-path', required=True)
@@ -964,7 +1082,10 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_task.add_argument('--bundle-path')
         p_run_task.add_argument('--agent-command')
         p_run_task.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_run_task.add_argument('--verifier-command')
+        p_run_task.add_argument('--verifier-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_run_task.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_run_task.add_argument('--verifier-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_task.add_argument('--dry-run', action='store_true')
         p_run_task.set_defaults(func=cmd_run_task)
 
@@ -976,7 +1097,10 @@ def build_parser() -> argparse.ArgumentParser:
         p_run_tasks.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
         p_run_tasks.add_argument('--agent-command')
         p_run_tasks.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_run_tasks.add_argument('--verifier-command')
+        p_run_tasks.add_argument('--verifier-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_run_tasks.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_run_tasks.add_argument('--verifier-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_run_tasks.add_argument('--continue-on-error', action='store_true')
         p_run_tasks.add_argument('--dry-run', action='store_true')
         p_run_tasks.set_defaults(func=cmd_run_tasks)
@@ -990,7 +1114,10 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain_run.add_argument('--limit', type=int, default=DEFAULT_BATCH_LIMIT)
         p_maintain_run.add_argument('--agent-command')
         p_maintain_run.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_maintain_run.add_argument('--verifier-command')
+        p_maintain_run.add_argument('--verifier-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_maintain_run.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_maintain_run.add_argument('--verifier-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_maintain_run.add_argument('--continue-on-error', action='store_true')
         p_maintain_run.add_argument('--dry-run', action='store_true')
         p_maintain_run.set_defaults(func=cmd_maintain_run)
@@ -1006,7 +1133,10 @@ def build_parser() -> argparse.ArgumentParser:
         p_maintain_loop.add_argument('--task-budget', type=int, default=DEFAULT_MAINTAIN_LOOP_TASK_BUDGET)
         p_maintain_loop.add_argument('--agent-command')
         p_maintain_loop.add_argument('--agent-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
+        p_maintain_loop.add_argument('--verifier-command')
+        p_maintain_loop.add_argument('--verifier-profile', nargs='?', const=DEFAULT_PROFILE_SENTINEL)
         p_maintain_loop.add_argument('--producer-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
+        p_maintain_loop.add_argument('--verifier-timeout', type=float, default=DEFAULT_TIMEOUT_SECONDS)
         p_maintain_loop.add_argument('--continue-on-error', action='store_true')
         p_maintain_loop.add_argument('--dry-run', action='store_true')
         p_maintain_loop.set_defaults(func=cmd_maintain_loop)

@@ -43,6 +43,26 @@ class MaintenanceRunTests(unittest.TestCase):
         )
         return script
 
+    def _write_verifier(self, kb: Path) -> Path:
+        script = kb / 'verifier_agent.py'
+        verdict = {
+            'schema_version': 'wikify.patch-bundle-verdict.v1',
+            'accepted': True,
+            'summary': 'accepted',
+            'findings': [],
+        }
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'assert request["schema_version"] == "wikify.patch-bundle-verification-request.v1"',
+                f'print(json.dumps({verdict!r}))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
+
     def _read_queue(self, kb: Path) -> dict:
         return json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
 
@@ -76,6 +96,27 @@ class MaintenanceRunTests(unittest.TestCase):
             self.assertIn('[[agent-knowledge-loops]]', target.read_text(encoding='utf-8'))
             self.assertTrue((kb / 'sorted' / 'graph-maintenance-history.json').exists())
             self.assertTrue((kb / 'sorted' / 'graph-patch-bundles' / 'agent-task-1.json').exists())
+
+    def test_maintain_run_forwards_verifier_command(self):
+        from wikify.maintenance.maintain_run import run_maintenance_workflow
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = self._copy_sample_kb(tmpdir)
+            agent = self._write_link_repair_agent(kb)
+            verifier = self._write_verifier(kb)
+
+            result = run_maintenance_workflow(
+                kb,
+                limit=1,
+                action='queue_link_repair',
+                agent_command=[sys.executable, str(agent)],
+                verifier_command=[sys.executable, str(verifier)],
+            )
+
+            item_result = result['batch']['items'][0]['result']
+            self.assertEqual(result['status'], 'completed')
+            self.assertIn('bundle_verifier', [step['name'] for step in item_result['steps']])
+            self.assertTrue(Path(item_result['artifacts']['verification']).exists())
 
     def test_maintain_run_defaults_to_balanced_queued_limit_five(self):
         from wikify.maintenance.maintain_run import run_maintenance_workflow

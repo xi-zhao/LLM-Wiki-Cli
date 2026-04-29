@@ -74,6 +74,26 @@ class MaintenanceBatchRunnerTests(unittest.TestCase):
         )
         return script
 
+    def _write_verifier(self, kb: Path):
+        script = kb / 'batch_verifier.py'
+        verdict = {
+            'schema_version': 'wikify.patch-bundle-verdict.v1',
+            'accepted': True,
+            'summary': 'accepted',
+            'findings': [],
+        }
+        script.write_text(
+            '\n'.join([
+                'import json',
+                'import sys',
+                'request = json.load(sys.stdin)',
+                'assert request["schema_version"] == "wikify.patch-bundle-verification-request.v1"',
+                f'print(json.dumps({verdict!r}))',
+            ]),
+            encoding='utf-8',
+        )
+        return script
+
     def _read_queue(self, kb: Path):
         return json.loads((kb / 'sorted' / 'graph-agent-tasks.json').read_text(encoding='utf-8'))
 
@@ -110,6 +130,28 @@ class MaintenanceBatchRunnerTests(unittest.TestCase):
             self.assertEqual((kb / 'topics' / 'a.md').read_text(encoding='utf-8'), 'See [[Existing1]].\n')
             self.assertEqual((kb / 'topics' / 'b.md').read_text(encoding='utf-8'), 'See [[Existing2]].\n')
             self.assertEqual([task['status'] for task in queue['tasks']], ['done', 'done'])
+
+    def test_run_agent_tasks_forwards_verifier_command(self):
+        from wikify.maintenance.batch_runner import run_agent_tasks
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kb = Path(tmpdir)
+            self._write_target(kb, 'topics/a.md', 'Missing1')
+            self._write_queue(kb, [self._task('agent-task-1', 'topics/a.md', 'Missing1')])
+            agent = self._write_agent(kb)
+            verifier = self._write_verifier(kb)
+
+            result = run_agent_tasks(
+                kb,
+                limit=1,
+                agent_command=[sys.executable, str(agent)],
+                verifier_command=[sys.executable, str(verifier)],
+            )
+
+            item_result = result['items'][0]['result']
+            self.assertEqual(result['status'], 'completed')
+            self.assertIn('bundle_verifier', [step['name'] for step in item_result['steps']])
+            self.assertTrue(Path(item_result['artifacts']['verification']).exists())
 
     def test_run_agent_tasks_defaults_to_queued_limit_five(self):
         from wikify.maintenance.batch_runner import run_agent_tasks
