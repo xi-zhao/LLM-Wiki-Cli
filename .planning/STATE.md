@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 25 - Source-Backed Wikiization Pipeline
-Status: Completed
-Last activity: 2026-04-29 - Completed Phase 25 plan 25-01: shipped `wikify wikiize`, source-backed generated pages, queue lifecycle updates, edit protection, wikiization tasks, explicit agent request/result handoff, docs, and verification.
+Phase: 26 - Human Wiki Views And Local Static Output
+Status: Context captured
+Last activity: 2026-04-29 - Captured Phase 26 context for `wikify views`, human Markdown views, local static HTML, object-artifact source of truth, graph/timeline entry points, and view edit protection.
 
 Progress: ██████░░░░ 57%
 
@@ -142,6 +142,9 @@ Recent decisions affecting current work:
 - [Phase 25]: Remote-without-content and unsupported items create wikiization tasks instead of fake pages.
 - [Phase 25]: Generated page updates are hash-guarded and preserve user-edited drift for review.
 - [Phase 25]: External semantic enrichment uses visible request/result artifacts and explicit agent command/profile flags.
+- [Phase 26]: `wikify views` should be the explicit human-view generation command, producing Markdown views and local static HTML without running sync, wikiize, graph, providers, or agents implicitly.
+- [Phase 26]: Human views must render from `artifacts/objects/` plus source, queue, validation, and optional graph artifacts, not from a separate human-only knowledge store.
+- [Phase 26]: Generated view Markdown should be hash-guarded through `.wikify/views/view-manifest.json`; missing optional data should produce honest empty states and next actions.
 
 ### Pending Todos
 
@@ -195,6 +198,7 @@ Recent decisions affecting current work:
 - Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
 - Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 - Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
+- Phase 26 context captured: `wikify views` command boundary, object-artifact source of truth, human Markdown view set, static HTML output, graph/timeline entry views, missing-data behavior, and view hash guards.
 
 ## Deferred Items
 
@@ -207,6 +211,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 25 complete.
-Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-01-SUMMARY.md
-Next command: `$gsd-discuss-phase 26`
+Stopped at: Phase 26 context gathered.
+Resume file: .planning/phases/26-human-wiki-views-and-local-static-output/26-CONTEXT.md
+Next command: `$gsd-plan-phase 26`
