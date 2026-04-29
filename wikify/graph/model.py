@@ -11,6 +11,8 @@ class GraphNode:
     label: str
     tags: list[str] = field(default_factory=list)
     degree: int = 0
+    object_id: str | None = None
+    canonical_type: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -22,6 +24,8 @@ class GraphNode:
             'label': self.label,
             'tags': list(self.tags),
             'degree': self.degree,
+            'object_id': self.object_id,
+            'canonical_type': self.canonical_type,
         }
 
 

@@ -19,6 +19,8 @@ def extract_nodes(objects: list[WikiObject]) -> list[GraphNode]:
             type=obj.type,
             title=obj.title,
             label=obj.title,
+            object_id=obj.object_id,
+            canonical_type=obj.canonical_type,
         ))
     return nodes
 
