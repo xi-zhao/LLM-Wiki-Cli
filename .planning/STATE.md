@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 28 - Maintenance Integration And Compatibility
-Status: Context captured and ready to plan
-Last activity: 2026-04-30 - Captured Phase 28 discussion context for maintenance integration, v0.2 target resolution, compatibility, verifier/repair preservation, and E2E verification.
+Status: Ready to execute
+Last activity: 2026-04-30 - Planned Phase 28 as four waves covering object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility verification, docs, and GSD completion.
 
 Progress: █████████░ 87%
 
@@ -161,6 +161,7 @@ Recent decisions affecting current work:
 - [Phase 28 planning]: Maintenance should use an ephemeral target resolver over object, page, view, source, validation, graph, and agent artifacts instead of creating a second knowledge store.
 - [Phase 28 planning]: Findings may target personal wiki pages, source/human views, and agent exports; derived views and agent exports should usually be regenerated explicitly rather than patched directly.
 - [Phase 28 planning]: Verifier and repair flows must deterministically preserve generated page `source_refs` and `review_status` in addition to any external verifier judgment.
+- [Phase 28 planning]: Phase execution is split into four plans: target resolver/enrichment, artifact-health findings, generated-page preservation, and E2E/docs/completion.
 
 ### Pending Todos
 
@@ -221,6 +222,7 @@ Recent decisions affecting current work:
 - Phase 27 planned: 3 dependent plans covering `wikify agent export`, agent indexes and llms artifacts, deterministic context packs, citation and related query commands, docs, smoke verification, and GSD completion artifacts.
 - Phase 27 completed: `wikify agent export`, `llms.txt`, `llms-full.txt`, page/citation/related indexes, agent graph export, deterministic context packs, citation query, related query, public docs, protocol docs, full test suite, compile check, and smoke workflow shipped.
 - Phase 28 context captured: compatibility-first maintenance integration, v0.2 target resolver, object/view/agent findings, additive task metadata, generated-page preservation checks, and E2E workflow verification.
+- Phase 28 planned: 4 dependent plans covering object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility tests, docs, verification, and GSD completion artifacts.
 
 ## Deferred Items
 
@@ -233,6 +235,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-30
-Stopped at: Phase 28 context captured and ready to plan.
-Resume file: .planning/phases/28-maintenance-integration-and-compatibility/28-CONTEXT.md
-Next command: `$gsd-plan-phase 28`
+Stopped at: Phase 28 planned and ready to execute.
+Resume file: .planning/phases/28-maintenance-integration-and-compatibility/28-01-PLAN.md
+Next command: `$gsd-execute-phase 28`
