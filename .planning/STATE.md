@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 25 - Source-Backed Wikiization Pipeline
-Status: Ready for discussion/planning
-Last activity: 2026-04-29 - Completed Phase 24 wiki object model and validation: canonical object schemas, Markdown front matter metadata, structured validation records, graph object-id compatibility, `wikify validate`, docs, and verification artifacts.
+Status: Context gathered; ready for planning
+Last activity: 2026-04-29 - Gathered Phase 25 source-backed wikiization context, including `wikify wikiize` command boundary, ingest queue lifecycle, generated page/object layout, source traceability, explicit agent handoff, edit protection, review/task artifacts, and validation gates.
 
 Progress: ████░░░░░░ 43%
 
@@ -186,6 +186,7 @@ Recent decisions affecting current work:
 - Phase 24 context captured: object schema set, object identity, JSON/front matter contract, validation command, source/citation references, graph edge compatibility, and deferred scope.
 - Phase 24 planned: 1 TDD plan covering object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification.
 - Phase 24 completed: canonical object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification artifacts shipped.
+- Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
 
 ## Deferred Items
 
@@ -198,6 +199,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 24 completed.
-Resume file: .planning/phases/24-wiki-object-model-and-validation/24-01-SUMMARY.md
-Next command: `$gsd-discuss-phase 25`
+Stopped at: Phase 25 context gathered.
+Resume file: .planning/phases/25-source-backed-wikiization-pipeline/25-CONTEXT.md
+Next command: `$gsd-plan-phase 25`
