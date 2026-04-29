@@ -2,26 +2,26 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-29)
+See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 28 maintenance integration and compatibility.
+**Current focus:** v0.2.0 Personal Wiki Core & Views is implementation-complete; next step is milestone completion.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
 Phase: 28 - Maintenance Integration And Compatibility
-Status: Ready to execute
-Last activity: 2026-04-30 - Planned Phase 28 as four waves covering object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility verification, docs, and GSD completion.
+Status: Complete
+Last activity: 2026-04-30 - Executed Phase 28 across four waves: object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility verification, docs, and GSD completion.
 
-Progress: █████████░ 87%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
+- Total plans completed: 33
 - Average duration: 1 session
-- Total execution time: 29 sessions
+- Total execution time: 33 sessions
 
 **By Phase:**
 
@@ -54,9 +54,10 @@ Progress: █████████░ 87%
 | 25. Source-Backed Wikiization Pipeline | 1/1 | 1 session | 1 session |
 | 26. Human Wiki Views And Local Static Output | 1/1 | 1 session | 1 session |
 | 27. Agent Wiki Interfaces And Context Packs | 3/3 | 3 sessions | 1 session |
+| 28. Maintenance Integration And Compatibility | 4/4 | 4 sessions | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 25-01, 26-01, 27-01, 27-02, 27-03
+- Last 5 plans: 27-03, 28-01, 28-02, 28-03, 28-04
 - Trend: Stable
 
 ## Accumulated Context
@@ -162,6 +163,11 @@ Recent decisions affecting current work:
 - [Phase 28 planning]: Findings may target personal wiki pages, source/human views, and agent exports; derived views and agent exports should usually be regenerated explicitly rather than patched directly.
 - [Phase 28 planning]: Verifier and repair flows must deterministically preserve generated page `source_refs` and `review_status` in addition to any external verifier judgment.
 - [Phase 28 planning]: Phase execution is split into four plans: target resolver/enrichment, artifact-health findings, generated-page preservation, and E2E/docs/completion.
+- [Phase 28]: Maintenance targets are resolved from existing object/source/wiki/view/agent/control artifacts and are not a second knowledge store.
+- [Phase 28]: Object-aware task metadata is additive to `wikify.graph-agent-tasks.v1`; old readers can ignore the new fields.
+- [Phase 28]: View and agent export problems are represented as explicit regeneration tasks (`wikify views`, `wikify agent export`) rather than silent regeneration inside `wikify maintain`.
+- [Phase 28]: Generated page `source_refs` and `review_status` are preserved by deterministic local preflight/apply checks, with `generated_page_preservation_failed` returned before unsafe mutation or external verifier execution.
+- [Phase 28]: v0.2 maintenance compatibility is verified through an E2E source-to-agent-context-to-maintenance test and full test suite.
 
 ### Pending Todos
 
@@ -223,6 +229,7 @@ Recent decisions affecting current work:
 - Phase 27 completed: `wikify agent export`, `llms.txt`, `llms-full.txt`, page/citation/related indexes, agent graph export, deterministic context packs, citation query, related query, public docs, protocol docs, full test suite, compile check, and smoke workflow shipped.
 - Phase 28 context captured: compatibility-first maintenance integration, v0.2 target resolver, object/view/agent findings, additive task metadata, generated-page preservation checks, and E2E workflow verification.
 - Phase 28 planned: 4 dependent plans covering object-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility tests, docs, verification, and GSD completion artifacts.
+- Phase 28 completed: object-aware maintenance targets, artifact-health findings, generated-page preservation, E2E compatibility test, public docs, protocol docs, full test suite, compile check, and GSD summaries shipped.
 
 ## Deferred Items
 
@@ -235,6 +242,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-30
-Stopped at: Phase 28 planned and ready to execute.
-Resume file: .planning/phases/28-maintenance-integration-and-compatibility/28-01-PLAN.md
-Next command: `$gsd-execute-phase 28`
+Stopped at: Phase 28 complete and v0.2.0 requirements satisfied.
+Resume file: .planning/phases/28-maintenance-integration-and-compatibility/28-04-VERIFICATION.md
+Next command: `/gsd-complete-milestone`

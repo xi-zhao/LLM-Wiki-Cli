@@ -185,7 +185,7 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 ### Phase 28: Maintenance Integration And Compatibility
 
-**Status:** Planned 2026-04-30
+**Status:** Completed 2026-04-30
 
 **Goal:** Connect the v0.2.0 personal wiki model to the existing graph task, verifier, repair, and compatibility flows.
 
@@ -200,13 +200,13 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 
 **Dependencies:** Phase 22, Phase 23, Phase 24, Phase 25, Phase 26, Phase 27.
 
-**Verification:** Unit tests and an integration-style fixture covering source add, sync, wikiize, view generation, agent export, graph maintenance, verifier rejection, and repair feedback.
+**Verification:** Complete - unit tests and an integration-style fixture cover source add, sync, wikiize, view generation, agent export/context, graph maintenance, generated page preservation rejection, and compatibility behavior.
 
 **Plans:**
-- [ ] **28-01 Build Object-Aware Maintenance Targets And Task Enrichment** - Add a v0.2 maintenance target resolver, enrich graph findings/tasks with object/page metadata, and preserve legacy graph maintenance artifacts and task schema.
-- [ ] **28-02 Add Artifact-Health Findings For Views, Agent Exports, And Validation** - Queue validation, wikiization, view, and agent export maintenance findings with explicit regeneration actions for derived artifacts.
-- [ ] **28-03 Enforce Generated Page Source-Ref And Review-Status Preservation** - Add preservation context and local checks across proposal, bundle request, verifier, apply, and repair feedback flows.
-- [ ] **28-04 Verify Compatibility, Document Maintenance Integration, And Close Phase 28** - Add E2E/compatibility tests, update public docs, run full verification, and complete GSD artifacts after tests pass.
+- [x] **28-01 Build Object-Aware Maintenance Targets And Task Enrichment** - Added a v0.2 maintenance target resolver, enriched graph findings/tasks with object/page metadata, and preserved legacy graph maintenance artifacts and task schema.
+- [x] **28-02 Add Artifact-Health Findings For Views, Agent Exports, And Validation** - Queued validation, wikiization, view, and agent export maintenance findings with explicit regeneration actions for derived artifacts.
+- [x] **28-03 Enforce Generated Page Source-Ref And Review-Status Preservation** - Added preservation context and local checks across proposal, bundle request, verifier, apply, and repair feedback flows.
+- [x] **28-04 Verify Compatibility, Document Maintenance Integration, And Close Phase 28** - Added E2E/compatibility tests, updated public docs, ran full verification, and completed GSD artifacts.
 
 **Wave 1:** 28-01 can run after Phase 24, Phase 25, Phase 26, and Phase 27.
 
@@ -252,12 +252,12 @@ Build the core personal wiki object model, ingest flow, human-facing generated v
 | AGT-03 | Phase 27 | Complete |
 | AGT-04 | Phase 27 | Complete |
 | AGT-05 | Phase 27 | Complete |
-| MAINT-01 | Phase 28 | Pending |
-| MAINT-02 | Phase 28 | Pending |
-| MAINT-03 | Phase 28 | Pending |
-| MAINT-04 | Phase 28 | Pending |
+| MAINT-01 | Phase 28 | Complete |
+| MAINT-02 | Phase 28 | Complete |
+| MAINT-03 | Phase 28 | Complete |
+| MAINT-04 | Phase 28 | Complete |
 
-**Coverage:** 31/31 v0.2.0 requirements mapped.
+**Coverage:** 31/31 v0.2.0 requirements mapped and complete.
 
 ## Archived Phase History
 

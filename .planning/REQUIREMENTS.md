@@ -53,10 +53,10 @@
 
 ### Maintenance Integration
 
-- [ ] **MAINT-01**: Existing graph maintenance can read the v0.2.0 wiki object model instead of assuming project-only topic layouts.
-- [ ] **MAINT-02**: Maintenance findings can target personal wiki pages, source pages, human views, and agent exports.
-- [ ] **MAINT-03**: Verifier and repair flows preserve source references and review status when updating generated wiki pages.
-- [ ] **MAINT-04**: Existing v0.1.0a2 commands remain compatible while v0.2.0 adds personal wiki concepts.
+- [x] **MAINT-01**: Existing graph maintenance can read the v0.2.0 wiki object model instead of assuming project-only topic layouts.
+- [x] **MAINT-02**: Maintenance findings can target personal wiki pages, source pages, human views, and agent exports.
+- [x] **MAINT-03**: Verifier and repair flows preserve source references and review status when updating generated wiki pages.
+- [x] **MAINT-04**: Existing v0.1.0a2 commands remain compatible while v0.2.0 adds personal wiki concepts.
 
 ## Future Requirements
 
@@ -118,16 +118,17 @@
 | AGT-03 | Phase 27 | Complete |
 | AGT-04 | Phase 27 | Complete |
 | AGT-05 | Phase 27 | Complete |
-| MAINT-01 | Phase 28 | Pending |
-| MAINT-02 | Phase 28 | Pending |
-| MAINT-03 | Phase 28 | Pending |
-| MAINT-04 | Phase 28 | Pending |
+| MAINT-01 | Phase 28 | Complete |
+| MAINT-02 | Phase 28 | Complete |
+| MAINT-03 | Phase 28 | Complete |
+| MAINT-04 | Phase 28 | Complete |
 
 **Coverage:**
 - v0.2.0 requirements: 31 total
 - Mapped to phases: 31
+- Complete: 31
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-29*
-*Last updated: 2026-04-29 after completing Phase 27*
+*Last updated: 2026-04-30 after completing Phase 28*

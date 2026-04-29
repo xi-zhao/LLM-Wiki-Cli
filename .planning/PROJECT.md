@@ -16,7 +16,7 @@ Users can turn scattered personal and project knowledge into a living local wiki
 
 Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
 
-The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts; Phase 24 shipped the canonical wiki object model, Markdown front matter metadata bridge, structured object validation, graph object-id compatibility, and `wikify validate`; Phase 25 shipped `wikify wikiize` for source-backed generated pages, queue lifecycle updates, edit protection, wikiization task artifacts, and explicit agent enrichment handoff; Phase 26 shipped `wikify views` for human-facing Markdown views, local static HTML, view manifests, and non-interrupting view drift tasks; Phase 27 shipped `wikify agent export`, agent indexes, `llms.txt` / `llms-full.txt`, context packs, citation queries, and related-object queries.
+The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts; Phase 24 shipped the canonical wiki object model, Markdown front matter metadata bridge, structured object validation, graph object-id compatibility, and `wikify validate`; Phase 25 shipped `wikify wikiize` for source-backed generated pages, queue lifecycle updates, edit protection, wikiization task artifacts, and explicit agent enrichment handoff; Phase 26 shipped `wikify views` for human-facing Markdown views, local static HTML, view manifests, and non-interrupting view drift tasks; Phase 27 shipped `wikify agent export`, agent indexes, `llms.txt` / `llms-full.txt`, context packs, citation queries, and related-object queries; Phase 28 shipped personal-wiki-aware maintenance targets, artifact-health findings, generated-page preservation, compatibility tests, and documentation.
 
 ## Current Milestone: v0.2.0 Personal Wiki Core & Views
 
@@ -81,10 +81,14 @@ The product direction for v0.2.0 expands the target object from project Markdown
 - [x] `wikify agent context` writes deterministic, budgeted, source-backed `wikify.context-pack.v1` context packs and matching context pack objects.
 - [x] `wikify agent cite` returns explicit citation evidence before page source-ref fallback evidence and returns empty evidence rather than fabricated citations.
 - [x] `wikify agent related` returns ranked related objects with signal-level explanations.
+- [x] `wikify maintain` can read v0.2 object, source, page, validation, wikiization, human view, and agent export artifacts through an additive target resolver.
+- [x] Maintenance findings can target personal wiki pages, generated page drift, validation records, human view regeneration, and agent export refresh work.
+- [x] Generated page repair proposals, bundle requests, verifier preflight, and apply preflight preserve `source_refs` and `review_status` deterministically.
+- [x] v0.1.0a2 maintenance commands, `sorted/graph-*` artifact paths, JSON envelopes, and `wikify.graph-agent-tasks.v1` task fields remain compatible.
 
 ### Active
 
-- [ ] Maintenance-loop integration for the personal wiki model.
+- None - v0.2.0 implementation requirements are complete and ready for milestone completion.
 
 ### Out of Scope
 
@@ -143,6 +147,9 @@ The product direction for v0.2.0 expands the target object from project Markdown
 | Hash-guard generated human views | Visible wiki pages may be edited by people or agents, so drift should create repair tasks instead of silent overwrites | Good |
 | Keep Phase 27 agent interfaces object-aware and explicit | `wikify agent` should expose durable context without overloading legacy search/query/graph commands or hiding provider behavior | Good |
 | Keep context selection deterministic before vectors | Budgeted context packs should be explainable from local objects, source refs, citations, links, and graph signals before optional semantic retrieval is added | Good |
+| Keep Phase 28 maintenance object-aware but additive | Maintenance should see the same personal wiki artifacts as human and agent views while preserving legacy graph task compatibility | Good |
+| Treat derived views and agent exports as explicit regeneration work | `wikify maintain` should queue `wikify views` and `wikify agent export` work instead of silently patching derived artifacts | Good |
+| Preserve generated page traceability locally | `source_refs` and `review_status` must be protected by deterministic preflight, not only by external verifier prompts | Good |
 
 ## Evolution
 
@@ -162,4 +169,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after completing Phase 27*
+*Last updated: 2026-04-30 after completing Phase 28*
