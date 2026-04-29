@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 24 wiki object model and validation.
+**Current focus:** v0.2.0 Personal Wiki Core & Views, Phase 25 source-backed wikiization pipeline.
 
 ## Current Position
 
 Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: 24 - Wiki Object Model And Validation
-Status: Planned; ready to execute
-Last activity: 2026-04-29 - Planned Phase 24 object model and validation implementation, including schema contracts, front matter parsing, structured validation, graph compatibility, CLI wiring, docs, and verification.
+Phase: 25 - Source-Backed Wikiization Pipeline
+Status: Ready for discussion/planning
+Last activity: 2026-04-29 - Completed Phase 24 wiki object model and validation: canonical object schemas, Markdown front matter metadata, structured validation records, graph object-id compatibility, `wikify validate`, docs, and verification artifacts.
 
-Progress: ███░░░░░░░ 29%
+Progress: ████░░░░░░ 43%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
+- Total plans completed: 24
 - Average duration: 1 session
-- Total execution time: 23 sessions
+- Total execution time: 24 sessions
 
 **By Phase:**
 
@@ -50,9 +50,10 @@ Progress: ███░░░░░░░ 29%
 | 21. Milestone Verification Artifacts | 1/1 | 1 session | 1 session |
 | 22. Personal Wiki Workspace And Source Registry | 1/1 | 1 session | 1 session |
 | 23. Incremental Sync And Ingest Queue | 1/1 | 1 session | 1 session |
+| 24. Wiki Object Model And Validation | 1/1 | 1 session | 1 session |
 
 **Recent Trend:**
-- Last 5 plans: 19-01, 20-01, 21-01, 22-01, 23-01
+- Last 5 plans: 20-01, 21-01, 22-01, 23-01, 24-01
 - Trend: Stable
 
 ## Accumulated Context
@@ -130,6 +131,11 @@ Recent decisions affecting current work:
 - [Phase 23]: Source items use deterministic ids derived from source id and item locator so repeated syncs can detect unchanged items.
 - [Phase 23]: Sync writes current-state JSON artifacts under `.wikify/sync/` and `.wikify/queues/`, keeping human wiki directories separate from control-plane state.
 - [Phase 23]: Only `new` and `changed` source items create active ingest queue entries; `missing`, `skipped`, and `errored` stay as status evidence.
+- [Phase 24]: Object contracts are stdlib-only dictionaries/helpers and explicit schemas, not Pydantic, JSON Schema, YAML dependencies, or a database.
+- [Phase 24]: Markdown front matter is a readable metadata bridge using a bounded scalar plus JSON-flow subset.
+- [Phase 24]: Validation is compatibility-tolerant by default and strict for declared v0.2 object gaps.
+- [Phase 24]: `wikify graph` keeps path-based ids and exposes canonical object ids as additive metadata.
+- [Phase 24]: `artifacts/objects/` is the visible product artifact root for object JSON and validation reports.
 
 ### Pending Todos
 
@@ -179,6 +185,7 @@ Recent decisions affecting current work:
 - Phase 23 completed: `wikify sync`, deterministic source item index, sync report, ingest queue, dry-run, source selection, docs, and verification shipped.
 - Phase 24 context captured: object schema set, object identity, JSON/front matter contract, validation command, source/citation references, graph edge compatibility, and deferred scope.
 - Phase 24 planned: 1 TDD plan covering object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification.
+- Phase 24 completed: canonical object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification artifacts shipped.
 
 ## Deferred Items
 
@@ -191,6 +198,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-29
-Stopped at: Phase 24 planned.
-Resume file: .planning/phases/24-wiki-object-model-and-validation/24-01-PLAN.md
-Next command: `$gsd-execute-phase 24`
+Stopped at: Phase 24 completed.
+Resume file: .planning/phases/24-wiki-object-model-and-validation/24-01-SUMMARY.md
+Next command: `$gsd-discuss-phase 25`

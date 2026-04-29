@@ -16,7 +16,7 @@ Users can turn scattered personal and project knowledge into a living local wiki
 
 Wikify has a complete CLI-first agent maintenance loop: graph findings become task artifacts, tasks produce scoped proposals, explicit external producer commands generate deterministic patch bundles, verifier agents can block unsafe bundles, and rejected bundles can be repaired with durable feedback.
 
-The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts.
+The product direction for v0.2.0 expands the target object from project Markdown wiki maintenance to a personal knowledge base with first-class human and agent views. Phase 22 shipped the workspace manifest and source registry foundation; Phase 23 shipped deterministic incremental sync and ingest queue artifacts; Phase 24 shipped the canonical wiki object model, Markdown front matter metadata bridge, structured object validation, graph object-id compatibility, and `wikify validate`.
 
 ## Current Milestone: v0.2.0 Personal Wiki Core & Views
 
@@ -63,10 +63,15 @@ The product direction for v0.2.0 expands the target object from project Markdown
 - [x] `wikify sync` discovers registered source items, classifies freshness, writes `.wikify/sync/` status artifacts, and maintains `.wikify/queues/ingest-items.json`.
 - [x] `wikify sync --dry-run` previews source item and queue changes without writing sync artifacts or registry metadata.
 - [x] URL and remote repository sync remain offline with `network_checked: false`; local repository sync scans files without repository commands.
+- [x] Wikify defines canonical object schemas for source, source item, wiki page, topic, project, person, decision, timeline entry, citation, graph edge, and context pack objects.
+- [x] Wiki page objects include stable ids, titles, summaries, body paths, source references, links, timestamps, confidence, and review status.
+- [x] Markdown front matter can expose object metadata using the supported scalar and JSON-flow subset.
+- [x] JSON object artifacts live under visible `artifacts/objects/` product output paths.
+- [x] `wikify validate` returns `wikify.object-validation.v1` records for missing fields, duplicate ids, unresolved links/source refs, invalid schema fields, and malformed front matter.
+- [x] `wikify graph` preserves path-based node ids while exposing canonical object ids as additive metadata.
 
 ### Active
 
-- [ ] Canonical wiki object model shared by human and agent views.
 - [ ] Source-backed wikiization pipeline.
 - [ ] Generated human wiki views and local static browsing.
 - [ ] Agent context exports and query commands.
@@ -122,6 +127,8 @@ The product direction for v0.2.0 expands the target object from project Markdown
 | Treat audit and rollback as trust infrastructure, not the headline promise | Users care about safe automation and recoverability, not internal control-plane terminology | Active |
 | Keep source registration shallow in Phase 22 | `source add` should only record durable source identity and bounded offline metadata; sync/wikiization/views stay explicit later commands | Good |
 | Keep Phase 23 sync offline and artifact-first | `sync` should classify freshness and prepare queue work without hidden network, repository, provider, ingest, wikiization, view, or agent export side effects | Good |
+| Keep Phase 24 object contracts artifact-first | Object JSON and Markdown metadata should define/validate the wiki model without consuming queues or generating pages before Phase 25 | Good |
+| Preserve graph path ids while exposing object ids | Existing graph/maintenance compatibility matters; canonical ids can be additive until generated pages are migrated | Good |
 
 ## Evolution
 
@@ -141,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after completing Phase 23*
+*Last updated: 2026-04-29 after completing Phase 24*

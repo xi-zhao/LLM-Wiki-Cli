@@ -22,10 +22,10 @@
 
 ### Wiki Object Model
 
-- [ ] **OBJ-01**: Wikify defines canonical schemas for source, source item, wiki page, topic, project, person, decision, timeline entry, citation, graph edge, and context pack objects.
-- [ ] **OBJ-02**: Wiki pages include page id, type, title, summary, body path, source references, outbound links, backlinks, timestamps, confidence, and review status.
-- [ ] **OBJ-03**: Wiki object metadata is available as both machine-readable JSON artifacts and Markdown front matter where applicable.
-- [ ] **OBJ-04**: Wikify can validate wiki object artifacts and return structured errors for missing required fields, invalid links, or unresolved source references.
+- [x] **OBJ-01**: Wikify defines canonical schemas for source, source item, wiki page, topic, project, person, decision, timeline entry, citation, graph edge, and context pack objects.
+- [x] **OBJ-02**: Wiki pages include page id, type, title, summary, body path, source references, outbound links, backlinks, timestamps, confidence, and review status.
+- [x] **OBJ-03**: Wiki object metadata is available as both machine-readable JSON artifacts and Markdown front matter where applicable.
+- [x] **OBJ-04**: Wikify can validate wiki object artifacts and return structured errors for missing required fields, invalid links, or unresolved source references.
 
 ### Wikiization Pipeline
 
@@ -99,10 +99,10 @@
 | ING-02 | Phase 23 | Complete |
 | ING-03 | Phase 23 | Complete |
 | ING-04 | Phase 23 | Complete |
-| OBJ-01 | Phase 24 | Pending |
-| OBJ-02 | Phase 24 | Pending |
-| OBJ-03 | Phase 24 | Pending |
-| OBJ-04 | Phase 24 | Pending |
+| OBJ-01 | Phase 24 | Complete |
+| OBJ-02 | Phase 24 | Complete |
+| OBJ-03 | Phase 24 | Complete |
+| OBJ-04 | Phase 24 | Complete |
 | WIK-01 | Phase 25 | Pending |
 | WIK-02 | Phase 25 | Pending |
 | WIK-03 | Phase 25 | Pending |
@@ -130,4 +130,4 @@
 
 ---
 *Requirements defined: 2026-04-29*
-*Last updated: 2026-04-29 after completing Phase 22*
+*Last updated: 2026-04-29 after completing Phase 24*
