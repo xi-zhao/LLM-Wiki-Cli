@@ -86,6 +86,17 @@ def _object_path_for_markdown(root: Path, metadata: dict, body_path: str) -> tup
     return None, None
 
 
+def _object_path_for_body_path(root: Path, body_path: str) -> tuple[str | None, dict | None]:
+    object_root = root / 'artifacts' / 'objects' / 'wiki_pages'
+    if not object_root.exists():
+        return None, None
+    for path in sorted(object_root.glob('*.json')):
+        document = _read_json_if_exists(path)
+        if document and document.get('body_path') == body_path:
+            return _relative(root, path), document
+    return None, None
+
+
 def _preserved_metadata(metadata: dict | None) -> dict | None:
     if metadata is None:
         return None
@@ -102,10 +113,13 @@ def _record_from_markdown(root: Path, relative_path: str) -> dict | None:
     try:
         metadata, _body = split_front_matter(path.read_text(encoding='utf-8'))
     except FrontMatterError as exc:
-        raise GeneratedPagePreservationError(
-            'generated page front matter is invalid',
-            details={'path': relative_path, 'frontmatter_code': exc.code, 'frontmatter_details': exc.details},
-        ) from exc
+        _object_path, object_document = _object_path_for_body_path(root, relative_path)
+        if object_document:
+            raise GeneratedPagePreservationError(
+                'generated page front matter is invalid',
+                details={'path': relative_path, 'frontmatter_code': exc.code, 'frontmatter_details': exc.details},
+            ) from exc
+        return None
     is_wiki_page = metadata.get('type') == 'wiki_page' or bool(metadata.get('body_path'))
     if not is_wiki_page:
         return None

@@ -145,6 +145,43 @@ class MaintenanceGeneratedPagePreservationTests(unittest.TestCase):
                 )
             self.assertEqual(raised.exception.code, 'generated_page_preservation_failed')
 
+    def test_invalid_legacy_front_matter_is_ignored_but_generated_page_is_rejected(self):
+        from wikify.maintenance.preservation import GeneratedPagePreservationError, build_preservation_context
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            legacy_path = root / 'topics' / 'legacy.md'
+            legacy_path.parent.mkdir(parents=True, exist_ok=True)
+            legacy_path.write_text('---\ntags:\n  - legacy\n---\n# Legacy\n', encoding='utf-8')
+            legacy_context = build_preservation_context(root, ['topics/legacy.md'])
+            self.assertFalse(legacy_context['required'])
+
+            generated_path = root / 'wiki' / 'pages' / 'broken.md'
+            generated_path.parent.mkdir(parents=True, exist_ok=True)
+            generated_path.write_text('---\nsource_refs:\n  - bad\n---\n# Broken\n', encoding='utf-8')
+            self._write_json(
+                root / 'artifacts' / 'objects' / 'wiki_pages' / 'broken.json',
+                {
+                    'schema_version': 'wikify.wiki-page.v1',
+                    'id': 'broken',
+                    'type': 'wiki_page',
+                    'title': 'Broken',
+                    'summary': 'Broken summary.',
+                    'body_path': 'wiki/pages/broken.md',
+                    'source_refs': [{'source_id': 'src_notes', 'item_id': 'item_broken', 'confidence': 0.9}],
+                    'outbound_links': [],
+                    'backlinks': [],
+                    'created_at': '2026-04-30T00:00:00Z',
+                    'updated_at': '2026-04-30T00:00:00Z',
+                    'confidence': 0.9,
+                    'review_status': 'generated',
+                },
+            )
+
+            with self.assertRaises(GeneratedPagePreservationError) as raised:
+                build_preservation_context(root, ['wiki/pages/broken.md'])
+            self.assertEqual(raised.exception.code, 'generated_page_preservation_failed')
+
 
 if __name__ == '__main__':
     unittest.main()

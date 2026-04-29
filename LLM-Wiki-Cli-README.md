@@ -510,7 +510,11 @@ wikify maintain --policy aggressive
 
 `graph-agent-tasks.json` 是后续 agent 的任务包，而不是人类 checklist。每条任务包含 source finding、action、priority、target、evidence、write scope、agent instructions、acceptance checks、`requires_user: false` 和 `status: queued`。
 
-V1 安全规则：`maintain` 不修改 topic、parsed、sorted 等正文页面，也不在 CLI 内隐藏调用 LLM；断链修复、孤立对象挂接、digest 刷新和 community synthesis 都只进入 plan 和 agent task queue，由后续 agent 审核或执行。
+v0.2 personal wiki 工作区中，`maintain` 会额外读取 object model、generated page object、wikiization task queue、validation report、human view manifest 和 agent export artifact。任务队列仍保持 `wikify.graph-agent-tasks.v1` 兼容；新增字段都是可选 metadata，例如 `object_id`、`object_type`、`body_path`、`object_path`、`view_path`、`agent_artifact_path`、`source_refs`、`review_status`、`regeneration_command`。
+
+Artifact-health findings 不直接重写派生产物：object validation 问题进入 validation repair task，generated page drift 进入 generated page repair task，human view stale/drift 进入 `wikify views` regeneration task，agent export 缺失进入 `wikify agent export` refresh task。生成页修复会携带 preservation context，preflight/apply 会拒绝修改 `source_refs` 或 `review_status` 的 bundle，错误码为 `generated_page_preservation_failed`。
+
+V1/v0.2 安全规则：`maintain` 不修改 topic、parsed、sorted、wiki/pages、views、artifacts/agent 等正文或派生产物，也不在 CLI 内隐藏调用 LLM；不会为了维护上下文重新读取 raw source，也不会隐式执行 `sync`、`wikiize`、`views` 或 `agent export`。断链修复、孤立对象挂接、digest 刷新、community synthesis、validation repair、view regeneration 和 agent export refresh 都只进入 plan 和 agent task queue，由后续 agent 或显式命令推进。
 
 ## 3.10 Agent Task Reader
 

@@ -408,6 +408,10 @@ wikify tasks --id agent-task-1 --mark-done
 
 `graph-agent-tasks.json` is the handoff artifact for later agents. Each queued task carries the source finding, action, target, evidence, write scope, agent instructions, acceptance checks, and `requires_user: false`.
 
+For v0.2 personal wiki workspaces, `wikify maintain` also reads the object model, generated page objects, wikiization task queue, validation reports, human view manifests, and agent export artifacts. The task queue stays schema-compatible with `wikify.graph-agent-tasks.v1`; object-aware fields are optional additive metadata such as `object_id`, `object_type`, `body_path`, `object_path`, `view_path`, `agent_artifact_path`, `source_refs`, `review_status`, and `regeneration_command`.
+
+Artifact-health findings use explicit actions instead of silent mutation: validation issues queue object validation repair, generated page drift queues generated page repair, stale or drifted human views queue `wikify views`, and missing agent exports queue `wikify agent export`. Generated page repair proposals and bundles carry preservation context, and preflight/apply reject unsafe changes to `source_refs` or `review_status` with `generated_page_preservation_failed`.
+
 `wikify tasks` is the read API for that handoff artifact. By default it only reads `sorted/graph-agent-tasks.json`; `--refresh` explicitly runs `wikify maintain` first. If the artifact is missing, the command returns `agent_task_queue_missing`.
 
 `wikify propose` turns one queued graph agent task into `sorted/graph-patch-proposals/<task-id>.json`. It validates every proposed path against the task `write_scope`. `--dry-run` returns the proposal JSON without writing the artifact.
@@ -436,7 +440,7 @@ For one-command automation, `wikify run-task --id <task-id> --agent-command "<co
 
 Explicit lifecycle actions on `wikify tasks` persist task status changes and append `sorted/graph-agent-task-events.json`. Supported actions include `--mark-proposed`, `--start`, `--mark-done`, `--mark-failed`, `--block`, `--cancel`, `--retry`, and `--restore`. `--retry` and `--restore` clear stale `blocked_feedback` so a repaired task does not carry an obsolete verifier verdict. Invalid transitions return `invalid_agent_task_transition`.
 
-Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, `wikify produce-bundle`, and `wikify verify-bundle` do not edit content pages or call hidden LLMs. `maintain-loop`, `maintain-run`, `run-task`, `run-tasks`, `produce-bundle`, and `verify-bundle` only invoke an external command when the caller supplies an explicit command/profile flag. Every bundle output is still preflighted, and verifier rejection blocks apply; in task automation it also blocks the task with durable feedback. A configured default profile does nothing by itself; the command still needs the explicit profile flag. `wikify apply` remains the deterministic content mutation path.
+Safety rule: `wikify maintain`, `wikify tasks`, `wikify propose`, `wikify bundle-request`, `wikify produce-bundle`, and `wikify verify-bundle` do not edit content pages or call hidden LLMs. They also do not reread raw sources for maintenance context or implicitly run `sync`, `wikiize`, `views`, or `agent export`; those refresh steps stay explicit. `maintain-loop`, `maintain-run`, `run-task`, `run-tasks`, `produce-bundle`, and `verify-bundle` only invoke an external command when the caller supplies an explicit command/profile flag. Every bundle output is still preflighted, generated page `source_refs` and `review_status` are preserved deterministically, and verifier rejection blocks apply; in task automation it also blocks the task with durable feedback. A configured default profile does nothing by itself; the command still needs the explicit profile flag. `wikify apply` remains the deterministic content mutation path.
 
 ## Documentation map
 

@@ -1629,6 +1629,7 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertFalse((kb / 'sorted' / 'graph-findings.json').exists())
                 self.assertFalse((kb / 'sorted' / 'graph-maintenance-plan.json').exists())
                 self.assertFalse((kb / 'sorted' / 'graph-maintenance-history.json').exists())
+                self.assertFalse((kb / 'sorted' / 'graph-agent-tasks.json').exists())
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
