@@ -70,6 +70,14 @@ from wikify.maintenance.task_reader import (
 )
 from wikify.maintenance.runner import run_maintenance
 from wikify.maintenance.task_runner import TaskRunError, run_agent_task
+from wikify.workspace import (
+    SOURCE_TYPES,
+    WorkspaceError,
+    add_source,
+    initialize_workspace,
+    list_sources,
+    show_source,
+)
 
 
 def _sync_legacy_env():
@@ -109,6 +117,97 @@ def cmd_graph(args):
         'user_message': 'graph completed',
     }
     return envelope_ok('graph', result)
+
+
+def _workspace_error(command: str, exc: WorkspaceError):
+    return envelope_error(
+        command,
+        exc.code,
+        str(exc),
+        2,
+        retryable=False,
+        details=exc.details,
+    )
+
+
+def _attach_workspace_completion(result: dict, summary: str, next_actions: list[str] | None = None):
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    result['completion'] = {
+        'status': 'completed',
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': next_actions or [],
+        'user_message': summary,
+    }
+
+
+def cmd_init(args):
+    try:
+        result = initialize_workspace(args.base or discover_base())
+    except WorkspaceError as exc:
+        return _workspace_error('init', exc)
+    except Exception as exc:
+        return envelope_error(
+            'init',
+            'workspace_init_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    _attach_workspace_completion(result, 'workspace initialized')
+    return envelope_ok('init', result)
+
+
+def cmd_source_add(args):
+    try:
+        result = add_source(discover_base(), args.locator, args.type)
+    except WorkspaceError as exc:
+        return _workspace_error('source.add', exc)
+    except Exception as exc:
+        return envelope_error(
+            'source.add',
+            'source_add_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    _attach_workspace_completion(result, f"source {result['status']}")
+    return envelope_ok('source.add', result)
+
+
+def cmd_source_list(args):
+    del args
+    try:
+        result = list_sources(discover_base())
+    except WorkspaceError as exc:
+        return _workspace_error('source.list', exc)
+    except Exception as exc:
+        return envelope_error(
+            'source.list',
+            'source_list_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    _attach_workspace_completion(result, 'sources listed')
+    return envelope_ok('source.list', result)
+
+
+def cmd_source_show(args):
+    try:
+        result = show_source(discover_base(), args.target)
+    except WorkspaceError as exc:
+        return _workspace_error('source.show', exc)
+    except Exception as exc:
+        return envelope_error(
+            'source.show',
+            'source_show_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+    _attach_workspace_completion(result, 'source shown')
+    return envelope_ok('source.show', result)
 
 
 def cmd_maintain(args):
@@ -986,6 +1085,32 @@ def build_parser() -> argparse.ArgumentParser:
     parser.description = 'Wikify agent-facing Markdown knowledge base CLI'
 
     sub = _subparsers_action(parser)
+    if 'init' in sub.choices:
+        p_init = sub.choices['init']
+        if not any(getattr(action, 'dest', None) == 'base' for action in p_init._actions):
+            p_init.add_argument('base', nargs='?', help='Workspace base directory')
+        p_init.set_defaults(func=cmd_init)
+    else:
+        p_init = sub.add_parser('init', help='Initialize a Wikify workspace')
+        p_init.add_argument('base', nargs='?', help='Workspace base directory')
+        p_init.set_defaults(func=cmd_init)
+
+    if 'source' not in sub.choices:
+        p_source = sub.add_parser('source', help='Manage workspace source registry entries')
+        source_sub = p_source.add_subparsers(dest='source_action', required=True)
+
+        p_source_add = source_sub.add_parser('add', help='Register a source without fetching or synchronizing it')
+        p_source_add.add_argument('locator')
+        p_source_add.add_argument('--type', required=True, choices=sorted(SOURCE_TYPES))
+        p_source_add.set_defaults(func=cmd_source_add)
+
+        p_source_list = source_sub.add_parser('list', help='List registered sources')
+        p_source_list.set_defaults(func=cmd_source_list)
+
+        p_source_show = source_sub.add_parser('show', help='Show one registered source by id or locator')
+        p_source_show.add_argument('target')
+        p_source_show.set_defaults(func=cmd_source_show)
+
     if 'graph' not in sub.choices:
         p_graph = sub.add_parser('graph', help='Build graph artifacts from compiled Markdown wiki files')
         p_graph.add_argument('--scope', choices=['all', 'topics', 'timelines', 'briefs', 'parsed', 'sorted', 'sources'], default='all')

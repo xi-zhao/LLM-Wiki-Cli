@@ -15,10 +15,22 @@ def discover_app_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def discover_workspace_base(start: Path | str | None = None) -> Path | None:
+    current = Path(start or os.getcwd()).expanduser().resolve()
+    candidates = [current, *current.parents]
+    for candidate in candidates:
+        if (candidate / 'wikify.json').is_file():
+            return candidate
+    return None
+
+
 def discover_base() -> Path:
     env_base = os.environ.get('WIKIFY_BASE') or os.environ.get('FOKB_BASE')
     if env_base:
         return Path(env_base).expanduser().resolve()
+    workspace_base = discover_workspace_base()
+    if workspace_base:
+        return workspace_base
     return discover_app_root()
 
 

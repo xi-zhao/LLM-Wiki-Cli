@@ -609,7 +609,7 @@ class WikifyCliTests(unittest.TestCase):
                 payload = json.loads(stdout.getvalue())
                 self.assertFalse(payload['ok'])
                 self.assertEqual(payload['command'], 'source.add')
-                self.assertEqual(payload['error']['code'], 'workspace_manifest_missing')
+                self.assertEqual(payload['error']['code'], 'workspace_missing')
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
@@ -646,7 +646,7 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(add_payload['command'], 'source.add')
                 self.assertEqual(add_payload['result']['status'], 'added')
                 self.assertEqual(add_payload['result']['source']['last_sync_status'], 'never_synced')
-                source_id = add_payload['result']['source']['id']
+                source_id = add_payload['result']['source']['source_id']
 
                 stdout = io.StringIO()
                 with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
@@ -654,7 +654,7 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(raised.exception.code, 0)
                 duplicate_payload = json.loads(stdout.getvalue())
                 self.assertEqual(duplicate_payload['result']['status'], 'existing')
-                self.assertEqual(duplicate_payload['result']['source']['id'], source_id)
+                self.assertEqual(duplicate_payload['result']['source']['source_id'], source_id)
 
                 stdout = io.StringIO()
                 with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
@@ -663,7 +663,7 @@ class WikifyCliTests(unittest.TestCase):
                 list_payload = json.loads(stdout.getvalue())
                 self.assertEqual(list_payload['command'], 'source.list')
                 self.assertEqual(list_payload['result']['summary']['source_count'], 1)
-                self.assertEqual(list_payload['result']['sources'][0]['id'], source_id)
+                self.assertEqual(list_payload['result']['sources'][0]['source_id'], source_id)
 
                 stdout = io.StringIO()
                 with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
@@ -671,7 +671,7 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(raised.exception.code, 0)
                 show_payload = json.loads(stdout.getvalue())
                 self.assertEqual(show_payload['command'], 'source.show')
-                self.assertEqual(show_payload['result']['source']['id'], source_id)
+                self.assertEqual(show_payload['result']['source']['source_id'], source_id)
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
