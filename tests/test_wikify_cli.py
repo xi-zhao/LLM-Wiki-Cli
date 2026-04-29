@@ -664,6 +664,38 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.max_page_chars, 3000)
         self.assertEqual(profile_args.command, 'agent-profile')
 
+    def test_build_parser_accepts_agent_context_cite_and_related_commands(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        context_args = parser.parse_args([
+            'agent',
+            'context',
+            'agent context',
+            '--dry-run',
+            '--max-chars',
+            '800',
+            '--max-pages',
+            '2',
+            '--include-full-pages',
+        ])
+        cite_args = parser.parse_args(['agent', 'cite', 'Source Title', '--limit', '5'])
+        related_args = parser.parse_args(['agent', 'related', 'agent context', '--limit', '5'])
+
+        self.assertEqual(context_args.command, 'agent')
+        self.assertEqual(context_args.agent_action, 'context')
+        self.assertEqual(context_args.query, 'agent context')
+        self.assertTrue(context_args.dry_run)
+        self.assertEqual(context_args.max_chars, 800)
+        self.assertEqual(context_args.max_pages, 2)
+        self.assertTrue(context_args.include_full_pages)
+        self.assertEqual(cite_args.agent_action, 'cite')
+        self.assertEqual(cite_args.query, 'Source Title')
+        self.assertEqual(cite_args.limit, 5)
+        self.assertEqual(related_args.agent_action, 'related')
+        self.assertEqual(related_args.target, 'agent context')
+        self.assertEqual(related_args.limit, 5)
+
     def test_init_command_creates_workspace_without_hidden_pipeline_outputs(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -1193,6 +1225,145 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(payload['command'], 'agent.export')
                 self.assertIn(payload['error']['code'], {'agent_validation_failed', 'agent_object_invalid'})
                 self.assertFalse((base / 'llms.txt').exists())
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_context_command_writes_context_pack(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.agent import context_pack_dir
+        from wikify.sync import sync_workspace
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import run_wikiization
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Source Title\n\nAgent Context source for query packs.\n', encoding='utf-8')
+                add_source(base, str(note), 'file')
+                sync_workspace(base)
+                run_wikiization(base)
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+                stdout = io.StringIO()
+
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'context', 'agent context', '--dry-run', '--max-chars', '800'])
+
+                self.assertEqual(raised.exception.code, 0)
+                dry_payload = json.loads(stdout.getvalue())
+                self.assertTrue(dry_payload['ok'])
+                self.assertEqual(dry_payload['command'], 'agent.context')
+                self.assertFalse(context_pack_dir(base).exists())
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'context', 'agent context', '--max-chars', '800'])
+
+                self.assertEqual(raised.exception.code, 0)
+                payload = json.loads(stdout.getvalue())
+                self.assertTrue(payload['ok'])
+                self.assertEqual(payload['command'], 'agent.context')
+                self.assertTrue(context_pack_dir(base).is_dir())
+                artifacts = payload['result']['completion']['artifacts']
+                self.assertTrue(any(path.startswith('artifacts/agent/context-packs/') for path in artifacts))
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
+    def test_agent_cite_and_related_commands_return_json(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.objects import (
+            make_citation_object,
+            make_object_index,
+            make_topic_object,
+            object_document_path,
+            object_index_path,
+        )
+        from wikify.sync import sync_workspace
+        from wikify.workspace import add_source, initialize_workspace
+        from wikify.wikiize import run_wikiization
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir) / 'personal-wiki'
+                initialize_workspace(base)
+                note = base / 'sources' / 'note.md'
+                note.write_text('# Source Title\n\nAgent Context source for query packs.\n', encoding='utf-8')
+                source = add_source(base, str(note), 'file')['source']
+                sync_result = sync_workspace(base)
+                item = sync_result['items'][0]
+                run_wikiization(base)
+                page_path = next((base / 'artifacts' / 'objects' / 'wiki_pages').glob('*.json'))
+                page = json.loads(page_path.read_text(encoding='utf-8'))
+                page['outbound_links'] = ['topic_agent_context']
+                page_path.write_text(json.dumps(page, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+                source_refs = [{
+                    'source_id': source['source_id'],
+                    'item_id': item['item_id'],
+                    'locator': item.get('locator'),
+                    'relative_path': item.get('relative_path'),
+                    'confidence': 0.9,
+                }]
+                topic = make_topic_object(
+                    object_id='topic_agent_context',
+                    title='Agent Context',
+                    summary='Durable context for agents.',
+                    page_ids=[page['id']],
+                    source_refs=source_refs,
+                )
+                citation = make_citation_object(
+                    object_id='citation_source_title',
+                    source_id=source['source_id'],
+                    item_id=item['item_id'],
+                    locator='sources/note.md#L1',
+                    confidence=0.9,
+                    snippet='Source Title',
+                )
+                self._write_json(object_document_path(base, 'topic', topic['id']), topic)
+                self._write_json(object_document_path(base, 'citation', citation['id']), citation)
+                self._write_json(object_index_path(base), make_object_index(base, [page, topic, citation]))
+                os.environ['WIKIFY_BASE'] = str(base)
+                os.environ.pop('FOKB_BASE', None)
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'cite', 'Source Title'])
+
+                self.assertEqual(raised.exception.code, 0)
+                cite_payload = json.loads(stdout.getvalue())
+                self.assertTrue(cite_payload['ok'])
+                self.assertEqual(cite_payload['command'], 'agent.cite')
+                self.assertGreater(len(cite_payload['result']['evidence']), 0)
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main(['--output', 'json', 'agent', 'related', 'agent context'])
+
+                self.assertEqual(raised.exception.code, 0)
+                related_payload = json.loads(stdout.getvalue())
+                self.assertTrue(related_payload['ok'])
+                self.assertEqual(related_payload['command'], 'agent.related')
+                self.assertGreater(len(related_payload['result']['related']), 0)
+                self.assertIn('signals', related_payload['result']['related'][0])
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
