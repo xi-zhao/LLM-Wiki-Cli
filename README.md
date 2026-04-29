@@ -30,6 +30,7 @@ In short:
 - Register source files, directories, URLs, repositories, and notes without hidden fetch/sync work
 - Sync registered sources into deterministic source item and ingest queue artifacts
 - Wikiize queued source items into source-backed Markdown pages and wiki page objects
+- Render human-facing wiki views and local static HTML from object/source artifacts
 - Ingest URLs into a local wiki
 - Maintain parsed articles, briefs, topics, timelines, and digests
 - Return stable JSON envelopes for automation
@@ -52,6 +53,8 @@ wikify sync
 wikify wikiize --dry-run
 wikify wikiize
 wikify validate
+wikify views --dry-run
+wikify views
 wikify check
 wikify stats
 wikify ingest "https://example.com"
@@ -159,6 +162,8 @@ wikify sync
 wikify wikiize --dry-run
 wikify wikiize
 wikify validate --strict --write-report
+wikify views --dry-run
+wikify views
 ```
 
 Generated human-readable pages live under:
@@ -196,11 +201,63 @@ Incremental updates are hash guarded. Wikify stores generation metadata on gener
 
 Remote URLs and remote repositories are not fetched by default. Without explicit enrichment they create wikiization tasks, not weak pages. Semantic enrichment requires an explicit `--agent-command` or `--agent-profile`; Wikify writes a `wikify.wikiization-request.v1` artifact, sends it on stdin, accepts a `wikify.wikiization-result.v1` result, then performs final path checks, rendering, object writes, and strict validation itself. There are no hidden provider calls.
 
-Phase 25 only creates source-backed pages. Human home/source/topic/static views belong to Phase 26; `llms.txt`, context packs, and agent query exports belong to Phase 27.
+`wikify wikiize` only creates source-backed pages and objects. Run `wikify views` to render those objects into human-facing navigation pages and static HTML. `llms.txt`, context packs, and agent query exports remain separate later surfaces.
+
+## Human wiki views and static output
+
+`wikify views` renders the knowledge base artifact for people. It reads existing object/source/control artifacts and writes Markdown views under `views/` plus optional local static HTML under `views/site/`.
+
+Primary flow:
+
+```bash
+wikify sync
+wikify wikiize
+wikify validate --strict --write-report
+wikify views --dry-run
+wikify views
+```
+
+Generated Markdown views include:
+- `views/index.md`
+- `views/pages.md`
+- `views/sources/index.md`
+- `views/sources/<source-id>.md`
+- `views/topics/index.md`
+- `views/projects/index.md`
+- `views/people/index.md`
+- `views/decisions/index.md`
+- `views/timeline.md`
+- `views/graph.md`
+- `views/review.md`
+
+Static HTML is stdlib-only and local-file friendly:
+- `views/site/index.html`
+- `views/site/pages.html`
+- `views/site/sources/index.html`
+- `views/site/assets/style.css`
+
+Control artifacts:
+- `.wikify/views/last-views.json`
+- `.wikify/views/view-manifest.json`
+- `.wikify/queues/view-tasks.json`
+
+Useful options:
+
+```bash
+wikify views --dry-run
+wikify views --no-html
+wikify views --section sources
+```
+
+`--dry-run` reports planned Markdown and HTML paths, counts, warnings, conflicts, and next actions without writing files. Non-dry-run validates object artifacts before rendering; hard validation errors return exit code `2` with `views_validation_failed`.
+
+Generated Markdown views are hash guarded through `.wikify/views/view-manifest.json`. If a generated view was edited by a person or agent, Wikify preserves the edit, skips that path, returns `completed_with_conflicts`, and writes a non-interrupting task to `.wikify/queues/view-tasks.json`.
+
+`wikify views` does not run `sync`, `wikiize`, `graph`, providers, external agents, repository commands, network fetchers, or background watchers. Missing optional graph, topic, project, person, decision, citation, timeline, and task artifacts produce honest empty-state views or warnings instead of invented content.
 
 ## Wiki object model and validation
 
-Phase 24 defines the v0.2 wiki object contract and validation surface. Phase 25 consumes `.wikify/queues/ingest-items.json` through `wikify wikiize` to generate source-backed wiki pages. Human views, agent exports, provider-backed runtime integration, and broad maintenance repair flows remain separate later phases.
+Phase 24 defines the v0.2 wiki object contract and validation surface. Phase 25 consumes `.wikify/queues/ingest-items.json` through `wikify wikiize` to generate source-backed wiki pages. Phase 26 renders human views from those objects. Agent exports, provider-backed runtime integration, and broad maintenance repair flows remain separate later phases.
 
 Visible object artifacts live under `artifacts/objects/`:
 - `artifacts/objects/object-index.json` uses `wikify.object-index.v1`

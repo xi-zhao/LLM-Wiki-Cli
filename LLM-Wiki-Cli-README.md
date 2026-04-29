@@ -83,6 +83,7 @@ Wikify 的产品目标可以概括成五句话：
 - `source show`
 - `sync`
 - `wikiize`
+- `views`
 - `check`
 - `status`
 - `stats`
@@ -131,6 +132,8 @@ wikify sync
 wikify sync --source src_<id>
 wikify wikiize --dry-run
 wikify wikiize
+wikify views --dry-run
+wikify views
 ```
 
 base 解析优先级：
@@ -200,11 +203,56 @@ wikify wikiize --agent-profile
 
 远程 URL 和远程 repository 默认不抓取、不 clone，不会伪造页面；没有显式 agent enrichment 时会生成 wikiization task。语义增强必须显式传 `--agent-command` 或 `--agent-profile`。Wikify 写出 `wikify.wikiization-request.v1`，通过 stdin 交给外部 agent，接收 `wikify.wikiization-result.v1`，然后由 Wikify 自己完成路径校验、front matter 渲染、对象写入和 strict validation。不存在隐藏 provider 调用。
 
-Phase 25 只负责 source-backed page pipeline；首页、source 页、topic/project/person/decision 浏览页和静态站点属于 Phase 26；`llms.txt`、context pack 和 agent query export 属于 Phase 27。
+`wikify wikiize` 只负责生成 source-backed 页面和对象；要把这些对象渲染成人可浏览的知识库成果，需要显式运行 `wikify views`。`llms.txt`、context pack 和 agent query export 仍属于后续独立能力。
+
+### Human wiki views 与本地静态站点
+
+`wikify views` 是 `source add -> sync -> wikiize -> views` 闭环里的展示步骤。它不重新读取原始 source、不隐藏调用 provider，也不生成另一套 human-only store；它读取已有对象、source registry、source item index、queue、validation report 和可选 graph artifacts，然后生成给人浏览的 Markdown views 与本地静态 HTML。
+
+常用命令：
+
+```bash
+wikify views --dry-run
+wikify views
+wikify views --no-html
+wikify views --section sources
+```
+
+主要 Markdown 产物：
+
+- `views/index.md`：知识库首页、最近更新、入口导航和告警摘要
+- `views/pages.md`：source-backed wiki page 目录
+- `views/sources/index.md` 与 `views/sources/<source-id>.md`：source 目录和单 source 详情
+- `views/topics/index.md`
+- `views/projects/index.md`
+- `views/people/index.md`
+- `views/decisions/index.md`
+- `views/timeline.md`
+- `views/graph.md`
+- `views/review.md`
+
+本地静态站点产物：
+
+- `views/site/index.html`
+- `views/site/pages.html`
+- `views/site/sources/index.html`
+- `views/site/assets/style.css`
+
+控制面产物：
+
+- `.wikify/views/last-views.json`
+- `.wikify/views/view-manifest.json`
+- `.wikify/queues/view-tasks.json`
+
+`--dry-run` 只报告计划写入的 Markdown/HTML path、计数、warnings、conflicts 和 next actions，不写任何文件。非 dry-run 会在渲染前执行 strict object validation；硬错误返回 exit code `2`，错误码为 `views_validation_failed`。
+
+生成的 Markdown view 有 hash guard：如果用户或 agent 改过 `views/*.md`，下一次 `wikify views` 不会静默覆盖，而是保留现有文件，返回 `completed_with_conflicts`，并把修复任务写入 `.wikify/queues/view-tasks.json`。这些任务默认 `requires_user: false`，适合交给后续 agent 处理。
+
+边界规则：`wikify views` 不运行 `sync`、`wikiize`、`graph`、外部 agent、provider、网络抓取、repository 命令或后台 watcher。缺少 graph、topic、project、person、decision、citation、timeline 或 task artifact 时，只生成明确 empty state 或 warning，不伪造内容。
 
 ## 3.2 Wiki object model 与验证
 
-Phase 24 定义 v0.2 对象模型和验证面；Phase 25 通过 `wikify wikiize` 消费 `.wikify/queues/ingest-items.json` 并生成 source-backed wiki 页面。human views、agent exports、provider runtime 和更广泛 maintenance repair flow 仍属于后续阶段。
+Phase 24 定义 v0.2 对象模型和验证面；Phase 25 通过 `wikify wikiize` 消费 `.wikify/queues/ingest-items.json` 并生成 source-backed wiki 页面；Phase 26 通过 `wikify views` 从这些对象渲染 human views。agent exports、provider runtime 和更广泛 maintenance repair flow 仍属于后续阶段。
 
 对象产物是知识库成果的一部分，放在可见目录 `artifacts/objects/`，而不是只藏在 `.wikify/` 控制面里：
 

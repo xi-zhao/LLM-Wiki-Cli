@@ -130,6 +130,17 @@
 - `wikiize_agent_result_schema_invalid`
 - `wikiize_agent_result_queue_mismatch`
 - `wikiization_task_queue_invalid`
+- `views_object_index_invalid`
+- `views_object_invalid`
+- `views_source_items_invalid`
+- `views_ingest_queue_invalid`
+- `views_wikiization_tasks_invalid`
+- `views_validation_report_invalid`
+- `views_manifest_invalid`
+- `view_task_queue_invalid`
+- `views_section_invalid`
+- `views_validation_failed`
+- `views_failed`
 - `object_required_field_missing`
 - `object_duplicate_id`
 - `object_link_unresolved`
@@ -172,6 +183,12 @@
 - `wikiize --limit <n>`
 - `wikiize --agent-command <command>`
 - `wikiize --agent-profile <name>`
+
+### Human view 层
+- `views`
+- `views --dry-run`
+- `views --no-html`
+- `views --section all|home|sources|pages|collections|timeline|graph|review`
 
 ### 运行 / 状态层
 - `status`
@@ -453,13 +470,114 @@ Boundary rules:
 - no hidden URL fetch
 - no hidden repository clone
 - no provider SDK calls
-- no human home/source/topic/static views
+- no direct human view writes; use explicit `wikify views`
 - no `llms.txt`, context packs, or agent query exports
 - no graph maintenance repair flow
 
-## 7. Wiki object model and validation schema v1
+## 7. Human wiki views schema v1
 
-Phase 24 定义对象模型、Markdown front matter metadata bridge、JSON artifact contract 和验证协议。Phase 25 通过 `wikify wikiize` 消费 ingest queue 并生成 source-backed wiki 页面；human views、agent exports、provider runtime 和更广泛 maintenance repair flow 属于后续阶段。
+`wikify views` 是 human-facing artifact renderer。它读取 workspace manifest、source registry、`artifacts/objects/object-index.json`、对象 JSON、`.wikify/sync/source-items.json`、`.wikify/queues/ingest-items.json`、`.wikify/queues/wikiization-tasks.json`、`artifacts/objects/validation.json` 和可选 `graph/` 产物，生成 `views/` Markdown 与 `views/site/` 本地 HTML。
+
+命令：
+
+```bash
+wikify views
+wikify views --dry-run
+wikify views --no-html
+wikify views --section sources
+```
+
+Run report schema 固定为 `wikify.views-run.v1`。成功 envelope 的 `command` 固定为 `views`：
+
+```json
+{
+  "ok": true,
+  "command": "views",
+  "exit_code": 0,
+  "result": {
+    "schema_version": "wikify.views-run.v1",
+    "status": "completed",
+    "dry_run": false,
+    "summary": {
+      "planned_view_count": 11,
+      "planned_html_count": 11,
+      "generated_view_count": 11,
+      "generated_html_count": 12,
+      "source_count": 1,
+      "object_counts_by_type": {"wiki_page": 1},
+      "warning_count": 1,
+      "conflict_count": 0
+    },
+    "artifacts": {
+      "views": "views",
+      "site": "views/site",
+      "site_css": "views/site/assets/style.css",
+      "views_report": ".wikify/views/last-views.json",
+      "views_manifest": ".wikify/views/view-manifest.json",
+      "view_tasks": ".wikify/queues/view-tasks.json"
+    }
+  }
+}
+```
+
+Markdown view artifacts:
+
+- `views/index.md`
+- `views/pages.md`
+- `views/sources/index.md`
+- `views/sources/<source-id>.md`
+- `views/topics/index.md`
+- `views/projects/index.md`
+- `views/people/index.md`
+- `views/decisions/index.md`
+- `views/timeline.md`
+- `views/graph.md`
+- `views/review.md`
+
+Static HTML artifacts:
+
+- `views/site/index.html`
+- `views/site/pages.html`
+- `views/site/sources/index.html`
+- `views/site/assets/style.css`
+
+`--dry-run` reports planned Markdown/HTML paths, object counts, source count, warnings, conflicts, and next actions. It writes nothing under `views/`, `.wikify/views/`, or `.wikify/queues/view-tasks.json`.
+
+Non-dry-run validates object artifacts before rendering. Hard object validation failures return exit code `2` with `views_validation_failed`. Missing optional graph, timeline, citation, collection, validation, and task artifacts produce warnings or deterministic empty states.
+
+Manifest schema is `wikify.views-manifest.v1`. It stores generated hashes by relative path:
+
+```json
+{
+  "schema_version": "wikify.views-manifest.v1",
+  "generated_at": "2026-04-29T00:00:00Z",
+  "files": {
+    "views/index.md": {
+      "sha256": "...",
+      "kind": "markdown",
+      "generated_at": "2026-04-29T00:00:00Z"
+    }
+  }
+}
+```
+
+View task queue schema is `wikify.view-tasks.v1`. It is written when a generated Markdown view drifted from the manifest hash. Tasks include `id`, `schema_version`, `created_at`, `updated_at`, `target_paths`, `reason_code`, `message`, `evidence`, `agent_instructions`, `acceptance_checks`, `requires_user: false`, and `status: queued`. Current reason code is `generated_view_drifted`.
+
+Boundary rules:
+
+- no implicit `sync`
+- no implicit `wikiize`
+- no implicit `graph`
+- no provider SDK calls
+- no external agent execution
+- no network fetch
+- no repository command
+- no hidden watcher
+- no separate human-only knowledge store
+
+## 8. Wiki object model and validation schema v1
+
+Phase 24 定义对象模型、Markdown front matter metadata bridge、JSON artifact contract 和验证协议。Phase 25 通过 `wikify wikiize` 消费 ingest queue 并生成 source-backed wiki 页面；Phase 26 通过 `wikify views` 从对象和控制产物渲染 human views。agent exports、provider runtime 和更广泛 maintenance repair flow 属于后续阶段。
 
 对象产物根目录固定为 `artifacts/objects/`：
 
