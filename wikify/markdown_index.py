@@ -12,6 +12,7 @@ SCOPE_DIRS = {
     'parsed': ('articles', 'parsed'),
     'sorted': ('sorted',),
     'sources': ('sources',),
+    'wiki_pages': ('wiki', 'pages'),
 }
 
 

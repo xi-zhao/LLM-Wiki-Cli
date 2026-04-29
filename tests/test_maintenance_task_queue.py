@@ -108,6 +108,47 @@ class MaintenanceTaskQueueTests(unittest.TestCase):
         self.assertEqual(queue['tasks'][0]['priority'], 'normal')
         self.assertEqual(queue['tasks'][0]['relevance']['max_confidence'], 'low')
 
+    def test_build_task_queue_copies_generated_page_metadata(self):
+        from wikify.maintenance.executor import apply_plan
+        from wikify.maintenance.planner import build_plan
+        from wikify.maintenance.task_queue import build_task_queue
+
+        findings = [
+            {
+                'id': 'broken-link:wiki/pages/page_alpha.md:5:Missing',
+                'type': 'broken_link',
+                'severity': 'warning',
+                'title': 'Broken link',
+                'subject': 'wiki/pages/page_alpha.md',
+                'evidence': {'source': 'wiki/pages/page_alpha.md', 'line': 5, 'target': 'Missing'},
+                'recommended_action': 'queue_link_repair',
+                'can_auto_apply': False,
+                'policy_minimum': 'conservative',
+                'target_kind': 'wiki_page',
+                'target_family': 'personal_wiki_page',
+                'object_id': 'page_alpha',
+                'object_type': 'wiki_page',
+                'body_path': 'wiki/pages/page_alpha.md',
+                'object_path': 'artifacts/objects/wiki_pages/page_alpha.json',
+                'source_refs': [{'source_id': 'src_notes', 'item_id': 'item_alpha', 'confidence': 0.9}],
+                'review_status': 'generated',
+                'write_scope': ['wiki/pages/page_alpha.md'],
+            }
+        ]
+        plan = build_plan(findings, policy='balanced')
+        execution = apply_plan(plan, dry_run=False)
+
+        queue = build_task_queue(plan, execution, findings)
+
+        task = queue['tasks'][0]
+        self.assertEqual(task['target'], 'wiki/pages/page_alpha.md')
+        self.assertEqual(task['object_id'], 'page_alpha')
+        self.assertEqual(task['object_type'], 'wiki_page')
+        self.assertEqual(task['body_path'], 'wiki/pages/page_alpha.md')
+        self.assertEqual(task['source_refs'][0]['source_id'], 'src_notes')
+        self.assertEqual(task['review_status'], 'generated')
+        self.assertEqual(task['write_scope'], ['wiki/pages/page_alpha.md'])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -53,6 +53,7 @@ LEGACY_SCOPE_OBJECT_TYPES = {
     'briefs': 'wiki_page',
     'parsed': 'wiki_page',
     'sorted': 'wiki_page',
+    'wiki_pages': 'wiki_page',
     'sources': 'source',
 }
 

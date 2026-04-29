@@ -4,6 +4,21 @@ from datetime import datetime, timezone
 SCHEMA_VERSION = 'wikify.graph-agent-tasks.v1'
 
 
+TARGET_METADATA_KEYS = (
+    'target_kind',
+    'target_family',
+    'object_id',
+    'object_type',
+    'body_path',
+    'object_path',
+    'view_path',
+    'agent_artifact_path',
+    'source_refs',
+    'review_status',
+    'regeneration_command',
+)
+
+
 INSTRUCTIONS = {
     'queue_link_repair': [
         'Inspect the source file and the unresolved link evidence.',
@@ -75,6 +90,21 @@ def _finding_by_id(findings: list[dict]) -> dict[str, dict]:
     }
 
 
+def _target_metadata(finding: dict) -> dict:
+    return {
+        key: finding[key]
+        for key in TARGET_METADATA_KEYS
+        if key in finding and finding[key] is not None
+    }
+
+
+def _write_scope(finding: dict, target: str | None) -> list:
+    write_scope = finding.get('write_scope')
+    if isinstance(write_scope, list) and write_scope:
+        return list(write_scope)
+    return [target] if target else []
+
+
 def build_task_queue(plan: dict, execution: dict, findings: list[dict]) -> dict:
     steps = _step_by_id(plan)
     finding_lookup = _finding_by_id(findings)
@@ -88,7 +118,7 @@ def build_task_queue(plan: dict, execution: dict, findings: list[dict]) -> dict:
         finding = finding_lookup.get(finding_id, {})
         action = result.get('action') or step.get('action')
         target = finding.get('subject') or step.get('subject')
-        write_scope = [target] if target else []
+        write_scope = _write_scope(finding, target)
         task_index = len(tasks) + 1
         task = {
             'id': f'agent-task-{task_index}',
@@ -104,6 +134,7 @@ def build_task_queue(plan: dict, execution: dict, findings: list[dict]) -> dict:
             'requires_user': False,
             'status': 'queued',
         }
+        task.update(_target_metadata(finding))
         if finding.get('relevance'):
             task['relevance'] = dict(finding['relevance'])
         tasks.append(task)

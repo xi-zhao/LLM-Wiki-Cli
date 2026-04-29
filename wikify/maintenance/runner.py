@@ -7,6 +7,7 @@ from wikify.maintenance.findings import build_findings, summarize_findings
 from wikify.maintenance.history import append_run, write_json
 from wikify.maintenance.planner import build_plan
 from wikify.maintenance.task_queue import build_task_queue
+from wikify.maintenance.targets import load_maintenance_targets
 
 
 FINDINGS_SCHEMA_VERSION = 'wikify.graph-findings.v1'
@@ -22,12 +23,22 @@ def _next_commands(dry_run: bool) -> list[str]:
     return ['wikify maintain --dry-run', 'wikify graph --no-html']
 
 
-def _build_findings_document(graph: dict, findings: list[dict], summary: dict) -> dict:
+def _target_summary(targets: dict) -> dict:
+    return {
+        'schema_version': targets.get('schema_version'),
+        'summary': dict(targets.get('summary') or {}),
+        'warning_count': len(targets.get('warnings') or []),
+        'warnings': list(targets.get('warnings') or []),
+    }
+
+
+def _build_findings_document(graph: dict, findings: list[dict], summary: dict, target_summary: dict | None = None) -> dict:
     return {
         'schema_version': FINDINGS_SCHEMA_VERSION,
         'generated_at': _utc_now(),
         'graph_schema_version': graph.get('schema_version'),
         'base': graph.get('base'),
+        'target_summary': target_summary,
         'summary': summary,
         'findings': findings,
     }
@@ -37,9 +48,11 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
     root = Path(base).expanduser().resolve()
     graph_result = build_graph_artifacts(root, include_html=False)
     graph = graph_result['graph']
-    findings = build_findings(graph)
+    targets = load_maintenance_targets(root)
+    targets_summary = _target_summary(targets)
+    findings = build_findings(graph, targets=targets)
     findings_summary = summarize_findings(findings)
-    findings_document = _build_findings_document(graph, findings, findings_summary)
+    findings_document = _build_findings_document(graph, findings, findings_summary, targets_summary)
     plan = build_plan(findings, policy=policy)
     execution = apply_plan(plan, dry_run=dry_run)
     task_execution = apply_plan(plan, dry_run=False) if dry_run else execution
@@ -93,6 +106,7 @@ def run_maintenance(base: Path | str, policy: str = 'balanced', dry_run: bool = 
         'dry_run': dry_run,
         'artifacts': artifacts,
         'graph': graph_result['summary'],
+        'targets': targets_summary,
         'findings': findings_document,
         'plan': plan,
         'execution': execution,

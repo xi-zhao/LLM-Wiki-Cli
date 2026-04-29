@@ -1,6 +1,22 @@
 from collections import Counter
 
 
+TARGET_METADATA_KEYS = (
+    'target_kind',
+    'target_family',
+    'object_id',
+    'object_type',
+    'body_path',
+    'object_path',
+    'view_path',
+    'agent_artifact_path',
+    'source_refs',
+    'review_status',
+    'write_scope',
+    'regeneration_command',
+)
+
+
 def _finding(
     finding_id: str,
     finding_type: str,
@@ -47,7 +63,25 @@ def _attach_relevance(finding: dict, analytics: dict) -> dict:
     return finding
 
 
-def build_findings(graph: dict) -> list[dict]:
+def _attach_target_metadata(finding: dict, targets: dict | None) -> dict:
+    if not targets:
+        return finding
+    from wikify.maintenance.targets import resolve_target
+
+    target = resolve_target(targets, finding.get('subject'))
+    metadata = {
+        key: target[key]
+        for key in TARGET_METADATA_KEYS
+        if key in target and target[key] is not None
+    }
+    if not metadata:
+        return finding
+    enriched = dict(finding)
+    enriched.update(metadata)
+    return enriched
+
+
+def build_findings(graph: dict, targets: dict | None = None) -> list[dict]:
     analytics = graph.get('analytics', {})
     findings = []
 
@@ -149,7 +183,7 @@ def build_findings(graph: dict) -> list[dict]:
             )
         )
 
-    return findings
+    return [_attach_target_metadata(finding, targets) for finding in findings]
 
 
 def summarize_findings(findings: list[dict]) -> dict:

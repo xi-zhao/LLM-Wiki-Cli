@@ -108,6 +108,53 @@ class MaintenanceFindingsTests(unittest.TestCase):
         self.assertEqual(summary['by_severity']['warning'], 1)
         self.assertEqual(summary['by_severity']['info'], 3)
 
+    def test_build_findings_enriches_generated_page_targets(self):
+        from wikify.maintenance.findings import build_findings
+
+        graph = {
+            'schema_version': 'wikify.graph.v1',
+            'analytics': {
+                'node_count': 1,
+                'edge_count': 1,
+                'broken_links': [
+                    {
+                        'source': 'wiki/pages/page_alpha.md',
+                        'target': 'Missing',
+                        'line': 5,
+                        'label': 'unresolved_wikilink',
+                    }
+                ],
+            },
+        }
+        targets = {
+            'schema_version': 'wikify.maintenance-targets.v1',
+            'by_object_id': {},
+            'by_path': {
+                'wiki/pages/page_alpha.md': {
+                    'target_kind': 'wiki_page',
+                    'target_family': 'personal_wiki_page',
+                    'object_id': 'page_alpha',
+                    'object_type': 'wiki_page',
+                    'body_path': 'wiki/pages/page_alpha.md',
+                    'object_path': 'artifacts/objects/wiki_pages/page_alpha.json',
+                    'source_refs': [{'source_id': 'src_notes', 'item_id': 'item_alpha', 'confidence': 0.9}],
+                    'review_status': 'generated',
+                    'write_scope': ['wiki/pages/page_alpha.md'],
+                }
+            },
+        }
+
+        findings = build_findings(graph, targets=targets)
+
+        finding = findings[0]
+        self.assertEqual(finding['target_family'], 'personal_wiki_page')
+        self.assertEqual(finding['object_id'], 'page_alpha')
+        self.assertEqual(finding['object_type'], 'wiki_page')
+        self.assertEqual(finding['body_path'], 'wiki/pages/page_alpha.md')
+        self.assertEqual(finding['source_refs'][0]['source_id'], 'src_notes')
+        self.assertEqual(finding['review_status'], 'generated')
+        self.assertEqual(finding['write_scope'], ['wiki/pages/page_alpha.md'])
+
 
 if __name__ == '__main__':
     unittest.main()
