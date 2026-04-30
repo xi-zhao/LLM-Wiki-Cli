@@ -45,6 +45,32 @@ class ObjectValidationTests(unittest.TestCase):
         self.assertEqual(result['summary']['warning_count'], 0)
         self.assertEqual(result['summary']['object_count'], 1)
 
+    def test_source_item_object_artifact_passes_strict_validation(self):
+        from wikify.object_validation import validate_workspace_objects
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_json(
+                root / 'artifacts' / 'objects' / 'source_items' / 'item_1.json',
+                {
+                    'schema_version': 'wikify.source-items.v1',
+                    'id': 'item_1',
+                    'type': 'source_item',
+                    'source_id': 'src_1',
+                    'relative_path': 'sources/raw/wechat_url/item_1/document.md',
+                    'source_item': {
+                        'item_id': 'item_1',
+                        'source_id': 'src_1',
+                        'relative_path': 'sources/raw/wechat_url/item_1/document.md',
+                    },
+                },
+            )
+
+            result = validate_workspace_objects(root, strict=True)
+
+        self.assertEqual(result['status'], 'passed')
+        self.assertEqual(result['summary']['error_count'], 0)
+
     def test_valid_markdown_object_front_matter_passes(self):
         from wikify.object_validation import validate_workspace_objects
 

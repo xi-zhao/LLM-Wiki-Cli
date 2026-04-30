@@ -1,3 +1,4 @@
+import json
 from dataclasses import replace
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from wikify.ingest.artifacts import (
 )
 from wikify.ingest.documents import FetchedPayload, IngestRequest, NormalizedDocument
 from wikify.ingest.errors import IngestError
+from wikify.sync import ingest_queue_path
 from wikify.views import run_view_generation
 from wikify.wikiize import run_wikiization
 from wikify.workspace import add_source, load_workspace
@@ -106,6 +108,57 @@ def run_ingest(
 
     upsert_source_item(root, workspace_id, item, now)
     queue_entry = upsert_ingest_queue_entry(root, workspace_id, item, now)
+    source_item_object_path = write_source_item_object(root, item)
+    item_record_path = _write_ingest_item_record(root, workspace_id, document, item, queue_entry, now)
+
+    human_path = {}
+    human_entry = {}
+    if refresh_views:
+        try:
+            wikiize_result = run_wikiization(root, item_id=document.item_id, limit=1)
+            queue_entry = _current_queue_entry(root, item['item_id']) or queue_entry
+            human_path['wikiize'] = {
+                'status': wikiize_result.get('status'),
+                'summary': wikiize_result.get('summary', {}),
+                'artifacts': wikiize_result.get('artifacts', {}),
+            }
+            for processed in wikiize_result.get('items', []):
+                paths = processed.get('paths') or {}
+                object_ids = processed.get('object_ids') or []
+                if paths.get('body_path'):
+                    human_entry = {
+                        'title': document.title,
+                        'body_path': paths.get('body_path'),
+                        'object_id': object_ids[0] if object_ids else None,
+                    }
+                    break
+            views_result = run_view_generation(root, dry_run=False, include_html=True, section='all')
+            human_path['views'] = {
+                'status': views_result.get('status'),
+                'summary': views_result.get('summary', {}),
+                'generated': views_result.get('generated', []),
+            }
+        except Exception as exc:
+            queue_entry = _current_queue_entry(root, item['item_id']) or queue_entry
+            _write_ingest_item_record(root, workspace_id, document, item, queue_entry, now)
+            _write_ingest_run_record(
+                root,
+                workspace_id,
+                run_id,
+                request,
+                document,
+                item,
+                queue_entry,
+                refresh_views,
+                now,
+                source_item_object_path=source_item_object_path,
+                status='failed',
+                human_path=human_path,
+                human_entry=human_entry,
+                error=_error_record(exc),
+            )
+            raise
+
     item_record_path = _write_ingest_item_record(root, workspace_id, document, item, queue_entry, now)
     run_record_path = _write_ingest_run_record(
         root,
@@ -117,35 +170,17 @@ def run_ingest(
         queue_entry,
         refresh_views,
         now,
+        source_item_object_path=source_item_object_path,
+        status='completed',
+        human_path=human_path,
+        human_entry=human_entry,
     )
-
-    human_path = {}
-    human_entry = {}
-    if refresh_views:
-        wikiize_result = run_wikiization(root, item_id=document.item_id, limit=1)
-        human_path['wikiize'] = {
-            'status': wikiize_result.get('status'),
-            'summary': wikiize_result.get('summary', {}),
-            'artifacts': wikiize_result.get('artifacts', {}),
-        }
-        for processed in wikiize_result.get('items', []):
-            paths = processed.get('paths') or {}
-            object_ids = processed.get('object_ids') or []
-            if paths.get('body_path'):
-                human_entry = {
-                    'title': document.title,
-                    'body_path': paths.get('body_path'),
-                    'object_id': object_ids[0] if object_ids else None,
-                }
-                break
-        views_result = run_view_generation(root, dry_run=False, include_html=True, section='all')
-        human_path['views'] = {
-            'status': views_result.get('status'),
-            'summary': views_result.get('summary', {}),
-            'generated': views_result.get('generated', []),
-        }
-
-    source_item_object_path = write_source_item_object(root, item)
+    next_actions = []
+    if not refresh_views:
+        next_actions = [
+            f'wikify wikiize --item {item["item_id"]}',
+            'wikify views',
+        ]
 
     return {
         'schema_version': INGEST_RUN_SCHEMA_VERSION,
@@ -171,10 +206,7 @@ def run_ingest(
         },
         'human_path': human_path,
         'human_entry': human_entry,
-        'next_actions': [
-            f'wikify wikiize --item {item["item_id"]}',
-            'wikify views',
-        ],
+        'next_actions': next_actions,
     }
 
 
@@ -207,6 +239,24 @@ def _source_type_for_locator(locator: str) -> str:
     if locator.startswith(('http://', 'https://')):
         return 'url'
     return 'file'
+
+
+def _current_queue_entry(root: Path, item_id: str) -> dict | None:
+    path = ingest_queue_path(root)
+    if not path.exists():
+        return None
+    document = json.loads(path.read_text(encoding='utf-8'))
+    for entry in document.get('entries') or []:
+        if isinstance(entry, dict) and entry.get('item_id') == item_id:
+            return entry
+    return None
+
+
+def _error_record(exc: Exception) -> dict:
+    return {
+        'code': getattr(exc, 'code', 'ingest_human_path_failed'),
+        'message': str(exc),
+    }
 
 
 def _write_raw_document(root: Path, document: NormalizedDocument) -> dict:
@@ -280,13 +330,23 @@ def _write_ingest_run_record(
     queue_entry: dict,
     refresh_views: bool,
     now: str,
+    *,
+    source_item_object_path: Path,
+    status: str,
+    human_path: dict,
+    human_entry: dict,
+    error: dict | None = None,
 ) -> Path:
-    path = ingest_run_path(root, run_id)
-    write_json_atomic(path, {
+    artifacts = {
+        'item': relative_to_root(root, ingest_item_path(root, document.item_id)),
+        'source_item_object': relative_to_root(root, source_item_object_path),
+        'raw_document': document.raw_paths.get('document'),
+    }
+    record = {
         'schema_version': INGEST_RUN_SCHEMA_VERSION,
         'workspace_id': workspace_id,
         'run_id': run_id,
-        'status': 'completed',
+        'status': status,
         'dry_run': False,
         'request': {
             'locator': request.locator,
@@ -298,11 +358,15 @@ def _write_ingest_run_record(
         'item_id': document.item_id,
         'source_item_id': item['item_id'],
         'queue_id': queue_entry['queue_id'],
-        'artifacts': {
-            'item': relative_to_root(root, ingest_item_path(root, document.item_id)),
-            'raw_document': document.raw_paths.get('document'),
-        },
+        'queue_entry': queue_entry,
+        'human_path': human_path,
+        'human_entry': human_entry,
+        'artifacts': artifacts,
         'created_at': now,
         'updated_at': now,
-    })
+    }
+    if error is not None:
+        record['error'] = error
+    path = ingest_run_path(root, run_id)
+    write_json_atomic(path, record)
     return path

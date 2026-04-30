@@ -531,6 +531,9 @@ class IngestPipelineWriteTests(unittest.TestCase):
 class IngestHumanPathTests(unittest.TestCase):
     def test_default_ingest_wikiizes_and_refreshes_views(self):
         from wikify.ingest.pipeline import run_ingest
+        from wikify.object_validation import validate_workspace_objects
+        from wikify.sync import ingest_queue_path
+        from wikify.views import run_view_generation
         from wikify.workspace import initialize_workspace
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -554,6 +557,23 @@ class IngestHumanPathTests(unittest.TestCase):
             self.assertTrue((root / 'views' / 'index.md').exists())
             self.assertTrue((root / 'artifacts' / 'objects' / 'wiki_pages').exists())
             self.assertTrue(result['human_entry']['body_path'].startswith('wiki/pages/'))
+            self.assertEqual(result['queue_entry']['status'], 'completed')
+            self.assertEqual(result['next_actions'], [])
+
+            queue = json.loads(ingest_queue_path(root).read_text(encoding='utf-8'))
+            queue_entry = [entry for entry in queue['entries'] if entry['item_id'] == result['item']['item_id']][0]
+            self.assertEqual(result['queue_entry']['status'], queue_entry['status'])
+
+            validation = validate_workspace_objects(root, strict=True)
+            self.assertEqual(validation['status'], 'passed')
+            views_result = run_view_generation(root, dry_run=False, include_html=True, section='all')
+            self.assertEqual(views_result['status'], 'completed')
+
+            run_record = json.loads((root / result['artifacts']['run']).read_text(encoding='utf-8'))
+            self.assertEqual(run_record['status'], 'completed')
+            self.assertEqual(run_record['queue_entry']['status'], 'completed')
+            self.assertEqual(run_record['human_path']['wikiize']['status'], 'completed')
+            self.assertTrue(run_record['human_entry']['body_path'].startswith('wiki/pages/'))
 
     def test_ingest_skips_human_path_when_refresh_views_false(self):
         from wikify.ingest.pipeline import run_ingest
@@ -578,4 +598,39 @@ class IngestHumanPathTests(unittest.TestCase):
             self.assertEqual(result['status'], 'completed')
             self.assertEqual(result['human_path'], {})
             self.assertEqual(result['human_entry'], {})
+            self.assertEqual(result['queue_entry']['status'], 'queued')
+            self.assertIn(f'wikify wikiize --item {result["item"]["item_id"]}', result['next_actions'])
+            self.assertIn('wikify views', result['next_actions'])
             self.assertFalse((root / 'views' / 'index.md').exists())
+
+    def test_human_path_failure_writes_failed_run_record(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.views import ViewGenerationError
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+            error = ViewGenerationError('view boom', code='views_boom')
+
+            with patch('wikify.ingest.pipeline.run_view_generation', side_effect=error):
+                with self.assertRaises(ViewGenerationError):
+                    run_ingest(
+                        root,
+                        'https://mp.weixin.qq.com/s/example',
+                        adapter_name='wechat_url',
+                        fetch_payload={
+                            'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                            'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                            'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                        },
+                    )
+
+            run_records = list((root / '.wikify' / 'ingest' / 'runs').glob('*.json'))
+            self.assertEqual(len(run_records), 1)
+            run_record = json.loads(run_records[0].read_text(encoding='utf-8'))
+            self.assertEqual(run_record['status'], 'failed')
+            self.assertEqual(run_record['error']['code'], 'views_boom')
+            self.assertEqual(run_record['queue_entry']['status'], 'completed')
+            self.assertIn('item', run_record['artifacts'])
+            self.assertIn('raw_document', run_record['artifacts'])

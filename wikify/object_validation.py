@@ -21,6 +21,7 @@ from wikify.workspace import WorkspaceError, load_workspace, manifest_path, regi
 OBJECT_VALIDATION_SCHEMA_VERSION = "wikify.object-validation.v1"
 
 RECOGNIZED_OBJECT_SCHEMAS = {
+    SOURCE_ITEMS_SCHEMA_VERSION: 'source_item',
     SCHEMA_VERSIONS['wiki_page']: 'wiki_page',
     SCHEMA_VERSIONS['topic']: 'topic',
     SCHEMA_VERSIONS['project']: 'project',
@@ -82,6 +83,7 @@ def validate_workspace_objects(
 
     focus = _resolve_focus(root_resolved, path, records)
     entries = _collect_entries(root_resolved, focus, records)
+    entries = _collapse_artifact_body_entries(entries)
 
     source_ids = _load_source_ids(root_resolved)
     item_ids = _load_source_item_ids(root_resolved, records)
@@ -225,6 +227,8 @@ def _entry_from_json(root: Path, path: Path, records: list[ValidationRecord]) ->
 def _entries_from_markdown_index(root: Path, records: list[ValidationRecord]) -> list[dict]:
     entries = []
     for obj in scan_objects(root):
+        if obj.relative_path.startswith('sources/raw/'):
+            continue
         if obj.metadata.get('_frontmatter_error'):
             error = obj.metadata['_frontmatter_error']
             records.append(_record(
@@ -363,6 +367,27 @@ def _load_source_item_ids(root: Path, records: list[ValidationRecord]) -> set[st
         ))
         return set()
     return set(document['items'].keys())
+
+
+def _collapse_artifact_body_entries(entries: list[dict]) -> list[dict]:
+    artifact_body_refs = {
+        (entry.get('object_id'), body_path)
+        for entry in entries
+        if entry.get('source') == 'json'
+        for body_path in (
+            entry.get('document', {}).get('body_path'),
+            entry.get('document', {}).get('relative_path'),
+        )
+        if body_path
+    }
+    return [
+        entry
+        for entry in entries
+        if not (
+            entry.get('source') == 'markdown'
+            and (entry.get('object_id'), entry.get('path')) in artifact_body_refs
+        )
+    ]
 
 
 def _validate_duplicate_ids(entries: list[dict], records: list[ValidationRecord]):
