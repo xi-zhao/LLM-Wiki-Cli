@@ -1,8 +1,28 @@
 # Wikify
 
-Agent-facing CLI for maintaining a local Markdown knowledge base.
+Human request, agent operation, wiki result.
 
-`wikify` gives agents a stable control surface for ingest, maintenance, decision, execution, and graph understanding, while keeping Markdown notes as the human-readable source of truth.
+Wikify is a CLI-first personal knowledge base tool. Humans ask an agent to save or organize knowledge; the agent calls `wikify`; the final product is a readable local Markdown/static wiki.
+
+Ask your agent:
+
+```text
+Save this article to my wiki: https://...
+Make this WeChat public account article easy to find later.
+Organize this file into my knowledge base.
+```
+
+The agent-facing tool call is:
+
+```bash
+wikify ingest <locator>
+```
+
+What humans should see is the final wiki entry, related wiki pages, and a short change summary. They should not need to inspect queues, request artifacts, JSON envelopes, validation reports, or agent context exports unless they are debugging.
+
+Agent operator guide: [docs/agent-operator-guide.md](docs/agent-operator-guide.md).
+
+`wikify` gives agents a stable control surface for ingest, maintenance, decision, execution, rollback, and graph understanding, while keeping Markdown notes as the human-readable source of truth.
 
 This project is explicitly inspired by Andrej Karpathy's LLM Wiki / markdown-first knowledge workflow, then pushed further toward agent-facing control, automation, and protocolized outputs.
 

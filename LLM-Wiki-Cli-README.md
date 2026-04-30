@@ -1,6 +1,16 @@
 # Wikify
 
-Wikify 是一个 **面向 agent 的 Markdown 知识库控制 CLI**。
+人类说需求，agent 做操作，最后交付 wiki 结果。
+
+Wikify 是一个 **面向 agent 的 Markdown 知识库控制 CLI**。它让人类用自然语言说“帮我保存/整理这篇内容”，让 agent 调用 `wikify` 完成抓取、整理、验证和恢复边界，最终把可读的本地 Markdown/static wiki 交还给人类。
+
+三步短路径：
+
+1. 人类对 agent 说：`帮我保存这篇文章`、`把这个链接整理进我的 wiki`、`这个文件帮我归档一下`。
+2. agent 调用：`wikify ingest <locator>`，必要时读取 trusted request 并用 `trusted-op` 包住大范围编辑。
+3. 人类看到：整理好的 wiki 页面、相关页面位置、agent 的简短变更摘要。
+
+Agent 操作指南：[docs/agent-operator-guide.md](docs/agent-operator-guide.md)。
 
 它明确参考了 Andrej Karpathy 提出的 LLM Wiki / markdown-first knowledge workflow 思路，但不是照搬个人 wiki 展示层，而是把这条路线继续产品化成 agent 可调用的控制面。
 

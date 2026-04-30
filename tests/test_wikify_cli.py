@@ -3093,22 +3093,30 @@ class WikifyCliTests(unittest.TestCase):
         readme = (root / 'README.md').read_text(encoding='utf-8')
         chinese_readme = (root / 'LLM-Wiki-Cli-README.md').read_text(encoding='utf-8')
         protocol = (root / 'scripts' / 'fokb_protocol.md').read_text(encoding='utf-8')
+        agent_guide = (root / 'docs' / 'agent-operator-guide.md').read_text(encoding='utf-8')
 
+        self.assertIn('Human request, agent operation, wiki result.', readme)
+        self.assertIn('Ask your agent:', readme)
+        self.assertIn('What humans should see', readme)
         self.assertIn('wikify ingest <locator>', readme)
         self.assertIn('Humans should normally ask their agent to save or organize knowledge', readme)
         self.assertIn('trusted agent request', readme)
         self.assertIn('wikify trusted-op begin', readme)
         self.assertIn('trusted operation snapshots', readme)
+        self.assertIn('Agent operator guide', readme)
         self.assertIn('wikify sync still does not fetch URL sources', readme)
         self.assertIn('mp.weixin.qq.com', readme)
         self.assertNotIn('wikify ingest <locator>\nwikify views', readme)
 
+        self.assertIn('人类说需求，agent 做操作，最后交付 wiki 结果', chinese_readme)
         self.assertIn('人类入口：自然语言让 agent 保存知识', chinese_readme)
+        self.assertIn('三步短路径', chinese_readme)
         self.assertIn('帮我保存这篇文章', chinese_readme)
         self.assertIn('wikify ingest <locator>', chinese_readme)
         self.assertIn('wikify ingest https://mp.weixin.qq.com/s/example', chinese_readme)
         self.assertIn('wikify trusted-op begin', chinese_readme)
         self.assertIn('trusted operation snapshots', chinese_readme)
+        self.assertIn('Agent 操作指南', chinese_readme)
         self.assertIn('wikify sync still does not fetch URL sources', chinese_readme)
         self.assertIn('不会隐藏抓取', chinese_readme)
 
@@ -3120,6 +3128,15 @@ class WikifyCliTests(unittest.TestCase):
         self.assertIn('wikify trusted-op begin', protocol)
         self.assertIn('mp.weixin.qq.com', protocol)
         self.assertIn('wikify sync still does not fetch URL sources', protocol)
+
+        self.assertIn('# Wikify Agent Operator Guide', agent_guide)
+        self.assertIn('Never make the human read request artifacts, queues, validation reports, or JSON envelopes by default.', agent_guide)
+        self.assertIn('1. Capture the source', agent_guide)
+        self.assertIn('2. Read the trusted request', agent_guide)
+        self.assertIn('3. Update the wiki when needed', agent_guide)
+        self.assertIn('4. Validate and refresh human views', agent_guide)
+        self.assertIn('5. Reply to the human', agent_guide)
+        self.assertIn('Use `wikify trusted-op begin` before broad edits', agent_guide)
 
 
 if __name__ == '__main__':

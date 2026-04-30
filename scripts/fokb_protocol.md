@@ -5,6 +5,16 @@
 
 `fokb` 是旧入口兼容别名，协议语义与 `wikify` 相同。新自动化应优先调用 `wikify`。
 
+## Product experience boundary
+
+Human request, agent operation, wiki result.
+
+Humans normally say things like "save this article", "organize this link", or "make this file easy to find later". Agents translate that intent into protocol calls, inspect machine artifacts, perform any needed semantic organization, and reply with the final wiki result.
+
+Do not treat this protocol document as the human product surface. The human-facing artifact is the generated wiki plus a short change summary. Request artifacts, queues, validation reports, JSON envelopes, and agent exports are machine/debug surfaces.
+
+Operational agent guidance lives in `docs/agent-operator-guide.md`.
+
 ## Unified ingest pipeline
 
 Humans ask an agent to save or organize knowledge in natural language. The agent calls `wikify ingest <locator>` as the tool contract. Ingest may fetch network content because the user/agent explicitly invoked a save operation.
