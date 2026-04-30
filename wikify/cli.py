@@ -3,6 +3,8 @@ import os
 
 from wikify.config import discover_base
 from wikify.envelope import envelope_error, envelope_ok, print_output
+from wikify.ingest.errors import IngestError
+from wikify.ingest.pipeline import run_ingest
 from wikify.agent import (
     AgentInterfaceError,
     query_agent_citations,
@@ -250,6 +252,53 @@ def cmd_sync(args):
         'user_message': 'sync completed',
     }
     return envelope_ok('sync', result)
+
+
+def cmd_ingest(args):
+    locator = getattr(args, 'locator', None) or getattr(args, 'url', None)
+    try:
+        result = run_ingest(
+            discover_base(),
+            locator,
+            source_id=getattr(args, 'source', None),
+            adapter_name=getattr(args, 'adapter', None),
+            dry_run=getattr(args, 'dry_run', False),
+            write_raw=True,
+            refresh_views=not getattr(args, 'no_refresh_views', False),
+        )
+    except IngestError as exc:
+        payload, _ = envelope_error(
+            'ingest',
+            exc.code,
+            str(exc),
+            2,
+            retryable=exc.retryable,
+            details=exc.details,
+        )
+        return payload
+    except WorkspaceError as exc:
+        payload, _ = _workspace_error('ingest', exc)
+        return payload
+    except Exception as exc:
+        payload, _ = envelope_error(
+            'ingest',
+            'ingest_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+        return payload
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    summary = 'ingest dry run completed' if result.get('dry_run') else 'wiki updated from ingest'
+    result['completion'] = {
+        'status': result.get('status'),
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': result.get('next_actions', []),
+        'user_message': summary,
+    }
+    payload, _ = envelope_ok('ingest', result)
+    return payload
 
 
 def cmd_wikiize(args):
@@ -1403,12 +1452,47 @@ def _subparsers_action(parser: argparse.ArgumentParser):
     raise RuntimeError('parser has no subparsers action')
 
 
+def _has_action_dest(parser: argparse.ArgumentParser, dest: str) -> bool:
+    return any(getattr(action, 'dest', None) == dest for action in parser._actions)
+
+
+def _has_option(parser: argparse.ArgumentParser, option: str) -> bool:
+    return any(option in getattr(action, 'option_strings', []) for action in parser._actions)
+
+
+def _ensure_unified_ingest_parser(sub):
+    if 'ingest' in sub.choices:
+        p_ingest = sub.choices['ingest']
+        for action in p_ingest._actions:
+            if getattr(action, 'dest', None) == 'url' and not getattr(action, 'option_strings', []):
+                action.dest = 'locator'
+                action.metavar = 'locator'
+                break
+        if not _has_action_dest(p_ingest, 'locator'):
+            p_ingest.add_argument('locator')
+    else:
+        p_ingest = sub.add_parser('ingest', help='Ingest one locator through the unified pipeline')
+        p_ingest.add_argument('locator')
+
+    if not _has_action_dest(p_ingest, 'source'):
+        p_ingest.add_argument('--source')
+    if not _has_action_dest(p_ingest, 'adapter'):
+        p_ingest.add_argument('--adapter')
+    if not _has_option(p_ingest, '--dry-run'):
+        p_ingest.add_argument('--dry-run', action='store_true')
+    if not _has_option(p_ingest, '--no-refresh-views'):
+        p_ingest.add_argument('--no-refresh-views', action='store_true')
+    p_ingest.set_defaults(func=cmd_ingest)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = _legacy_fokb().build_parser()
     parser.prog = 'wikify'
     parser.description = 'Wikify agent-facing Markdown knowledge base CLI'
 
     sub = _subparsers_action(parser)
+    _ensure_unified_ingest_parser(sub)
+
     if 'init' in sub.choices:
         p_init = sub.choices['init']
         if not any(getattr(action, 'dest', None) == 'base' for action in p_init._actions):
@@ -1657,7 +1741,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    payload, exit_code = args.func(args)
+    result = args.func(args)
+    if isinstance(result, tuple):
+        payload, exit_code = result
+    else:
+        payload = result
+        exit_code = payload.get('exit_code', 0)
     print_output(payload, args.output)
     raise SystemExit(exit_code)
 

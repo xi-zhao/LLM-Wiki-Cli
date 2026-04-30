@@ -592,6 +592,63 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(args.source, 'src_abc')
         self.assertTrue(args.dry_run)
 
+    def test_build_parser_accepts_unified_ingest_options(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            'ingest',
+            'https://mp.weixin.qq.com/s/example',
+            '--adapter',
+            'wechat_url',
+            '--dry-run',
+            '--no-refresh-views',
+        ])
+
+        self.assertEqual(args.command, 'ingest')
+        self.assertEqual(args.locator, 'https://mp.weixin.qq.com/s/example')
+        self.assertEqual(args.adapter, 'wechat_url')
+        self.assertTrue(args.dry_run)
+        self.assertTrue(args.no_refresh_views)
+        self.assertEqual(args.func, cli.cmd_ingest)
+
+    def test_ingest_command_dry_run_returns_unified_envelope(self):
+        cli = importlib.import_module('wikify.cli')
+        from wikify.workspace import initialize_workspace
+
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                initialize_workspace(root)
+                os.environ['WIKIFY_BASE'] = str(root)
+                os.environ['FOKB_BASE'] = str(root)
+                parser = cli.build_parser()
+                args = parser.parse_args([
+                    'ingest',
+                    'https://mp.weixin.qq.com/s/example',
+                    '--adapter',
+                    'wechat_url',
+                    '--dry-run',
+                ])
+
+                result = args.func(args)
+
+                self.assertTrue(result['ok'])
+                self.assertEqual(result['command'], 'ingest')
+                self.assertEqual(result['result']['status'], 'planned')
+                self.assertEqual(result['result']['completion']['user_message'], 'ingest dry run completed')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
     def test_build_parser_accepts_validate_command(self):
         cli = importlib.import_module('wikify.cli')
 
