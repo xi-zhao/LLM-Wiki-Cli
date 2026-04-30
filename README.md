@@ -40,6 +40,27 @@ In short:
 - Keep an Obsidian-friendly navigation layer alongside the CLI layer
 - Build graph artifacts that explain wiki structure, central nodes, communities, and broken links
 
+## Human ingest path
+
+Humans should normally add knowledge and read the final wiki:
+
+```bash
+wikify ingest <locator>
+wikify views
+```
+
+For WeChat public account articles, pass the article URL:
+
+```bash
+wikify ingest https://mp.weixin.qq.com/s/example
+```
+
+The command is allowed to fetch because ingest is explicit. It writes machine artifacts for agents, then updates the organized wiki. Humans consume the final wiki; `source add`, `sync`, `wikiize`, validation reports, queues, and agent exports are lower-level machine surfaces.
+
+In short, humans consume the final wiki.
+
+`wikify sync` still does not fetch URL sources. It remains an agent/debug command for local change detection and queue maintenance.
+
 ## 30-second example
 
 ```bash

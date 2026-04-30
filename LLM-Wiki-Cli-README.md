@@ -27,6 +27,26 @@ fokb ...
 
 ---
 
+## 人类入口：只看最终 wiki
+
+人类用户不应该理解 source registry、sync、queue、wikiize 这些中间层。默认体验应该是：
+
+```bash
+wikify ingest <locator>
+```
+
+公众号文章示例：
+
+```bash
+wikify ingest https://mp.weixin.qq.com/s/example
+```
+
+`wikify ingest` 是显式联网入口，可以抓取和整理内容，然后刷新最终 wiki。人类消费的是整理好的 Markdown/static wiki；`wikify sync`、`wikify wikiize`、validation report、agent context 等是 agent、调试和维护接口。
+
+`wikify sync still does not fetch URL sources`：URL source 在 sync 中仍然只做离线状态记录，不会隐藏抓取。
+
+---
+
 # 1. 产品定位
 
 Wikify 解决的不是“如何写 markdown 文件”这个问题，

@@ -5,6 +5,14 @@
 
 `fokb` 是旧入口兼容别名，协议语义与 `wikify` 相同。新自动化应优先调用 `wikify`。
 
+## Unified ingest pipeline
+
+`wikify ingest <locator>` is the human-facing entrypoint. It may fetch network content because the user explicitly invoked ingest. Humans consume the final wiki, while agents inspect the machine artifacts.
+
+For `mp.weixin.qq.com` URLs, the `wechat_url` adapter normalizes the article into canonical source item artifacts and queues deterministic wikiization.
+
+`wikify sync still does not fetch URL sources`; sync remains a machine-facing offline change detection command.
+
 ## 1. 输出 envelope
 
 所有子命令默认输出 JSON envelope。

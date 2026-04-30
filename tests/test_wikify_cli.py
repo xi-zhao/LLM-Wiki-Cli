@@ -2972,6 +2972,19 @@ class WikifyCliTests(unittest.TestCase):
             else:
                 os.environ['FOKB_BASE'] = original_fokb
 
+    def test_docs_describe_human_ingest_and_machine_pipeline_boundary(self):
+        root = Path(__file__).resolve().parents[1]
+        combined = '\n'.join([
+            (root / 'README.md').read_text(encoding='utf-8'),
+            (root / 'LLM-Wiki-Cli-README.md').read_text(encoding='utf-8'),
+            (root / 'scripts' / 'fokb_protocol.md').read_text(encoding='utf-8'),
+        ])
+
+        self.assertIn('wikify ingest <locator>', combined)
+        self.assertIn('humans consume the final wiki', combined)
+        self.assertIn('wikify sync still does not fetch URL sources', combined)
+        self.assertIn('mp.weixin.qq.com', combined)
+
 
 if __name__ == '__main__':
     unittest.main()
