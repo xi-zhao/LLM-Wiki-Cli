@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wikify"
 version = "0.1.0a1"
-description = "Turn links, files, repos, and notes into an agent-maintained local wiki"
+description = "把链接、文件、仓库和笔记变成一个由 Agent 维护的本地 Wiki"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
