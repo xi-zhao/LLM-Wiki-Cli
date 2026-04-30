@@ -46,7 +46,6 @@ Humans should normally add knowledge and read the final wiki:
 
 ```bash
 wikify ingest <locator>
-wikify views
 ```
 
 For WeChat public account articles, pass the article URL:
@@ -59,7 +58,9 @@ The command is allowed to fetch because ingest is explicit. It writes machine ar
 
 In short, humans consume the final wiki.
 
-`wikify sync` still does not fetch URL sources. It remains an agent/debug command for local change detection and queue maintenance.
+`wikify ingest` refreshes views by default, so `wikify views` is not part of the normal human ingest path. Use `wikify views` only when explicitly re-rendering views for debugging, repair, or agent maintenance.
+
+`wikify sync still does not fetch URL sources`. It remains an agent/debug command for local change detection and queue maintenance.
 
 ## 30-second example
 

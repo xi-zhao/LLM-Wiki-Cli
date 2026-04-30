@@ -2974,16 +2974,26 @@ class WikifyCliTests(unittest.TestCase):
 
     def test_docs_describe_human_ingest_and_machine_pipeline_boundary(self):
         root = Path(__file__).resolve().parents[1]
-        combined = '\n'.join([
-            (root / 'README.md').read_text(encoding='utf-8'),
-            (root / 'LLM-Wiki-Cli-README.md').read_text(encoding='utf-8'),
-            (root / 'scripts' / 'fokb_protocol.md').read_text(encoding='utf-8'),
-        ])
+        readme = (root / 'README.md').read_text(encoding='utf-8')
+        chinese_readme = (root / 'LLM-Wiki-Cli-README.md').read_text(encoding='utf-8')
+        protocol = (root / 'scripts' / 'fokb_protocol.md').read_text(encoding='utf-8')
 
-        self.assertIn('wikify ingest <locator>', combined)
-        self.assertIn('humans consume the final wiki', combined)
-        self.assertIn('wikify sync still does not fetch URL sources', combined)
-        self.assertIn('mp.weixin.qq.com', combined)
+        self.assertIn('wikify ingest <locator>', readme)
+        self.assertIn('humans consume the final wiki', readme)
+        self.assertIn('wikify sync still does not fetch URL sources', readme)
+        self.assertIn('mp.weixin.qq.com', readme)
+        self.assertNotIn('wikify ingest <locator>\nwikify views', readme)
+
+        self.assertIn('人类入口：只看最终 wiki', chinese_readme)
+        self.assertIn('wikify ingest <locator>', chinese_readme)
+        self.assertIn('wikify ingest https://mp.weixin.qq.com/s/example', chinese_readme)
+        self.assertIn('wikify sync still does not fetch URL sources', chinese_readme)
+        self.assertIn('不会隐藏抓取', chinese_readme)
+
+        self.assertIn('Unified ingest pipeline', protocol)
+        self.assertIn('wikify ingest <locator>', protocol)
+        self.assertIn('mp.weixin.qq.com', protocol)
+        self.assertIn('wikify sync still does not fetch URL sources', protocol)
 
 
 if __name__ == '__main__':
