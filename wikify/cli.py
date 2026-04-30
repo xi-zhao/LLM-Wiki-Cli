@@ -256,6 +256,15 @@ def cmd_sync(args):
 
 def cmd_ingest(args):
     locator = getattr(args, 'locator', None) or getattr(args, 'url', None)
+    if not locator:
+        payload, _ = envelope_error(
+            'ingest',
+            'ingest_locator_invalid',
+            'ingest locator is required',
+            2,
+            retryable=False,
+        )
+        return payload
     try:
         result = run_ingest(
             discover_base(),
@@ -1460,9 +1469,26 @@ def _has_option(parser: argparse.ArgumentParser, option: str) -> bool:
     return any(option in getattr(action, 'option_strings', []) for action in parser._actions)
 
 
+def _remove_actions_by_dest(parser: argparse.ArgumentParser, dests: set[str]):
+    removed = [action for action in parser._actions if getattr(action, 'dest', None) in dests]
+    if not removed:
+        return
+
+    parser._actions = [action for action in parser._actions if action not in removed]
+    for action in removed:
+        for option in getattr(action, 'option_strings', []):
+            parser._option_string_actions.pop(option, None)
+
+    for group in parser._action_groups:
+        group._group_actions = [action for action in group._group_actions if action not in removed]
+    for group in parser._mutually_exclusive_groups:
+        group._group_actions = [action for action in group._group_actions if action not in removed]
+
+
 def _ensure_unified_ingest_parser(sub):
     if 'ingest' in sub.choices:
         p_ingest = sub.choices['ingest']
+        _remove_actions_by_dest(p_ingest, {'with_digests', 'skip_lint'})
         for action in p_ingest._actions:
             if getattr(action, 'dest', None) == 'url' and not getattr(action, 'option_strings', []):
                 action.dest = 'locator'

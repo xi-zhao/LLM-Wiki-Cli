@@ -612,6 +612,24 @@ class WikifyCliTests(unittest.TestCase):
         self.assertTrue(args.no_refresh_views)
         self.assertEqual(args.func, cli.cmd_ingest)
 
+    def test_build_parser_rejects_legacy_ingest_options(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+
+        with self.assertRaises(SystemExit):
+            parser.parse_args([
+                'ingest',
+                'https://mp.weixin.qq.com/s/example',
+                '--with-digests',
+            ])
+        with self.assertRaises(SystemExit):
+            parser.parse_args([
+                'ingest',
+                'https://mp.weixin.qq.com/s/example',
+                '--skip-lint',
+            ])
+
     def test_ingest_command_dry_run_returns_unified_envelope(self):
         cli = importlib.import_module('wikify.cli')
         from wikify.workspace import initialize_workspace
@@ -648,6 +666,18 @@ class WikifyCliTests(unittest.TestCase):
                 os.environ.pop('FOKB_BASE', None)
             else:
                 os.environ['FOKB_BASE'] = original_fokb
+
+    def test_ingest_command_requires_locator(self):
+        cli = importlib.import_module('wikify.cli')
+        import argparse
+
+        result = cli.cmd_ingest(argparse.Namespace())
+
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['command'], 'ingest')
+        self.assertEqual(result['exit_code'], 2)
+        self.assertEqual(result['error']['code'], 'ingest_locator_invalid')
+        self.assertEqual(result['error']['message'], 'ingest locator is required')
 
     def test_build_parser_accepts_validate_command(self):
         cli = importlib.import_module('wikify.cli')
