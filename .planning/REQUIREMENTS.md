@@ -39,8 +39,8 @@
 | TAI-04 | Phase 29 | Complete |
 | TAI-05 | Phase 29 | Complete |
 | TAI-06 | Phase 29 | Complete |
-| TAI-07 | Future | Deferred |
-| TAI-08 | Future | Deferred |
+| TAI-07 | Phase 30 | Planned |
+| TAI-08 | Phase 30 | Planned |
 
 ---
 *Requirements defined: 2026-04-30 from `docs/superpowers/specs/2026-04-30-trusted-agent-ingest-experience-design.md`.*

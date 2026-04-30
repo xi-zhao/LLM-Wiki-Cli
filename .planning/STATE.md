@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.3.0 Trusted Agent Ingest Experience begins with Phase 29, converting ingest into a trusted-agent handoff contract.
+**Current focus:** v0.3.0 Trusted Agent Ingest Experience continues with Phase 30, adding trusted-agent operation snapshots and rollback.
 
 ## Current Position
 
 Milestone: v0.3.0 Trusted Agent Ingest Experience
-Phase: 29 - Trusted Agent Ingest Handoff
-Status: Phase complete
-Last activity: 2026-04-30 - Implemented trusted-agent ingest request artifacts, agent completion summary, docs, tests, and verification.
+Phase: 30 - Trusted Agent Operation Snapshots
+Status: Planning
+Last activity: 2026-04-30 - Started Phase 30 to make trusted-agent broad writes recoverable with explicit snapshots and rollback.
 
-Progress: ██████████ 100%
+Progress: █████░░░░░ 50%
 
 ## Performance Metrics
 
@@ -171,7 +171,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- None.
+- Implement Phase 30 trusted-agent operation snapshots and rollback.
 
 ### Blockers/Concerns
 
@@ -179,6 +179,7 @@ Recent decisions affecting current work:
 - Task lifecycle remains separate from content mutation; apply/rollback handles content changes and lifecycle commands handle task status.
 - v0.2.0 changed product scope from project-only wiki maintenance to a personal knowledge base with shared human and agent views.
 - v0.3.0 changes the default product surface from humans running ingest commands to humans asking trusted agents to save and organize knowledge.
+- Phase 30 should provide explicit operation primitives because Wikify cannot intercept arbitrary agent file edits automatically.
 
 ### Roadmap Evolution
 
@@ -222,6 +223,7 @@ Recent decisions affecting current work:
 - Milestone v0.3.0 started: Trusted Agent Ingest Experience.
 - Phase 29 added: Trusted Agent Ingest Handoff.
 - Phase 29 completed: `wikify ingest` now writes trusted-agent request artifacts, returns agent-friendly completion summaries, and documents the natural-language human request path.
+- Phase 30 added: Trusted Agent Operation Snapshots.
 - Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
 - Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 - Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
@@ -247,6 +249,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-30
-Stopped at: Phase 29 complete and verified.
-Resume file: .planning/phases/29-trusted-agent-ingest-handoff/29-01-SUMMARY.md
-Next command: Decide whether to add the future snapshot/operation-record phase.
+Stopped at: Phase 30 planning started.
+Resume file: .planning/phases/30-trusted-agent-operation-snapshots/30-01-PLAN.md
+Next command: `/gsd-execute-phase 30 --interactive`

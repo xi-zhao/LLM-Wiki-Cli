@@ -24,9 +24,9 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 
 **Active slice:**
 - Phase 29: Trusted Agent Ingest Handoff.
+- Phase 30: Trusted Agent Operation Snapshots.
 
 **Candidate later slices:**
-- Automatic snapshots and operation records for broad trusted-agent wiki rewrites.
 - Provider runtime for explicit model calls, budgets, retries, and audit records.
 - Search and retrieval improvements such as hybrid ranking or optional embeddings.
 - Richer review/maintenance ergonomics for generated pages, source issues, and agent context quality.
@@ -88,7 +88,7 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 
 ### Active
 
-- None - Phase 29 completed the first v0.3.0 trusted-agent ingest slice. Future trusted-write snapshot and rollback work remains deferred.
+- [ ] Trusted agents can explicitly begin, complete, and rollback broad wiki operations with content snapshots and hash guards.
 
 ### Validated
 
