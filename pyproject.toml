@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wikify"
 version = "0.1.0a1"
-description = "Agent-facing CLI for maintaining and graphing a local Markdown knowledge base"
+description = "Turn links, files, repos, and notes into an agent-maintained local wiki"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
