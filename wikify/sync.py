@@ -444,6 +444,39 @@ def _trackable_local_item(item: dict) -> bool:
     return item.get('item_type') == 'file' and item.get('path') and item.get('source_type') not in REMOTE_SOURCE_TYPES
 
 
+def _preservable_fetched_remote_item(item: dict) -> bool:
+    metadata = item.get('metadata') or {}
+    fingerprint = item.get('fingerprint') or {}
+    return (
+        item.get('source_type') in REMOTE_SOURCE_TYPES
+        and item.get('item_type') == 'file'
+        and bool(item.get('path'))
+        and (fingerprint.get('kind') == 'fetched' or bool(metadata.get('adapter')))
+    )
+
+
+def _preserve_fetched_remote_item(item: dict, now: str) -> dict:
+    preserved = copy.deepcopy(item)
+    preserved['previous_status'] = item.get('status')
+    preserved['discovered_at'] = preserved.get('discovered_at') or now
+    preserved['updated_at'] = now
+    path = preserved.get('path')
+    exists = bool(path and Path(path).exists())
+    preserved['status'] = 'unchanged' if exists else 'missing'
+    fingerprint = dict(preserved.get('fingerprint') or {})
+    fingerprint['exists'] = exists
+    preserved['fingerprint'] = fingerprint
+    if exists:
+        preserved['errors'] = []
+    else:
+        preserved['errors'] = [{
+            'code': 'source_item_missing',
+            'message': 'previously fetched remote source item is missing',
+            'path': path,
+        }]
+    return preserved
+
+
 def _missing_from_previous(previous: dict, now: str) -> dict:
     item = copy.deepcopy(previous)
     item['status'] = 'missing'
@@ -669,7 +702,11 @@ def sync_workspace(base: Path | str, source_id: str | None = None, dry_run: bool
             if item.get('source_id') == source['source_id']
         ]
         for previous in previous_for_source:
-            if previous.get('item_id') not in discovered_ids and _trackable_local_item(previous):
+            if previous.get('item_id') in discovered_ids:
+                continue
+            if _preservable_fetched_remote_item(previous):
+                discovered_items.append(_preserve_fetched_remote_item(previous, now))
+            elif _trackable_local_item(previous):
                 discovered_items.append(_missing_from_previous(previous, now))
         discovered_items.sort(key=lambda item: (
             {'file': '0', 'remote': '0', 'missing': '1', 'skipped': '2', 'error': '3'}.get(item.get('item_type'), '9'),

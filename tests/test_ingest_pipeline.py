@@ -156,6 +156,17 @@ class IngestAdapterTests(unittest.TestCase):
 
         self.assertEqual(context.exception.code, 'ingest_adapter_not_found')
 
+    def test_explicit_wechat_adapter_rejects_incompatible_locator(self):
+        from wikify.ingest.adapters import resolve_adapter
+        from wikify.ingest.errors import IngestError
+
+        with self.assertRaises(IngestError) as context:
+            resolve_adapter('https://example.com/article', adapter_name='wechat_url')
+
+        self.assertEqual(context.exception.code, 'ingest_adapter_not_found')
+        self.assertEqual(context.exception.details['adapter'], 'wechat_url')
+        self.assertEqual(context.exception.details['locator'], 'https://example.com/article')
+
     def test_wechat_canonical_url_keeps_article_query_identity(self):
         from wikify.ingest.wechat import WeChatUrlAdapter
 
@@ -530,9 +541,10 @@ class IngestPipelineWriteTests(unittest.TestCase):
 
 class IngestHumanPathTests(unittest.TestCase):
     def test_default_ingest_wikiizes_and_refreshes_views(self):
+        from wikify.agent import run_agent_export
         from wikify.ingest.pipeline import run_ingest
         from wikify.object_validation import validate_workspace_objects
-        from wikify.sync import ingest_queue_path
+        from wikify.sync import ingest_queue_path, source_items_path, sync_workspace
         from wikify.views import run_view_generation
         from wikify.workspace import initialize_workspace
 
@@ -568,6 +580,17 @@ class IngestHumanPathTests(unittest.TestCase):
             self.assertEqual(validation['status'], 'passed')
             views_result = run_view_generation(root, dry_run=False, include_html=True, section='all')
             self.assertEqual(views_result['status'], 'completed')
+
+            sync_result = sync_workspace(root)
+            self.assertEqual(sync_result['status'], 'synced')
+            source_items = json.loads(source_items_path(root).read_text(encoding='utf-8'))
+            self.assertIn(result['item']['item_id'], source_items['items'])
+            validation_after_sync = validate_workspace_objects(root, strict=True)
+            self.assertEqual(validation_after_sync['status'], 'passed')
+            views_after_sync = run_view_generation(root, dry_run=False, include_html=True, section='all')
+            self.assertEqual(views_after_sync['status'], 'completed')
+            agent_export = run_agent_export(root, dry_run=False)
+            self.assertEqual(agent_export['status'], 'completed')
 
             run_record = json.loads((root / result['artifacts']['run']).read_text(encoding='utf-8'))
             self.assertEqual(run_record['status'], 'completed')

@@ -31,6 +31,15 @@ def resolve_adapter(locator: str, source=None, adapter_name: str | None = None) 
     if adapter_name:
         for adapter in _ADAPTERS:
             if adapter.name == adapter_name:
+                if not adapter.can_handle(locator, source=source):
+                    raise IngestError(
+                        f'Ingest adapter cannot handle locator: {adapter_name}',
+                        code='ingest_adapter_not_found',
+                        details={
+                            'adapter': adapter_name,
+                            'locator': locator,
+                        },
+                    )
                 return adapter
         raise IngestError(
             f'Ingest adapter not found: {adapter_name}',
