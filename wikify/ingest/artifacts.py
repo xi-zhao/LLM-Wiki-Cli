@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from wikify.ingest.documents import NormalizedDocument
-from wikify.sync import INGEST_QUEUE_SCHEMA_VERSION, SOURCE_ITEMS_SCHEMA_VERSION
+from wikify.objects import object_document_path, source_item_record_to_object
+from wikify.sync import INGEST_QUEUE_SCHEMA_VERSION, SOURCE_ITEMS_SCHEMA_VERSION, ingest_queue_path, source_items_path
 
 
 INGEST_RUN_SCHEMA_VERSION = 'wikify.ingest-run.v1'
@@ -67,6 +68,113 @@ def write_text_atomic(path: Path | str, text: str):
     temp_path = target.with_name(f'.{target.name}.{uuid.uuid4().hex}.tmp')
     temp_path.write_text(text, encoding='utf-8')
     temp_path.replace(target)
+
+
+def read_json_or_default(path: Path | str, default: dict) -> dict:
+    target = Path(path)
+    if not target.exists():
+        return default
+    return json.loads(target.read_text(encoding='utf-8'))
+
+
+def empty_source_items(workspace_id: str, now: str) -> dict:
+    return {
+        'schema_version': SOURCE_ITEMS_SCHEMA_VERSION,
+        'workspace_id': workspace_id,
+        'generated_at': now,
+        'summary': {
+            'item_count': 0,
+            'item_status_counts': {},
+        },
+        'items': {},
+    }
+
+
+def empty_ingest_queue(workspace_id: str, now: str) -> dict:
+    return {
+        'schema_version': INGEST_QUEUE_SCHEMA_VERSION,
+        'workspace_id': workspace_id,
+        'generated_at': now,
+        'summary': {
+            'queue_count': 0,
+            'by_item_status': {},
+        },
+        'entries': [],
+    }
+
+
+def _status_counts(items: list[dict]) -> dict:
+    counts: dict[str, int] = {}
+    for item in items:
+        status = item.get('status')
+        if status:
+            counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
+def _queue_item_status_counts(entries: list[dict]) -> dict:
+    counts: dict[str, int] = {}
+    for entry in entries:
+        status = entry.get('item_status')
+        if status:
+            counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
+def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
+    path = source_items_path(base)
+    document = read_json_or_default(path, empty_source_items(workspace_id, now))
+    document['schema_version'] = SOURCE_ITEMS_SCHEMA_VERSION
+    document['workspace_id'] = workspace_id
+    document['generated_at'] = now
+    document.setdefault('items', {})
+    document['items'][item['item_id']] = dict(item)
+    items = list(document['items'].values())
+    document['summary'] = {
+        'item_count': len(items),
+        'item_status_counts': _status_counts(items),
+    }
+    write_json_atomic(path, document)
+    return document
+
+
+def upsert_ingest_queue_entry(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
+    path = ingest_queue_path(base)
+    document = read_json_or_default(path, empty_ingest_queue(workspace_id, now))
+    document['schema_version'] = INGEST_QUEUE_SCHEMA_VERSION
+    document['workspace_id'] = workspace_id
+    document['generated_at'] = now
+
+    entries = list(document.get('entries') or [])
+    new_entry = queue_entry_for_source_item(item, now)
+    entry = None
+    for index, existing in enumerate(entries):
+        if existing.get('item_id') == item['item_id']:
+            created_at = existing.get('created_at') or now
+            entry = dict(existing)
+            entry.update(new_entry)
+            entry['created_at'] = created_at
+            entry['updated_at'] = now
+            entries[index] = entry
+            break
+    if entry is None:
+        entry = new_entry
+        entries.append(entry)
+
+    entries.sort(key=lambda value: (value.get('source_id') or '', value.get('item_id') or ''))
+    document['entries'] = entries
+    document['summary'] = {
+        'queue_count': len(entries),
+        'by_item_status': _queue_item_status_counts(entries),
+    }
+    write_json_atomic(path, document)
+    return entry
+
+
+def write_source_item_object(base: Path | str, item: dict) -> Path:
+    path = object_document_path(base, 'source_item', item['item_id'])
+    write_json_atomic(path, source_item_record_to_object(item))
+    return path
 
 
 def source_item_from_normalized(document: NormalizedDocument, status: str) -> dict:

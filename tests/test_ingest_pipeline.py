@@ -255,3 +255,103 @@ class IngestAdapterTests(unittest.TestCase):
             output = WeChatUrlAdapter()._run_browser(locator, 'html')
 
         self.assertEqual(output, '<html>ok</html>')
+
+
+class IngestPipelineWriteTests(unittest.TestCase):
+    def test_run_ingest_dry_run_writes_nothing(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+
+            result = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                dry_run=True,
+                fetch_payload={
+                    'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                    'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                    'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                },
+            )
+
+            self.assertEqual(result['status'], 'planned')
+            self.assertFalse((root / '.wikify' / 'ingest').exists())
+            self.assertFalse((root / '.wikify' / 'queues' / 'ingest-items.json').exists())
+
+    def test_run_ingest_writes_raw_item_source_object_and_queue(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+
+            result = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                fetch_payload={
+                    'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                    'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                    'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                },
+                refresh_views=False,
+            )
+
+            item_id = result['item']['item_id']
+            self.assertEqual(result['status'], 'completed')
+            self.assertTrue((root / result['item']['path']).exists())
+            self.assertTrue((root / '.wikify' / 'ingest' / 'items' / f'{item_id}.json').exists())
+            self.assertTrue((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
+
+            queue = json.loads((root / '.wikify' / 'queues' / 'ingest-items.json').read_text(encoding='utf-8'))
+            self.assertEqual(queue['schema_version'], 'wikify.ingest-queue.v1')
+            self.assertEqual(queue['summary']['queue_count'], 1)
+            self.assertEqual(queue['entries'][0]['item_id'], item_id)
+
+            source_items = json.loads((root / '.wikify' / 'sync' / 'source-items.json').read_text(encoding='utf-8'))
+            self.assertIn(item_id, source_items['items'])
+
+    def test_run_ingest_duplicate_url_keeps_single_queue_entry_created_at(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+            payload = {
+                'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+            }
+
+            first = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                fetch_payload=payload,
+                refresh_views=False,
+            )
+            queue_path = root / '.wikify' / 'queues' / 'ingest-items.json'
+            first_queue = json.loads(queue_path.read_text(encoding='utf-8'))
+            first_entry = first_queue['entries'][0]
+
+            second = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                fetch_payload=payload,
+                refresh_views=False,
+            )
+            second_queue = json.loads(queue_path.read_text(encoding='utf-8'))
+            second_entry = second_queue['entries'][0]
+
+            self.assertEqual(first['item']['item_id'], second['item']['item_id'])
+            self.assertEqual(second_queue['summary']['queue_count'], 1)
+            self.assertEqual(len(second_queue['entries']), 1)
+            self.assertEqual(second_entry['created_at'], first_entry['created_at'])
+            self.assertGreaterEqual(second_entry['updated_at'], first_entry['updated_at'])
