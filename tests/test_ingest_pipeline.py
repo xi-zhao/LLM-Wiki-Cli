@@ -526,3 +526,56 @@ class IngestPipelineWriteTests(unittest.TestCase):
             self.assertFalse((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
             source_items = json.loads(source_items_path.read_text(encoding='utf-8'))
             self.assertNotIn(item_id, source_items.get('items', {}))
+
+
+class IngestHumanPathTests(unittest.TestCase):
+    def test_default_ingest_wikiizes_and_refreshes_views(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+
+            result = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                fetch_payload={
+                    'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                    'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                    'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                },
+            )
+
+            self.assertEqual(result['status'], 'completed')
+            self.assertEqual(result['human_path']['wikiize']['status'], 'completed')
+            self.assertIn('views', result['human_path'])
+            self.assertTrue((root / 'views' / 'index.md').exists())
+            self.assertTrue((root / 'artifacts' / 'objects' / 'wiki_pages').exists())
+            self.assertTrue(result['human_entry']['body_path'].startswith('wiki/pages/'))
+
+    def test_ingest_skips_human_path_when_refresh_views_false(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+
+            result = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                refresh_views=False,
+                fetch_payload={
+                    'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                    'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                    'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                },
+            )
+
+            self.assertEqual(result['status'], 'completed')
+            self.assertEqual(result['human_path'], {})
+            self.assertEqual(result['human_entry'], {})
+            self.assertFalse((root / 'views' / 'index.md').exists())

@@ -21,7 +21,9 @@ from wikify.ingest.artifacts import (
 )
 from wikify.ingest.documents import FetchedPayload, IngestRequest, NormalizedDocument
 from wikify.ingest.errors import IngestError
-from wikify.workspace import load_workspace
+from wikify.views import run_view_generation
+from wikify.wikiize import run_wikiization
+from wikify.workspace import add_source, load_workspace
 
 
 def run_ingest(
@@ -67,6 +69,8 @@ def run_ingest(
                 'status': 'planned',
             },
             'artifacts': {},
+            'human_path': {},
+            'human_entry': {},
             'next_actions': [],
         }
 
@@ -93,13 +97,15 @@ def run_ingest(
         fetched = adapter.fetch(request)
 
     document = adapter.normalize(fetched, source_id=source_id)
+    if source_id is None:
+        source_result = add_source(root, document.canonical_locator, _source_type_for_locator(document.canonical_locator))
+        document = replace(document, source_id=source_result['source']['source_id'])
     raw_paths = _write_raw_document(root, document)
     document = replace(document, raw_paths=raw_paths)
     item = source_item_from_normalized(document, status='new')
 
     upsert_source_item(root, workspace_id, item, now)
     queue_entry = upsert_ingest_queue_entry(root, workspace_id, item, now)
-    source_item_object_path = write_source_item_object(root, item)
     item_record_path = _write_ingest_item_record(root, workspace_id, document, item, queue_entry, now)
     run_record_path = _write_ingest_run_record(
         root,
@@ -112,6 +118,34 @@ def run_ingest(
         refresh_views,
         now,
     )
+
+    human_path = {}
+    human_entry = {}
+    if refresh_views:
+        wikiize_result = run_wikiization(root, item_id=document.item_id, limit=1)
+        human_path['wikiize'] = {
+            'status': wikiize_result.get('status'),
+            'summary': wikiize_result.get('summary', {}),
+            'artifacts': wikiize_result.get('artifacts', {}),
+        }
+        for processed in wikiize_result.get('items', []):
+            paths = processed.get('paths') or {}
+            object_ids = processed.get('object_ids') or []
+            if paths.get('body_path'):
+                human_entry = {
+                    'title': document.title,
+                    'body_path': paths.get('body_path'),
+                    'object_id': object_ids[0] if object_ids else None,
+                }
+                break
+        views_result = run_view_generation(root, dry_run=False, include_html=True, section='all')
+        human_path['views'] = {
+            'status': views_result.get('status'),
+            'summary': views_result.get('summary', {}),
+            'generated': views_result.get('generated', []),
+        }
+
+    source_item_object_path = write_source_item_object(root, item)
 
     return {
         'schema_version': INGEST_RUN_SCHEMA_VERSION,
@@ -135,6 +169,8 @@ def run_ingest(
             'source_item_object': relative_to_root(root, source_item_object_path),
             'raw_document': raw_paths['document'],
         },
+        'human_path': human_path,
+        'human_entry': human_entry,
         'next_actions': [
             f'wikify wikiize --item {item["item_id"]}',
             'wikify views',
@@ -165,6 +201,12 @@ def _fetched_payload(
         metadata=dict(payload.get('metadata') or {}),
         warnings=list(payload.get('warnings') or []),
     )
+
+
+def _source_type_for_locator(locator: str) -> str:
+    if locator.startswith(('http://', 'https://')):
+        return 'url'
+    return 'file'
 
 
 def _write_raw_document(root: Path, document: NormalizedDocument) -> dict:
