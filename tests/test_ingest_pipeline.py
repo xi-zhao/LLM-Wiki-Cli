@@ -440,3 +440,89 @@ class IngestPipelineWriteTests(unittest.TestCase):
             if source_items_path.exists():
                 source_items = json.loads(source_items_path.read_text(encoding='utf-8'))
                 self.assertNotIn(item_id, source_items.get('items', {}))
+
+    def test_run_ingest_raises_typed_error_for_invalid_queue_entry_member(self):
+        from wikify.ingest.artifacts import ingest_item_id
+        from wikify.ingest.errors import IngestError
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+            item_id = ingest_item_id('wechat_url', 'https://mp.weixin.qq.com/s/example')
+            queue_path = root / '.wikify' / 'queues' / 'ingest-items.json'
+            queue_path.parent.mkdir(parents=True, exist_ok=True)
+            queue_path.write_text(json.dumps({
+                'schema_version': 'wikify.ingest-queue.v1',
+                'workspace_id': 'wk_test',
+                'summary': {},
+                'entries': [1],
+            }), encoding='utf-8')
+
+            with self.assertRaises(IngestError) as context:
+                run_ingest(
+                    root,
+                    'https://mp.weixin.qq.com/s/example',
+                    adapter_name='wechat_url',
+                    fetch_payload={
+                        'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                        'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                        'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                    },
+                    refresh_views=False,
+                )
+
+            self.assertEqual(context.exception.code, 'ingest_queue_invalid')
+            self.assertEqual(context.exception.details['path'], str(queue_path.resolve()))
+            self.assertEqual(context.exception.details['field'], 'entries[0]')
+            self.assertFalse((root / 'sources' / 'raw' / 'wechat_url' / item_id).exists())
+            self.assertFalse((root / '.wikify' / 'ingest' / 'items' / f'{item_id}.json').exists())
+            self.assertFalse(any((root / '.wikify' / 'ingest' / 'runs').glob('*.json')))
+            self.assertFalse((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
+            source_items_path = root / '.wikify' / 'sync' / 'source-items.json'
+            if source_items_path.exists():
+                source_items = json.loads(source_items_path.read_text(encoding='utf-8'))
+                self.assertNotIn(item_id, source_items.get('items', {}))
+
+    def test_run_ingest_raises_typed_error_for_invalid_source_item_member(self):
+        from wikify.ingest.artifacts import ingest_item_id
+        from wikify.ingest.errors import IngestError
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+            item_id = ingest_item_id('wechat_url', 'https://mp.weixin.qq.com/s/example')
+            source_items_path = root / '.wikify' / 'sync' / 'source-items.json'
+            source_items_path.parent.mkdir(parents=True, exist_ok=True)
+            source_items_path.write_text(json.dumps({
+                'schema_version': 'wikify.source-items.v1',
+                'workspace_id': 'wk_test',
+                'summary': {},
+                'items': {'old': 1},
+            }), encoding='utf-8')
+
+            with self.assertRaises(IngestError) as context:
+                run_ingest(
+                    root,
+                    'https://mp.weixin.qq.com/s/example',
+                    adapter_name='wechat_url',
+                    fetch_payload={
+                        'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                        'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                        'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                    },
+                    refresh_views=False,
+                )
+
+            self.assertEqual(context.exception.code, 'ingest_source_items_invalid')
+            self.assertEqual(context.exception.details['path'], str(source_items_path.resolve()))
+            self.assertEqual(context.exception.details['field'], 'items.old')
+            self.assertFalse((root / 'sources' / 'raw' / 'wechat_url' / item_id).exists())
+            self.assertFalse((root / '.wikify' / 'ingest' / 'items' / f'{item_id}.json').exists())
+            self.assertFalse(any((root / '.wikify' / 'ingest' / 'runs').glob('*.json')))
+            self.assertFalse((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
+            source_items = json.loads(source_items_path.read_text(encoding='utf-8'))
+            self.assertNotIn(item_id, source_items.get('items', {}))

@@ -151,8 +151,19 @@ def _validate_source_items_document(path: Path, document: dict):
         raise IngestError(
             'Source items artifact items field is invalid',
             code='ingest_source_items_invalid',
-            details={'path': str(path), 'schema_version': document.get('schema_version')},
+            details={'path': str(path), 'schema_version': document.get('schema_version'), 'field': 'items'},
         )
+    for item_id, item in document['items'].items():
+        if not isinstance(item, dict):
+            raise IngestError(
+                'Source items artifact item entry is invalid',
+                code='ingest_source_items_invalid',
+                details={
+                    'path': str(path),
+                    'schema_version': document.get('schema_version'),
+                    'field': f'items.{item_id}',
+                },
+            )
 
 
 def _validate_ingest_queue_document(path: Path, document: dict):
@@ -166,8 +177,19 @@ def _validate_ingest_queue_document(path: Path, document: dict):
         raise IngestError(
             'Ingest queue artifact entries field is invalid',
             code='ingest_queue_invalid',
-            details={'path': str(path), 'schema_version': document.get('schema_version')},
+            details={'path': str(path), 'schema_version': document.get('schema_version'), 'field': 'entries'},
         )
+    for index, entry in enumerate(document['entries']):
+        if not isinstance(entry, dict):
+            raise IngestError(
+                'Ingest queue artifact entry is invalid',
+                code='ingest_queue_invalid',
+                details={
+                    'path': str(path),
+                    'schema_version': document.get('schema_version'),
+                    'field': f'entries[{index}]',
+                },
+            )
 
 
 def validate_existing_control_artifacts(base: Path | str, workspace_id: str, now: str):
