@@ -27,9 +27,18 @@ fokb ...
 
 ---
 
-## 人类入口：只看最终 wiki
+## 人类入口：自然语言让 agent 保存知识
 
-人类用户不应该理解 source registry、sync、queue、wikiize 这些中间层。默认体验应该是：
+人类用户不应该理解 source registry、sync、queue、wikiize 这些中间层。默认体验应该是对 agent 说：
+
+```text
+帮我保存这篇文章
+把这个链接整理进我的 wiki
+这个文件帮我归档一下
+以后让我能查到这篇内容
+```
+
+agent 再把这个意图翻译成 Wikify 工具调用：
 
 ```bash
 wikify ingest <locator>
@@ -41,7 +50,9 @@ wikify ingest <locator>
 wikify ingest https://mp.weixin.qq.com/s/example
 ```
 
-`wikify ingest` 是显式联网入口，可以抓取和整理内容，然后刷新最终 wiki。人类消费的是整理好的 Markdown/static wiki；`wikify sync`、`wikify wikiize`、validation report、agent context 等是 agent、调试和维护接口。
+`wikify ingest` 是 agent-facing 的显式联网入口，可以抓取和保存来源，并写出 `.wikify/ingest/requests/` 下的 trusted agent request。这个 request 会告诉 agent：来源是什么、正文在哪里、当前 wiki 有哪些上下文、agent 拥有哪些整理权限、页面质量标准是什么、失败后如何恢复。
+
+人类消费的是整理好的 Markdown/static wiki 和 agent 的最终变更摘要；`wikify sync`、`wikify wikiize`、validation report、queue、trusted request、agent context 等是 agent、调试和维护接口。
 
 `wikify sync still does not fetch URL sources`：URL source 在 sync 中仍然只做离线状态记录，不会隐藏抓取。
 

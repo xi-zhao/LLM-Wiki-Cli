@@ -7,7 +7,11 @@
 
 ## Unified ingest pipeline
 
-`wikify ingest <locator>` is the human-facing entrypoint. It may fetch network content because the user explicitly invoked ingest. Humans consume the final wiki, while agents inspect the machine artifacts.
+Humans ask an agent to save or organize knowledge in natural language. The agent calls `wikify ingest <locator>` as the tool contract. Ingest may fetch network content because the user/agent explicitly invoked a save operation.
+
+Successful ingest writes source artifacts and a trusted agent request under `.wikify/ingest/requests/`. The request gives the calling agent source metadata, content pointers, workspace context, full-control permission semantics, recovery instructions, page quality standards, and the expected human completion summary shape.
+
+Humans consume the final wiki and the agent's knowledge-base change summary, while agents inspect the machine artifacts.
 
 For `mp.weixin.qq.com` URLs, the `wechat_url` adapter normalizes the article into canonical source item artifacts and queues deterministic wikiization.
 

@@ -657,6 +657,12 @@ class WikifyCliTests(unittest.TestCase):
                 self.assertEqual(result['command'], 'ingest')
                 self.assertEqual(result['result']['status'], 'planned')
                 self.assertEqual(result['result']['completion']['user_message'], 'ingest dry run completed')
+                self.assertIn('trusted_agent_request', result['result']['artifacts'])
+                self.assertIn('read_trusted_agent_request', result['result']['completion']['agent_next_actions'])
+                self.assertEqual(
+                    result['result']['completion']['human_summary']['source_status'],
+                    'planned',
+                )
         finally:
             if original_wikify is None:
                 os.environ.pop('WIKIFY_BASE', None)
@@ -2979,12 +2985,14 @@ class WikifyCliTests(unittest.TestCase):
         protocol = (root / 'scripts' / 'fokb_protocol.md').read_text(encoding='utf-8')
 
         self.assertIn('wikify ingest <locator>', readme)
-        self.assertIn('humans consume the final wiki', readme)
+        self.assertIn('Humans should normally ask their agent to save or organize knowledge', readme)
+        self.assertIn('trusted agent request', readme)
         self.assertIn('wikify sync still does not fetch URL sources', readme)
         self.assertIn('mp.weixin.qq.com', readme)
         self.assertNotIn('wikify ingest <locator>\nwikify views', readme)
 
-        self.assertIn('人类入口：只看最终 wiki', chinese_readme)
+        self.assertIn('人类入口：自然语言让 agent 保存知识', chinese_readme)
+        self.assertIn('帮我保存这篇文章', chinese_readme)
         self.assertIn('wikify ingest <locator>', chinese_readme)
         self.assertIn('wikify ingest https://mp.weixin.qq.com/s/example', chinese_readme)
         self.assertIn('wikify sync still does not fetch URL sources', chinese_readme)
@@ -2992,6 +3000,8 @@ class WikifyCliTests(unittest.TestCase):
 
         self.assertIn('Unified ingest pipeline', protocol)
         self.assertIn('wikify ingest <locator>', protocol)
+        self.assertIn('Humans ask an agent to save or organize knowledge', protocol)
+        self.assertIn('.wikify/ingest/requests/', protocol)
         self.assertIn('mp.weixin.qq.com', protocol)
         self.assertIn('wikify sync still does not fetch URL sources', protocol)
 

@@ -12,6 +12,7 @@ from wikify.sync import INGEST_QUEUE_SCHEMA_VERSION, SOURCE_ITEMS_SCHEMA_VERSION
 
 INGEST_RUN_SCHEMA_VERSION = 'wikify.ingest-run.v1'
 INGEST_ITEM_SCHEMA_VERSION = 'wikify.ingest-item.v1'
+TRUSTED_AGENT_INGEST_REQUEST_SCHEMA_VERSION = 'wikify.trusted-agent-ingest-request.v1'
 
 
 def utc_now() -> str:
@@ -49,6 +50,10 @@ def ingest_run_path(base: Path | str, run_id: str) -> Path:
 
 def ingest_item_path(base: Path | str, item_id: str) -> Path:
     return workspace_root(base) / '.wikify' / 'ingest' / 'items' / f'{item_id}.json'
+
+
+def trusted_agent_request_path(base: Path | str, run_id: str) -> Path:
+    return workspace_root(base) / '.wikify' / 'ingest' / 'requests' / f'{run_id}.json'
 
 
 def raw_item_dir(base: Path | str, adapter: str, item_id: str) -> Path:

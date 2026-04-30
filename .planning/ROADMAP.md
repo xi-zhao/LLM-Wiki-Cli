@@ -12,7 +12,7 @@
 
 **Goal:** Make `wikify ingest` an agent-facing handoff contract that saves sources, gives trusted agents enough context to organize knowledge, and returns a completion summary suitable for human-facing replies.
 
-- [ ] Phase 29: Trusted Agent Ingest Handoff (0/1 plans)
+- [x] Phase 29: Trusted Agent Ingest Handoff (1/1 plans) - completed 2026-04-30
 
 Future phases may add full trusted-agent operation snapshots and rollback for broad wiki rewrites after the ingest handoff contract is stable.
 
@@ -92,4 +92,4 @@ Detailed phase plans, summaries, and verification artifacts remain in `.planning
 |-----------|--------|-------|--------|-----------|
 | v0.1.0a2 Agentic Maintenance Automation | 1-21 | 21/21 | Complete | 2026-04-29 |
 | v0.2.0 Personal Wiki Core & Views | 22-28 | 12/12 | Complete | 2026-04-30 |
-| v0.3.0 Trusted Agent Ingest Experience | 29 | 0/1 | Active | - |
+| v0.3.0 Trusted Agent Ingest Experience | 29 | 1/1 | Active | 2026-04-30 |

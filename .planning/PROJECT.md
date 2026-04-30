@@ -88,9 +88,13 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 
 ### Active
 
-- [ ] `wikify ingest` writes a trusted-agent handoff request that includes source metadata, content pointers, workspace context, full-control permissions, recovery instructions, high-quality page standards, and a completion summary contract.
-- [ ] Product docs frame normal use as humans asking agents to save or organize knowledge, with `wikify ingest` as the agent-facing tool call.
-- [ ] Ingest completion returns an agent-friendly summary that can be translated into a human-facing knowledge-base change report.
+- None - Phase 29 completed the first v0.3.0 trusted-agent ingest slice. Future trusted-write snapshot and rollback work remains deferred.
+
+### Validated
+
+- [x] `wikify ingest` writes a trusted-agent handoff request that includes source metadata, content pointers, workspace context, full-control permissions, recovery instructions, high-quality page standards, and a completion summary contract.
+- [x] Product docs frame normal use as humans asking agents to save or organize knowledge, with `wikify ingest` as the agent-facing tool call.
+- [x] Ingest completion returns an agent-friendly summary that can be translated into a human-facing knowledge-base change report.
 
 ### Out of Scope
 

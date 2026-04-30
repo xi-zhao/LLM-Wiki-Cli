@@ -11,6 +11,7 @@ from wikify.ingest.artifacts import (
     raw_item_dir,
     relative_to_root,
     source_item_from_normalized,
+    trusted_agent_request_path,
     unique_ingest_run_id,
     upsert_ingest_queue_entry,
     upsert_source_item,
@@ -22,6 +23,12 @@ from wikify.ingest.artifacts import (
 )
 from wikify.ingest.documents import FetchedPayload, IngestRequest, NormalizedDocument
 from wikify.ingest.errors import IngestError
+from wikify.ingest.handoff import (
+    build_completion_summary,
+    build_trusted_agent_ingest_request,
+    trusted_agent_next_actions,
+    write_trusted_agent_ingest_request,
+)
 from wikify.sync import ingest_queue_path
 from wikify.views import run_view_generation
 from wikify.wikiize import run_wikiization
@@ -49,6 +56,15 @@ def run_ingest(
 
     if dry_run:
         item_id = _planned_item_id(adapter.name, canonical_locator)
+        request_path = relative_to_root(root, trusted_agent_request_path(root, run_id))
+        completion_summary = build_completion_summary(
+            status='planned',
+            document=None,
+            item={'metadata': {}, 'item_id': item_id},
+            request_path=request_path,
+            human_entry={},
+            human_path={},
+        )
         return {
             'schema_version': INGEST_RUN_SCHEMA_VERSION,
             'status': 'planned',
@@ -70,9 +86,18 @@ def run_ingest(
                 'locator': canonical_locator,
                 'status': 'planned',
             },
-            'artifacts': {},
+            'artifacts': {
+                'trusted_agent_request': request_path,
+            },
+            'trusted_agent_request': {
+                'schema_version': 'wikify.trusted-agent-ingest-request.v1',
+                'path': request_path,
+                'status': 'planned',
+            },
             'human_path': {},
             'human_entry': {},
+            'completion_summary': completion_summary,
+            'agent_next_actions': trusted_agent_next_actions(),
             'next_actions': [],
         }
 
@@ -110,6 +135,26 @@ def run_ingest(
     queue_entry = upsert_ingest_queue_entry(root, workspace_id, item, now)
     source_item_object_path = write_source_item_object(root, item)
     item_record_path = _write_ingest_item_record(root, workspace_id, document, item, queue_entry, now)
+    base_artifacts = {
+        'item': relative_to_root(root, item_record_path),
+        'source_item_object': relative_to_root(root, source_item_object_path),
+        'raw_document': raw_paths['document'],
+    }
+
+    trusted_request = build_trusted_agent_ingest_request(
+        root,
+        workspace_id=workspace_id,
+        run_id=run_id,
+        document=document,
+        item=item,
+        queue_entry=queue_entry,
+        artifacts=base_artifacts,
+        human_path={},
+        human_entry={},
+        created_at=now,
+    )
+    trusted_agent_request_file = write_trusted_agent_ingest_request(root, trusted_request)
+    trusted_agent_request_rel = relative_to_root(root, trusted_agent_request_file)
 
     human_path = {}
     human_entry = {}
@@ -152,6 +197,7 @@ def run_ingest(
                 refresh_views,
                 now,
                 source_item_object_path=source_item_object_path,
+                trusted_agent_request_path=trusted_agent_request_file,
                 status='failed',
                 human_path=human_path,
                 human_entry=human_entry,
@@ -160,6 +206,26 @@ def run_ingest(
             raise
 
     item_record_path = _write_ingest_item_record(root, workspace_id, document, item, queue_entry, now)
+    artifacts = {
+        'run': relative_to_root(root, ingest_run_path(root, run_id)),
+        'item': relative_to_root(root, item_record_path),
+        'source_item_object': relative_to_root(root, source_item_object_path),
+        'raw_document': raw_paths['document'],
+        'trusted_agent_request': trusted_agent_request_rel,
+    }
+    trusted_request = build_trusted_agent_ingest_request(
+        root,
+        workspace_id=workspace_id,
+        run_id=run_id,
+        document=document,
+        item=item,
+        queue_entry=queue_entry,
+        artifacts=artifacts,
+        human_path=human_path,
+        human_entry=human_entry,
+        created_at=now,
+    )
+    write_trusted_agent_ingest_request(root, trusted_request)
     run_record_path = _write_ingest_run_record(
         root,
         workspace_id,
@@ -171,6 +237,7 @@ def run_ingest(
         refresh_views,
         now,
         source_item_object_path=source_item_object_path,
+        trusted_agent_request_path=trusted_agent_request_file,
         status='completed',
         human_path=human_path,
         human_entry=human_entry,
@@ -181,6 +248,14 @@ def run_ingest(
             f'wikify wikiize --item {item["item_id"]}',
             'wikify views',
         ]
+    completion_summary = build_completion_summary(
+        status='completed',
+        document=document,
+        item=item,
+        request_path=trusted_agent_request_rel,
+        human_entry=human_entry,
+        human_path=human_path,
+    )
 
     return {
         'schema_version': INGEST_RUN_SCHEMA_VERSION,
@@ -203,9 +278,17 @@ def run_ingest(
             'item': relative_to_root(root, item_record_path),
             'source_item_object': relative_to_root(root, source_item_object_path),
             'raw_document': raw_paths['document'],
+            'trusted_agent_request': trusted_agent_request_rel,
+        },
+        'trusted_agent_request': {
+            'schema_version': trusted_request['schema_version'],
+            'path': trusted_agent_request_rel,
+            'status': trusted_request['status'],
         },
         'human_path': human_path,
         'human_entry': human_entry,
+        'completion_summary': completion_summary,
+        'agent_next_actions': trusted_agent_next_actions(),
         'next_actions': next_actions,
     }
 
@@ -332,6 +415,7 @@ def _write_ingest_run_record(
     now: str,
     *,
     source_item_object_path: Path,
+    trusted_agent_request_path: Path | None,
     status: str,
     human_path: dict,
     human_entry: dict,
@@ -342,6 +426,8 @@ def _write_ingest_run_record(
         'source_item_object': relative_to_root(root, source_item_object_path),
         'raw_document': document.raw_paths.get('document'),
     }
+    if trusted_agent_request_path is not None:
+        artifacts['trusted_agent_request'] = relative_to_root(root, trusted_agent_request_path)
     record = {
         'schema_version': INGEST_RUN_SCHEMA_VERSION,
         'workspace_id': workspace_id,

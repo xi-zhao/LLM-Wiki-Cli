@@ -13,6 +13,7 @@ class IngestPipelineContractTests(unittest.TestCase):
             ingest_queue_id,
             ingest_run_path,
             raw_item_dir,
+            trusted_agent_request_path,
             workspace_root,
         )
 
@@ -32,6 +33,10 @@ class IngestPipelineContractTests(unittest.TestCase):
         self.assertEqual(
             raw_item_dir(root, 'wechat_url', item_id).as_posix(),
             (resolved_root / 'sources' / 'raw' / 'wechat_url' / item_id).as_posix(),
+        )
+        self.assertEqual(
+            trusted_agent_request_path(root, 'run_abc').as_posix(),
+            (resolved_root / '.wikify' / 'ingest' / 'requests' / 'run_abc.json').as_posix(),
         )
 
     def test_normalized_document_becomes_queueable_source_item(self):
@@ -290,8 +295,47 @@ class IngestPipelineWriteTests(unittest.TestCase):
             )
 
             self.assertEqual(result['status'], 'planned')
+            self.assertIn('trusted_agent_request', result['artifacts'])
+            self.assertTrue(result['artifacts']['trusted_agent_request'].startswith('.wikify/ingest/requests/'))
             self.assertFalse((root / '.wikify' / 'ingest').exists())
             self.assertFalse((root / '.wikify' / 'queues' / 'ingest-items.json').exists())
+
+    def test_run_ingest_writes_trusted_agent_request(self):
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+
+            result = run_ingest(
+                root,
+                'https://mp.weixin.qq.com/s/example',
+                adapter_name='wechat_url',
+                fetch_payload={
+                    'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                    'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                    'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                },
+                refresh_views=False,
+            )
+
+            request_path = root / result['artifacts']['trusted_agent_request']
+            request = json.loads(request_path.read_text(encoding='utf-8'))
+
+            self.assertEqual(request['schema_version'], 'wikify.trusted-agent-ingest-request.v1')
+            self.assertEqual(request['task']['user_intent'], 'save_and_organize_personal_wiki')
+            self.assertEqual(request['source']['item_id'], result['item']['item_id'])
+            self.assertEqual(request['source']['canonical_locator'], 'https://mp.weixin.qq.com/s/example')
+            self.assertEqual(request['content']['cleaned_markdown_path'], result['artifacts']['raw_document'])
+            self.assertIn('existing_topic_index', request['workspace_context'])
+            self.assertEqual(request['trusted_agent']['permissions']['delete_merge'], 'allowed_with_snapshot')
+            self.assertIn('一句话结论', request['page_quality']['required_sections'])
+            self.assertIn('source preservation status', request['completion_summary_contract']['human_summary_fields'])
+            self.assertIn('wikify validate --strict --write-report', request['recovery']['validation_commands'])
+            self.assertEqual(result['trusted_agent_request']['schema_version'], request['schema_version'])
+            self.assertEqual(result['trusted_agent_request']['path'], result['artifacts']['trusted_agent_request'])
+            self.assertIn('read_trusted_agent_request', result['agent_next_actions'])
 
     def test_run_ingest_writes_raw_item_source_object_and_queue(self):
         from wikify.ingest.pipeline import run_ingest
@@ -657,3 +701,5 @@ class IngestHumanPathTests(unittest.TestCase):
             self.assertEqual(run_record['queue_entry']['status'], 'completed')
             self.assertIn('item', run_record['artifacts'])
             self.assertIn('raw_document', run_record['artifacts'])
+            self.assertIn('trusted_agent_request', run_record['artifacts'])
+            self.assertTrue((root / run_record['artifacts']['trusted_agent_request']).exists())

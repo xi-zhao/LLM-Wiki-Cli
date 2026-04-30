@@ -11,10 +11,10 @@ See: .planning/PROJECT.md (updated 2026-04-30)
 
 Milestone: v0.3.0 Trusted Agent Ingest Experience
 Phase: 29 - Trusted Agent Ingest Handoff
-Status: Planning
-Last activity: 2026-04-30 - Created v0.3.0 requirements and roadmap from the trusted agent ingest experience design.
+Status: Phase complete
+Last activity: 2026-04-30 - Implemented trusted-agent ingest request artifacts, agent completion summary, docs, tests, and verification.
 
-Progress: ░░░░░░░░░░ 0%
+Progress: ██████████ 100%
 
 ## Performance Metrics
 
@@ -171,7 +171,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Implement Phase 29 trusted agent ingest handoff.
+- None.
 
 ### Blockers/Concerns
 
@@ -221,6 +221,7 @@ Recent decisions affecting current work:
 - Phase 24 completed: canonical object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification artifacts shipped.
 - Milestone v0.3.0 started: Trusted Agent Ingest Experience.
 - Phase 29 added: Trusted Agent Ingest Handoff.
+- Phase 29 completed: `wikify ingest` now writes trusted-agent request artifacts, returns agent-friendly completion summaries, and documents the natural-language human request path.
 - Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
 - Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 - Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
@@ -246,6 +247,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-30
-Stopped at: Phase 29 planning started.
-Resume file: .planning/phases/29-trusted-agent-ingest-handoff/29-01-PLAN.md
-Next command: `/gsd-execute-phase 29 --interactive`
+Stopped at: Phase 29 complete and verified.
+Resume file: .planning/phases/29-trusted-agent-ingest-handoff/29-01-SUMMARY.md
+Next command: Decide whether to add the future snapshot/operation-record phase.

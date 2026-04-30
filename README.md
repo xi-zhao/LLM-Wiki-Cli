@@ -40,9 +40,17 @@ In short:
 - Keep an Obsidian-friendly navigation layer alongside the CLI layer
 - Build graph artifacts that explain wiki structure, central nodes, communities, and broken links
 
-## Human ingest path
+## Agent-driven ingest path
 
-Humans should normally add knowledge and read the final wiki:
+Humans should normally ask their agent to save or organize knowledge:
+
+```text
+Save this article to my wiki: https://...
+Organize this file into my knowledge base.
+Make this WeChat public account article easy to find later.
+```
+
+The agent then calls Wikify as the tool contract:
 
 ```bash
 wikify ingest <locator>
@@ -54,11 +62,11 @@ For WeChat public account articles, pass the article URL:
 wikify ingest https://mp.weixin.qq.com/s/example
 ```
 
-The command is allowed to fetch because ingest is explicit. It writes machine artifacts for agents, then updates the organized wiki. Humans consume the final wiki; `source add`, `sync`, `wikiize`, validation reports, queues, and agent exports are lower-level machine surfaces.
+The command is allowed to fetch because ingest is explicit. It writes source artifacts plus a trusted agent request under `.wikify/ingest/requests/`, giving the calling agent source metadata, content pointers, workspace context, full-control permission semantics, recovery instructions, page quality standards, and a completion summary contract.
 
-In short, humans consume the final wiki.
+Humans consume the final wiki and the agent's knowledge-base change summary; `source add`, `sync`, `wikiize`, validation reports, queues, request artifacts, and agent exports are lower-level machine surfaces.
 
-`wikify ingest` refreshes views by default, so `wikify views` is not part of the normal human ingest path. Use `wikify views` only when explicitly re-rendering views for debugging, repair, or agent maintenance.
+`wikify ingest` refreshes views by default when the deterministic wiki path can complete, so `wikify views` is not part of the normal human-facing request. Use `wikify views` only when explicitly re-rendering views for debugging, repair, or agent maintenance.
 
 `wikify sync still does not fetch URL sources`. It remains an agent/debug command for local change detection and queue maintenance.
 

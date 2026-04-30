@@ -8,12 +8,12 @@
 
 ### Trusted Agent Ingest
 
-- [ ] **TAI-01**: Product documentation describes the primary human experience as natural-language requests to an agent, with `wikify ingest` as the agent-facing tool contract.
-- [ ] **TAI-02**: `wikify ingest` writes a trusted agent work request artifact for every successful non-dry-run ingest.
-- [ ] **TAI-03**: The trusted agent work request includes source metadata, cleaned content pointers, workspace context, full-control permission semantics, recovery instructions, and high-quality page standards.
-- [ ] **TAI-04**: `wikify ingest --dry-run` reports the planned trusted agent request path without writing request or source artifacts.
-- [ ] **TAI-05**: `wikify ingest` returns a completion summary that helps the calling agent tell the human what was saved, where the final wiki entry is or will be, and what the agent should do next.
-- [ ] **TAI-06**: The trusted ingest request and completion behavior are covered by focused unit tests and documented as agent-facing contracts.
+- [x] **TAI-01**: Product documentation describes the primary human experience as natural-language requests to an agent, with `wikify ingest` as the agent-facing tool contract.
+- [x] **TAI-02**: `wikify ingest` writes a trusted agent work request artifact for every successful non-dry-run ingest.
+- [x] **TAI-03**: The trusted agent work request includes source metadata, cleaned content pointers, workspace context, full-control permission semantics, recovery instructions, and high-quality page standards.
+- [x] **TAI-04**: `wikify ingest --dry-run` reports the planned trusted agent request path without writing request or source artifacts.
+- [x] **TAI-05**: `wikify ingest` returns a completion summary that helps the calling agent tell the human what was saved, where the final wiki entry is or will be, and what the agent should do next.
+- [x] **TAI-06**: The trusted ingest request and completion behavior are covered by focused unit tests and documented as agent-facing contracts.
 
 ### Future Trusted Maintenance
 
@@ -33,12 +33,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TAI-01 | Phase 29 | Planned |
-| TAI-02 | Phase 29 | Planned |
-| TAI-03 | Phase 29 | Planned |
-| TAI-04 | Phase 29 | Planned |
-| TAI-05 | Phase 29 | Planned |
-| TAI-06 | Phase 29 | Planned |
+| TAI-01 | Phase 29 | Complete |
+| TAI-02 | Phase 29 | Complete |
+| TAI-03 | Phase 29 | Complete |
+| TAI-04 | Phase 29 | Complete |
+| TAI-05 | Phase 29 | Complete |
+| TAI-06 | Phase 29 | Complete |
 | TAI-07 | Future | Deferred |
 | TAI-08 | Future | Deferred |
 

@@ -299,11 +299,14 @@ def cmd_ingest(args):
         return payload
     artifacts = [path for path in result.get('artifacts', {}).values() if path]
     summary = 'ingest dry run completed' if result.get('dry_run') else 'wiki updated from ingest'
+    completion_summary = result.get('completion_summary') or {}
     result['completion'] = {
         'status': result.get('status'),
         'summary': summary,
         'artifacts': artifacts,
         'next_actions': result.get('next_actions', []),
+        'agent_next_actions': result.get('agent_next_actions', []),
+        'human_summary': completion_summary.get('human_summary', {}),
         'user_message': summary,
     }
     payload, _ = envelope_ok('ingest', result)
