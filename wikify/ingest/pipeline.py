@@ -14,6 +14,7 @@ from wikify.ingest.artifacts import (
     upsert_ingest_queue_entry,
     upsert_source_item,
     utc_now,
+    validate_existing_control_artifacts,
     write_json_atomic,
     write_source_item_object,
     write_text_atomic,
@@ -75,6 +76,8 @@ def run_ingest(
             code='ingest_raw_required',
             details={'locator': locator, 'adapter': adapter.name},
         )
+
+    validate_existing_control_artifacts(root, workspace_id, now)
 
     request = IngestRequest(
         root=str(root),

@@ -140,9 +140,7 @@ def _queue_item_status_counts(entries: list[dict]) -> dict:
     return counts
 
 
-def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
-    path = source_items_path(base)
-    document = read_json_or_default(path, empty_source_items(workspace_id, now))
+def _validate_source_items_document(path: Path, document: dict):
     if document.get('schema_version') != SOURCE_ITEMS_SCHEMA_VERSION:
         raise IngestError(
             'Source items artifact schema is invalid',
@@ -155,6 +153,37 @@ def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str
             code='ingest_source_items_invalid',
             details={'path': str(path), 'schema_version': document.get('schema_version')},
         )
+
+
+def _validate_ingest_queue_document(path: Path, document: dict):
+    if document.get('schema_version') != INGEST_QUEUE_SCHEMA_VERSION:
+        raise IngestError(
+            'Ingest queue artifact schema is invalid',
+            code='ingest_artifact_schema_invalid',
+            details={'path': str(path), 'schema_version': document.get('schema_version')},
+        )
+    if not isinstance(document.get('entries'), list):
+        raise IngestError(
+            'Ingest queue artifact entries field is invalid',
+            code='ingest_queue_invalid',
+            details={'path': str(path), 'schema_version': document.get('schema_version')},
+        )
+
+
+def validate_existing_control_artifacts(base: Path | str, workspace_id: str, now: str):
+    source_path = source_items_path(base)
+    source_items = read_json_or_default(source_path, empty_source_items(workspace_id, now))
+    _validate_source_items_document(source_path, source_items)
+
+    queue_path = ingest_queue_path(base)
+    queue = read_json_or_default(queue_path, empty_ingest_queue(workspace_id, now))
+    _validate_ingest_queue_document(queue_path, queue)
+
+
+def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
+    path = source_items_path(base)
+    document = read_json_or_default(path, empty_source_items(workspace_id, now))
+    _validate_source_items_document(path, document)
     document['schema_version'] = SOURCE_ITEMS_SCHEMA_VERSION
     document['workspace_id'] = workspace_id
     document['generated_at'] = now
@@ -171,18 +200,7 @@ def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str
 def upsert_ingest_queue_entry(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
     path = ingest_queue_path(base)
     document = read_json_or_default(path, empty_ingest_queue(workspace_id, now))
-    if document.get('schema_version') != INGEST_QUEUE_SCHEMA_VERSION:
-        raise IngestError(
-            'Ingest queue artifact schema is invalid',
-            code='ingest_artifact_schema_invalid',
-            details={'path': str(path), 'schema_version': document.get('schema_version')},
-        )
-    if not isinstance(document.get('entries'), list):
-        raise IngestError(
-            'Ingest queue artifact entries field is invalid',
-            code='ingest_queue_invalid',
-            details={'path': str(path), 'schema_version': document.get('schema_version')},
-        )
+    _validate_ingest_queue_document(path, document)
     document['schema_version'] = INGEST_QUEUE_SCHEMA_VERSION
     document['workspace_id'] = workspace_id
     document['generated_at'] = now

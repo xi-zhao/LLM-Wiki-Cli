@@ -365,6 +365,7 @@ class IngestPipelineWriteTests(unittest.TestCase):
             self.assertGreaterEqual(second_entry['updated_at'], first_entry['updated_at'])
 
     def test_run_ingest_raises_typed_error_for_invalid_source_items_json(self):
+        from wikify.ingest.artifacts import ingest_item_id
         from wikify.ingest.errors import IngestError
         from wikify.ingest.pipeline import run_ingest
         from wikify.workspace import initialize_workspace
@@ -372,6 +373,7 @@ class IngestPipelineWriteTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             initialize_workspace(root)
+            item_id = ingest_item_id('wechat_url', 'https://mp.weixin.qq.com/s/example')
             source_items_path = root / '.wikify' / 'sync' / 'source-items.json'
             source_items_path.parent.mkdir(parents=True, exist_ok=True)
             source_items_path.write_text('{not json', encoding='utf-8')
@@ -391,8 +393,13 @@ class IngestPipelineWriteTests(unittest.TestCase):
 
             self.assertEqual(context.exception.code, 'ingest_artifact_invalid_json')
             self.assertEqual(context.exception.details['path'], str(source_items_path.resolve()))
+            self.assertFalse((root / 'sources' / 'raw' / 'wechat_url' / item_id).exists())
+            self.assertFalse((root / '.wikify' / 'ingest' / 'items' / f'{item_id}.json').exists())
+            self.assertFalse(any((root / '.wikify' / 'ingest' / 'runs').glob('*.json')))
+            self.assertFalse((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
 
     def test_run_ingest_raises_typed_error_for_invalid_queue_entries_type(self):
+        from wikify.ingest.artifacts import ingest_item_id
         from wikify.ingest.errors import IngestError
         from wikify.ingest.pipeline import run_ingest
         from wikify.workspace import initialize_workspace
@@ -400,6 +407,7 @@ class IngestPipelineWriteTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             initialize_workspace(root)
+            item_id = ingest_item_id('wechat_url', 'https://mp.weixin.qq.com/s/example')
             queue_path = root / '.wikify' / 'queues' / 'ingest-items.json'
             queue_path.parent.mkdir(parents=True, exist_ok=True)
             queue_path.write_text(json.dumps({
@@ -424,3 +432,11 @@ class IngestPipelineWriteTests(unittest.TestCase):
 
             self.assertEqual(context.exception.code, 'ingest_queue_invalid')
             self.assertEqual(context.exception.details['path'], str(queue_path.resolve()))
+            self.assertFalse((root / 'sources' / 'raw' / 'wechat_url' / item_id).exists())
+            self.assertFalse((root / '.wikify' / 'ingest' / 'items' / f'{item_id}.json').exists())
+            self.assertFalse(any((root / '.wikify' / 'ingest' / 'runs').glob('*.json')))
+            self.assertFalse((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
+            source_items_path = root / '.wikify' / 'sync' / 'source-items.json'
+            if source_items_path.exists():
+                source_items = json.loads(source_items_path.read_text(encoding='utf-8'))
+                self.assertNotIn(item_id, source_items.get('items', {}))
