@@ -6,11 +6,11 @@ from wikify.ingest.artifacts import (
     INGEST_ITEM_SCHEMA_VERSION,
     INGEST_RUN_SCHEMA_VERSION,
     ingest_item_path,
-    ingest_run_id,
     ingest_run_path,
     raw_item_dir,
     relative_to_root,
     source_item_from_normalized,
+    unique_ingest_run_id,
     upsert_ingest_queue_entry,
     upsert_source_item,
     utc_now,
@@ -40,7 +40,7 @@ def run_ingest(
     adapter = resolve_adapter(locator, adapter_name=adapter_name)
     canonical_locator = adapter.canonicalize(locator)
     now = utc_now()
-    run_id = ingest_run_id(adapter.name, canonical_locator, now)
+    run_id = unique_ingest_run_id(adapter.name, canonical_locator)
 
     if dry_run:
         item_id = _planned_item_id(adapter.name, canonical_locator)

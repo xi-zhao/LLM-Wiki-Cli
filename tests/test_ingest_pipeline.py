@@ -303,8 +303,12 @@ class IngestPipelineWriteTests(unittest.TestCase):
             )
 
             item_id = result['item']['item_id']
+            absolute_path = Path(result['item']['path'])
+            resolved_root = root.resolve()
             self.assertEqual(result['status'], 'completed')
-            self.assertTrue((root / result['item']['path']).exists())
+            self.assertTrue(absolute_path.is_absolute())
+            self.assertEqual(result['item']['relative_path'], absolute_path.relative_to(resolved_root).as_posix())
+            self.assertTrue(absolute_path.exists())
             self.assertTrue((root / '.wikify' / 'ingest' / 'items' / f'{item_id}.json').exists())
             self.assertTrue((root / 'artifacts' / 'objects' / 'source_items' / f'{item_id}.json').exists())
 
@@ -329,29 +333,94 @@ class IngestPipelineWriteTests(unittest.TestCase):
                 'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
             }
 
-            first = run_ingest(
-                root,
-                'https://mp.weixin.qq.com/s/example',
-                adapter_name='wechat_url',
-                fetch_payload=payload,
-                refresh_views=False,
-            )
-            queue_path = root / '.wikify' / 'queues' / 'ingest-items.json'
-            first_queue = json.loads(queue_path.read_text(encoding='utf-8'))
-            first_entry = first_queue['entries'][0]
+            with patch('wikify.ingest.pipeline.utc_now', return_value='2026-04-30T00:00:00Z'):
+                first = run_ingest(
+                    root,
+                    'https://mp.weixin.qq.com/s/example',
+                    adapter_name='wechat_url',
+                    fetch_payload=payload,
+                    refresh_views=False,
+                )
+                queue_path = root / '.wikify' / 'queues' / 'ingest-items.json'
+                first_queue = json.loads(queue_path.read_text(encoding='utf-8'))
+                first_entry = first_queue['entries'][0]
 
-            second = run_ingest(
-                root,
-                'https://mp.weixin.qq.com/s/example',
-                adapter_name='wechat_url',
-                fetch_payload=payload,
-                refresh_views=False,
-            )
+                second = run_ingest(
+                    root,
+                    'https://mp.weixin.qq.com/s/example',
+                    adapter_name='wechat_url',
+                    fetch_payload=payload,
+                    refresh_views=False,
+                )
             second_queue = json.loads(queue_path.read_text(encoding='utf-8'))
             second_entry = second_queue['entries'][0]
+            run_artifacts = sorted((root / '.wikify' / 'ingest' / 'runs').glob('*.json'))
 
             self.assertEqual(first['item']['item_id'], second['item']['item_id'])
+            self.assertNotEqual(first['run']['run_id'], second['run']['run_id'])
+            self.assertEqual(len(run_artifacts), 2)
             self.assertEqual(second_queue['summary']['queue_count'], 1)
             self.assertEqual(len(second_queue['entries']), 1)
             self.assertEqual(second_entry['created_at'], first_entry['created_at'])
             self.assertGreaterEqual(second_entry['updated_at'], first_entry['updated_at'])
+
+    def test_run_ingest_raises_typed_error_for_invalid_source_items_json(self):
+        from wikify.ingest.errors import IngestError
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+            source_items_path = root / '.wikify' / 'sync' / 'source-items.json'
+            source_items_path.parent.mkdir(parents=True, exist_ok=True)
+            source_items_path.write_text('{not json', encoding='utf-8')
+
+            with self.assertRaises(IngestError) as context:
+                run_ingest(
+                    root,
+                    'https://mp.weixin.qq.com/s/example',
+                    adapter_name='wechat_url',
+                    fetch_payload={
+                        'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                        'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                        'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                    },
+                    refresh_views=False,
+                )
+
+            self.assertEqual(context.exception.code, 'ingest_artifact_invalid_json')
+            self.assertEqual(context.exception.details['path'], str(source_items_path.resolve()))
+
+    def test_run_ingest_raises_typed_error_for_invalid_queue_entries_type(self):
+        from wikify.ingest.errors import IngestError
+        from wikify.ingest.pipeline import run_ingest
+        from wikify.workspace import initialize_workspace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            initialize_workspace(root)
+            queue_path = root / '.wikify' / 'queues' / 'ingest-items.json'
+            queue_path.parent.mkdir(parents=True, exist_ok=True)
+            queue_path.write_text(json.dumps({
+                'schema_version': 'wikify.ingest-queue.v1',
+                'workspace_id': 'wk_test',
+                'summary': {},
+                'entries': {},
+            }), encoding='utf-8')
+
+            with self.assertRaises(IngestError) as context:
+                run_ingest(
+                    root,
+                    'https://mp.weixin.qq.com/s/example',
+                    adapter_name='wechat_url',
+                    fetch_payload={
+                        'html': (Path(__file__).parent / 'fixtures' / 'wechat_article.html').read_text(encoding='utf-8'),
+                        'text': (Path(__file__).parent / 'fixtures' / 'wechat_article.txt').read_text(encoding='utf-8'),
+                        'metadata': {'title': '统一 Ingest 设计', 'source_account': 'Wikify 产品笔记'},
+                    },
+                    refresh_views=False,
+                )
+
+            self.assertEqual(context.exception.code, 'ingest_queue_invalid')
+            self.assertEqual(context.exception.details['path'], str(queue_path.resolve()))

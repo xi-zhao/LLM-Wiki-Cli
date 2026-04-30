@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from wikify.ingest.documents import NormalizedDocument
+from wikify.ingest.errors import IngestError
 from wikify.objects import object_document_path, source_item_record_to_object
 from wikify.sync import INGEST_QUEUE_SCHEMA_VERSION, SOURCE_ITEMS_SCHEMA_VERSION, ingest_queue_path, source_items_path
 
@@ -32,6 +33,10 @@ def ingest_queue_id(item_id: str) -> str:
 
 def ingest_run_id(adapter: str, canonical_locator: str, now: str) -> str:
     return f'run_{stable_digest(adapter, canonical_locator, now)[:24]}'
+
+
+def unique_ingest_run_id(adapter: str, canonical_locator: str) -> str:
+    return f'run_{stable_digest(adapter, canonical_locator, uuid.uuid4().hex)[:24]}'
 
 
 def workspace_root(base: Path | str) -> Path:
@@ -74,7 +79,21 @@ def read_json_or_default(path: Path | str, default: dict) -> dict:
     target = Path(path)
     if not target.exists():
         return default
-    return json.loads(target.read_text(encoding='utf-8'))
+    try:
+        document = json.loads(target.read_text(encoding='utf-8'))
+    except json.JSONDecodeError as exc:
+        raise IngestError(
+            'Ingest artifact JSON is invalid',
+            code='ingest_artifact_invalid_json',
+            details={'path': str(target), 'schema_version': None},
+        ) from exc
+    if not isinstance(document, dict):
+        raise IngestError(
+            'Ingest artifact JSON root must be an object',
+            code='ingest_artifact_schema_invalid',
+            details={'path': str(target), 'schema_version': None},
+        )
+    return document
 
 
 def empty_source_items(workspace_id: str, now: str) -> dict:
@@ -124,10 +143,21 @@ def _queue_item_status_counts(entries: list[dict]) -> dict:
 def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
     path = source_items_path(base)
     document = read_json_or_default(path, empty_source_items(workspace_id, now))
+    if document.get('schema_version') != SOURCE_ITEMS_SCHEMA_VERSION:
+        raise IngestError(
+            'Source items artifact schema is invalid',
+            code='ingest_artifact_schema_invalid',
+            details={'path': str(path), 'schema_version': document.get('schema_version')},
+        )
+    if not isinstance(document.get('items'), dict):
+        raise IngestError(
+            'Source items artifact items field is invalid',
+            code='ingest_source_items_invalid',
+            details={'path': str(path), 'schema_version': document.get('schema_version')},
+        )
     document['schema_version'] = SOURCE_ITEMS_SCHEMA_VERSION
     document['workspace_id'] = workspace_id
     document['generated_at'] = now
-    document.setdefault('items', {})
     document['items'][item['item_id']] = dict(item)
     items = list(document['items'].values())
     document['summary'] = {
@@ -141,11 +171,23 @@ def upsert_source_item(base: Path | str, workspace_id: str, item: dict, now: str
 def upsert_ingest_queue_entry(base: Path | str, workspace_id: str, item: dict, now: str) -> dict:
     path = ingest_queue_path(base)
     document = read_json_or_default(path, empty_ingest_queue(workspace_id, now))
+    if document.get('schema_version') != INGEST_QUEUE_SCHEMA_VERSION:
+        raise IngestError(
+            'Ingest queue artifact schema is invalid',
+            code='ingest_artifact_schema_invalid',
+            details={'path': str(path), 'schema_version': document.get('schema_version')},
+        )
+    if not isinstance(document.get('entries'), list):
+        raise IngestError(
+            'Ingest queue artifact entries field is invalid',
+            code='ingest_queue_invalid',
+            details={'path': str(path), 'schema_version': document.get('schema_version')},
+        )
     document['schema_version'] = INGEST_QUEUE_SCHEMA_VERSION
     document['workspace_id'] = workspace_id
     document['generated_at'] = now
 
-    entries = list(document.get('entries') or [])
+    entries = list(document['entries'])
     new_entry = queue_entry_for_source_item(item, now)
     entry = None
     for index, existing in enumerate(entries):
