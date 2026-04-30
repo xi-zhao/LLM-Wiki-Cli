@@ -4,13 +4,17 @@
 
 - [x] **v0.1.0a2 Agentic Maintenance Automation** - Phases 1-21 shipped 2026-04-29. Archive: `.planning/milestones/v0.1.0a2-ROADMAP.md`
 - [x] **v0.2.0 Personal Wiki Core & Views** - Phases 22-28 shipped 2026-04-30. Archive: `.planning/milestones/v0.2.0-ROADMAP.md`
-- [ ] **Next milestone** - Not defined. Run `/gsd-new-milestone` to create fresh requirements and roadmap.
+- [ ] **v0.3.0 Trusted Agent Ingest Experience** - Active. Implements the trusted-agent ingest handoff so humans ask agents to save knowledge and agents use Wikify as the recoverable wiki operating layer.
 
 ## Current Roadmap
 
-v0.2.0 is shipped and archived. There are no active milestone requirements in `.planning/ROADMAP.md`.
+### v0.3.0 Trusted Agent Ingest Experience
 
-Start the next cycle with `/gsd-new-milestone`; it should create a fresh `.planning/REQUIREMENTS.md` and expand this roadmap again.
+**Goal:** Make `wikify ingest` an agent-facing handoff contract that saves sources, gives trusted agents enough context to organize knowledge, and returns a completion summary suitable for human-facing replies.
+
+- [ ] Phase 29: Trusted Agent Ingest Handoff (0/1 plans)
+
+Future phases may add full trusted-agent operation snapshots and rollback for broad wiki rewrites after the ingest handoff contract is stable.
 
 ## Shipped Phase Summary
 
@@ -88,3 +92,4 @@ Detailed phase plans, summaries, and verification artifacts remain in `.planning
 |-----------|--------|-------|--------|-----------|
 | v0.1.0a2 Agentic Maintenance Automation | 1-21 | 21/21 | Complete | 2026-04-29 |
 | v0.2.0 Personal Wiki Core & Views | 22-28 | 12/12 | Complete | 2026-04-30 |
+| v0.3.0 Trusted Agent Ingest Experience | 29 | 0/1 | Active | - |

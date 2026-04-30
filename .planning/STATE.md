@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value:** Users can turn scattered personal and project knowledge into a living local wiki that people can browse and agents can reliably call.
-**Current focus:** v0.2.0 Personal Wiki Core & Views is shipped; next step is defining the next milestone.
+**Current focus:** v0.3.0 Trusted Agent Ingest Experience begins with Phase 29, converting ingest into a trusted-agent handoff contract.
 
 ## Current Position
 
-Milestone: v0.2.0 Personal Wiki Core & Views
-Phase: Milestone close
-Status: Shipped
-Last activity: 2026-04-30 - Archived v0.2.0 planning artifacts, marked the milestone shipped, and prepared the project for the next milestone cycle.
+Milestone: v0.3.0 Trusted Agent Ingest Experience
+Phase: 29 - Trusted Agent Ingest Handoff
+Status: Planning
+Last activity: 2026-04-30 - Created v0.3.0 requirements and roadmap from the trusted agent ingest experience design.
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -171,13 +171,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- None.
+- Implement Phase 29 trusted agent ingest handoff.
 
 ### Blockers/Concerns
 
 - `gsd-sdk` is not available in PATH; GSD files are maintained manually in this session.
 - Task lifecycle remains separate from content mutation; apply/rollback handles content changes and lifecycle commands handle task status.
 - v0.2.0 changed product scope from project-only wiki maintenance to a personal knowledge base with shared human and agent views.
+- v0.3.0 changes the default product surface from humans running ingest commands to humans asking trusted agents to save and organize knowledge.
 
 ### Roadmap Evolution
 
@@ -218,6 +219,8 @@ Recent decisions affecting current work:
 - Phase 24 context captured: object schema set, object identity, JSON/front matter contract, validation command, source/citation references, graph edge compatibility, and deferred scope.
 - Phase 24 planned: 1 TDD plan covering object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification.
 - Phase 24 completed: canonical object schemas, front matter parser, object validation, graph object-id metadata bridge, `wikify validate`, docs, and verification artifacts shipped.
+- Milestone v0.3.0 started: Trusted Agent Ingest Experience.
+- Phase 29 added: Trusted Agent Ingest Handoff.
 - Phase 25 context captured: queue-to-wiki command boundary, generated page/object layout, source refs, deterministic baseline generation, explicit agent enrichment handoff, edit protection, review tasks, and validation gates.
 - Phase 25 planned: 1 TDD plan covering `wikify wikiize`, queue consumption, generated Markdown/object artifacts, source traceability, edit protection, wikiization tasks, explicit agent handoff, docs, and verification.
 - Phase 25 completed: `wikify wikiize`, deterministic local wikiization, generated `wiki/pages/` Markdown, `wikify.wiki-page.v1` objects, object index updates, strict validation gate, edit protection, wikiization task queue, explicit agent handoff, docs, and verification shipped.
@@ -243,6 +246,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-30
-Stopped at: v0.2.0 shipped and archived.
-Resume file: .planning/milestones/v0.2.0-MILESTONE-AUDIT.md
-Next command: `/gsd-new-milestone`
+Stopped at: Phase 29 planning started.
+Resume file: .planning/phases/29-trusted-agent-ingest-handoff/29-01-PLAN.md
+Next command: `/gsd-execute-phase 29 --interactive`

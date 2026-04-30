@@ -18,14 +18,17 @@ Wikify now has the core personal wiki loop: users can initialize a wiki workspac
 
 The v0.1.0a2 maintenance loop remains compatible: graph findings still become task artifacts, tasks still produce scoped proposals and explicit patch bundles, verifier gates still block unsafe changes, and repair feedback remains durable. v0.2.0 extends that foundation to personal knowledge sources and shared human/agent wiki artifacts.
 
-## Next Milestone: Not Yet Defined
+## Current Milestone: v0.3.0 Trusted Agent Ingest Experience
 
-**Goal:** Define the next product slice with fresh requirements before implementation resumes.
+**Goal:** Make Wikify feel like the knowledge base operating system for trusted agents. Humans ask agents to save or organize knowledge; agents call Wikify to capture sources, prepare context, update the wiki, validate outputs, and report the final knowledge changes.
 
-**Candidate directions:**
+**Active slice:**
+- Phase 29: Trusted Agent Ingest Handoff.
+
+**Candidate later slices:**
+- Automatic snapshots and operation records for broad trusted-agent wiki rewrites.
 - Provider runtime for explicit model calls, budgets, retries, and audit records.
 - Search and retrieval improvements such as hybrid ranking or optional embeddings.
-- Release packaging and workflow polish for repeated personal wiki use.
 - Richer review/maintenance ergonomics for generated pages, source issues, and agent context quality.
 
 ## Requirements
@@ -85,7 +88,9 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 
 ### Active
 
-- None - v0.2.0 is shipped. The next milestone should define fresh active requirements.
+- [ ] `wikify ingest` writes a trusted-agent handoff request that includes source metadata, content pointers, workspace context, full-control permissions, recovery instructions, high-quality page standards, and a completion summary contract.
+- [ ] Product docs frame normal use as humans asking agents to save or organize knowledge, with `wikify ingest` as the agent-facing tool call.
+- [ ] Ingest completion returns an agent-friendly summary that can be translated into a human-facing knowledge-base change report.
 
 ### Out of Scope
 
@@ -147,6 +152,8 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 | Keep Phase 28 maintenance object-aware but additive | Maintenance should see the same personal wiki artifacts as human and agent views while preserving legacy graph task compatibility | Good |
 | Treat derived views and agent exports as explicit regeneration work | `wikify maintain` should queue `wikify views` and `wikify agent export` work instead of silently patching derived artifacts | Good |
 | Preserve generated page traceability locally | `source_refs` and `review_status` must be protected by deterministic preflight, not only by external verifier prompts | Good |
+| Treat `wikify ingest` as an agent-facing handoff | Humans should use natural-language save/organize requests; the calling agent uses Wikify to capture source, prepare context, validate, and report final wiki changes | Active |
+| Give trusted agents full wiki control with recovery | The product should trust agents to organize pages while Wikify preserves traceability, snapshots, operation records, validation, and rollback paths | Active |
 
 ## Evolution
 
@@ -166,4 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-30 after shipping v0.2.0 milestone*
+*Last updated: 2026-04-30 after starting v0.3.0 Trusted Agent Ingest Experience*
