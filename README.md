@@ -66,6 +66,17 @@ The command is allowed to fetch because ingest is explicit. It writes source art
 
 Humans consume the final wiki and the agent's knowledge-base change summary; `source add`, `sync`, `wikiize`, validation reports, queues, request artifacts, and agent exports are lower-level machine surfaces.
 
+When an agent needs to perform a broad wiki rewrite, merge, or cleanup after ingest, it can wrap the direct file edits with trusted operation snapshots:
+
+```bash
+wikify trusted-op begin --path wiki/pages/example.md --reason "merge imported article into existing topic"
+# agent edits the scoped wiki files
+wikify trusted-op complete --operation-path .wikify/trusted-operations/op_<id>.json
+wikify trusted-op rollback --operation-path .wikify/trusted-operations/op_<id>.json
+```
+
+This is agent infrastructure, not a human-facing workflow. It records before/after file hashes and content so the agent can rollback only when the current files still match the completed operation.
+
 `wikify ingest` refreshes views by default when the deterministic wiki path can complete, so `wikify views` is not part of the normal human-facing request. Use `wikify views` only when explicitly re-rendering views for debugging, repair, or agent maintenance.
 
 `wikify sync still does not fetch URL sources`. It remains an agent/debug command for local change detection and queue maintenance.
@@ -513,6 +524,7 @@ Implemented areas include:
 - explicit external patch bundle producer command
 - explicit agent command profiles
 - deterministic patch bundle apply and rollback
+- trusted operation snapshots for broad agent wiki edits
 - low-interruption agent task runner
 - bounded batch task runner
 - one-command maintenance run automation

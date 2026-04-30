@@ -83,6 +83,12 @@ from wikify.maintenance.task_reader import (
 )
 from wikify.maintenance.runner import run_maintenance
 from wikify.maintenance.task_runner import TaskRunError, run_agent_task
+from wikify.trusted_ops import (
+    TrustedOperationError,
+    begin_trusted_operation,
+    complete_trusted_operation,
+    rollback_trusted_operation,
+)
 from wikify.workspace import (
     SOURCE_TYPES,
     WorkspaceError,
@@ -1238,6 +1244,70 @@ def cmd_rollback(args):
     return envelope_ok('rollback', result)
 
 
+def cmd_trusted_op(args):
+    base = discover_base()
+    try:
+        if args.trusted_op_action == 'begin':
+            result = begin_trusted_operation(
+                base,
+                paths=args.path,
+                reason=args.reason,
+                dry_run=args.dry_run,
+            )
+        elif args.trusted_op_action == 'complete':
+            result = complete_trusted_operation(base, args.operation_path)
+        elif args.trusted_op_action == 'rollback':
+            result = rollback_trusted_operation(
+                base,
+                args.operation_path,
+                dry_run=args.dry_run,
+            )
+        else:
+            return envelope_error(
+                'trusted-op',
+                'trusted_operation_action_invalid',
+                f'unsupported trusted operation action: {args.trusted_op_action}',
+                2,
+                retryable=False,
+            )
+    except TrustedOperationError as exc:
+        return envelope_error(
+            'trusted-op',
+            exc.code,
+            str(exc),
+            2,
+            retryable=False,
+            details=exc.details,
+        )
+    except Exception as exc:
+        return envelope_error(
+            'trusted-op',
+            'trusted_operation_failed',
+            str(exc),
+            1,
+            retryable=False,
+        )
+
+    artifacts = [path for path in result.get('artifacts', {}).values() if path]
+    if args.trusted_op_action == 'begin':
+        summary = 'trusted operation preflight completed' if args.dry_run else 'trusted operation begun'
+        next_actions = [] if args.dry_run else ['edit scoped wiki files', 'run wikify trusted-op complete']
+    elif args.trusted_op_action == 'complete':
+        summary = 'trusted operation completed'
+        next_actions = ['run wikify trusted-op rollback if the operation must be reverted']
+    else:
+        summary = 'trusted operation rollback preflight completed' if args.dry_run else 'trusted operation rolled back'
+        next_actions = []
+    result['completion'] = {
+        'status': 'completed',
+        'summary': summary,
+        'artifacts': artifacts,
+        'next_actions': next_actions,
+        'user_message': summary,
+    }
+    return envelope_ok('trusted-op', result)
+
+
 def cmd_run_task(args):
     base = discover_base()
     agent_execution, error = _resolve_agent_execution_or_error('run-task', base, args)
@@ -1698,6 +1768,25 @@ def build_parser() -> argparse.ArgumentParser:
         p_rollback.add_argument('--application-path', required=True)
         p_rollback.add_argument('--dry-run', action='store_true')
         p_rollback.set_defaults(func=cmd_rollback)
+
+    if 'trusted-op' not in sub.choices:
+        p_trusted_op = sub.add_parser('trusted-op', help='Record and rollback broad trusted agent wiki operations')
+        trusted_sub = p_trusted_op.add_subparsers(dest='trusted_op_action', required=True)
+
+        p_trusted_begin = trusted_sub.add_parser('begin', help='Snapshot files before a trusted agent operation')
+        p_trusted_begin.add_argument('--path', action='append', required=True)
+        p_trusted_begin.add_argument('--reason', required=True)
+        p_trusted_begin.add_argument('--dry-run', action='store_true')
+        p_trusted_begin.set_defaults(func=cmd_trusted_op)
+
+        p_trusted_complete = trusted_sub.add_parser('complete', help='Record after snapshots for a trusted agent operation')
+        p_trusted_complete.add_argument('--operation-path', required=True)
+        p_trusted_complete.set_defaults(func=cmd_trusted_op)
+
+        p_trusted_rollback = trusted_sub.add_parser('rollback', help='Rollback a completed trusted agent operation')
+        p_trusted_rollback.add_argument('--operation-path', required=True)
+        p_trusted_rollback.add_argument('--dry-run', action='store_true')
+        p_trusted_rollback.set_defaults(func=cmd_trusted_op)
 
     if 'run-task' not in sub.choices:
         p_run_task = sub.add_parser('run-task', help='Advance one graph agent task through proposal, apply, and lifecycle')

@@ -4,7 +4,7 @@
 
 - [x] **v0.1.0a2 Agentic Maintenance Automation** - Phases 1-21 shipped 2026-04-29. Archive: `.planning/milestones/v0.1.0a2-ROADMAP.md`
 - [x] **v0.2.0 Personal Wiki Core & Views** - Phases 22-28 shipped 2026-04-30. Archive: `.planning/milestones/v0.2.0-ROADMAP.md`
-- [ ] **v0.3.0 Trusted Agent Ingest Experience** - Active. Implements the trusted-agent ingest handoff so humans ask agents to save knowledge and agents use Wikify as the recoverable wiki operating layer.
+- [ ] **v0.3.0 Trusted Agent Ingest Experience** - Ready for milestone audit. Implements the trusted-agent ingest handoff so humans ask agents to save knowledge and agents use Wikify as the recoverable wiki operating layer.
 
 ## Current Roadmap
 
@@ -13,7 +13,7 @@
 **Goal:** Make `wikify ingest` an agent-facing handoff contract that saves sources, gives trusted agents enough context to organize knowledge, and returns a completion summary suitable for human-facing replies.
 
 - [x] Phase 29: Trusted Agent Ingest Handoff (1/1 plans) - completed 2026-04-30
-- [ ] Phase 30: Trusted Agent Operation Snapshots (0/1 plans)
+- [x] Phase 30: Trusted Agent Operation Snapshots (1/1 plans) - completed 2026-04-30
 
 Future phases may add richer operation diff rendering, multi-operation review queues, or policy presets after the snapshot/rollback primitive is stable.
 
@@ -69,10 +69,18 @@ Full phase details are archived in `.planning/milestones/v0.2.0-ROADMAP.md`.
 | MAINT-02 | Phase 28 | Complete |
 | MAINT-03 | Phase 28 | Complete |
 | MAINT-04 | Phase 28 | Complete |
+| TAI-01 | Phase 29 | Complete |
+| TAI-02 | Phase 29 | Complete |
+| TAI-03 | Phase 29 | Complete |
+| TAI-04 | Phase 29 | Complete |
+| TAI-05 | Phase 29 | Complete |
+| TAI-06 | Phase 29 | Complete |
+| TAI-07 | Phase 30 | Complete |
+| TAI-08 | Phase 30 | Complete |
 
-**Coverage:** 31/31 v0.2.0 requirements mapped and complete.
+**Coverage:** 31/31 archived v0.2.0 requirements complete; 8/8 active v0.3.0 requirements complete.
 
-Full requirements are archived in `.planning/milestones/v0.2.0-REQUIREMENTS.md`.
+Full v0.2.0 requirements are archived in `.planning/milestones/v0.2.0-REQUIREMENTS.md`.
 
 ## Archived Phase History
 
@@ -93,4 +101,4 @@ Detailed phase plans, summaries, and verification artifacts remain in `.planning
 |-----------|--------|-------|--------|-----------|
 | v0.1.0a2 Agentic Maintenance Automation | 1-21 | 21/21 | Complete | 2026-04-29 |
 | v0.2.0 Personal Wiki Core & Views | 22-28 | 12/12 | Complete | 2026-04-30 |
-| v0.3.0 Trusted Agent Ingest Experience | 29-30 | 1/2 | Active | 2026-04-30 |
+| v0.3.0 Trusted Agent Ingest Experience | 29-30 | 2/2 | Ready for milestone audit | 2026-04-30 |

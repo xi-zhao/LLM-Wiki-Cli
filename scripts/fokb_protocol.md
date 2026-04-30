@@ -13,6 +13,18 @@ Successful ingest writes source artifacts and a trusted agent request under `.wi
 
 Humans consume the final wiki and the agent's knowledge-base change summary, while agents inspect the machine artifacts.
 
+## Trusted operation snapshots
+
+For broad trusted agent edits after ingest, an agent can create a reversible operation boundary before directly modifying wiki files:
+
+```bash
+wikify trusted-op begin --path wiki/pages/example.md --reason "merge imported article into existing topic"
+wikify trusted-op complete --operation-path .wikify/trusted-operations/op_<id>.json
+wikify trusted-op rollback --operation-path .wikify/trusted-operations/op_<id>.json
+```
+
+`trusted-op begin` records before snapshots for the scoped paths. `trusted-op complete` records after snapshots and makes rollback available. `trusted-op rollback` restores the before state only when current files still match the after snapshots, preventing stale rollback from overwriting newer work.
+
 For `mp.weixin.qq.com` URLs, the `wechat_url` adapter normalizes the article into canonical source item artifacts and queues deterministic wikiization.
 
 `wikify sync still does not fetch URL sources`; sync remains a machine-facing offline change detection command.

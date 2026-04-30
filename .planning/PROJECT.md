@@ -22,7 +22,7 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 
 **Goal:** Make Wikify feel like the knowledge base operating system for trusted agents. Humans ask agents to save or organize knowledge; agents call Wikify to capture sources, prepare context, update the wiki, validate outputs, and report the final knowledge changes.
 
-**Active slice:**
+**Completed slice:**
 - Phase 29: Trusted Agent Ingest Handoff.
 - Phase 30: Trusted Agent Operation Snapshots.
 
@@ -86,12 +86,7 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 - [x] Generated page repair proposals, bundle requests, verifier preflight, and apply preflight preserve `source_refs` and `review_status` deterministically.
 - [x] v0.1.0a2 maintenance commands, `sorted/graph-*` artifact paths, JSON envelopes, and `wikify.graph-agent-tasks.v1` task fields remain compatible.
 
-### Active
-
-- [ ] Trusted agents can explicitly begin, complete, and rollback broad wiki operations with content snapshots and hash guards.
-
-### Validated
-
+- [x] Trusted agents can explicitly begin, complete, and rollback broad wiki operations with content snapshots and hash guards.
 - [x] `wikify ingest` writes a trusted-agent handoff request that includes source metadata, content pointers, workspace context, full-control permissions, recovery instructions, high-quality page standards, and a completion summary contract.
 - [x] Product docs frame normal use as humans asking agents to save or organize knowledge, with `wikify ingest` as the agent-facing tool call.
 - [x] Ingest completion returns an agent-friendly summary that can be translated into a human-facing knowledge-base change report.
@@ -158,6 +153,7 @@ The v0.1.0a2 maintenance loop remains compatible: graph findings still become ta
 | Preserve generated page traceability locally | `source_refs` and `review_status` must be protected by deterministic preflight, not only by external verifier prompts | Good |
 | Treat `wikify ingest` as an agent-facing handoff | Humans should use natural-language save/organize requests; the calling agent uses Wikify to capture source, prepare context, validate, and report final wiki changes | Active |
 | Give trusted agents full wiki control with recovery | The product should trust agents to organize pages while Wikify preserves traceability, snapshots, operation records, validation, and rollback paths | Active |
+| Use explicit trusted operation snapshots for broad edits | Wikify cannot intercept arbitrary agent file edits, so agents must create begin/complete records around high-blast-radius wiki rewrites | Good |
 
 ## Evolution
 
@@ -177,4 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-30 after starting v0.3.0 Trusted Agent Ingest Experience*
+*Last updated: 2026-04-30 after completing Phase 30 trusted operation snapshots*

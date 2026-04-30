@@ -15,10 +15,10 @@
 - [x] **TAI-05**: `wikify ingest` returns a completion summary that helps the calling agent tell the human what was saved, where the final wiki entry is or will be, and what the agent should do next.
 - [x] **TAI-06**: The trusted ingest request and completion behavior are covered by focused unit tests and documented as agent-facing contracts.
 
-### Future Trusted Maintenance
+### Trusted Agent Operation Recovery
 
-- [ ] **TAI-07**: Broad trusted-agent rewrites, merges, splits, and deletes create operation records and snapshots before mutation.
-- [ ] **TAI-08**: Rollback can restore prior wiki content from trusted-agent operation records without manual file reconstruction.
+- [x] **TAI-07**: Broad trusted-agent rewrites, merges, splits, and deletes create operation records and snapshots before mutation.
+- [x] **TAI-08**: Rollback can restore prior wiki content from trusted-agent operation records without manual file reconstruction.
 
 ## Out of Scope
 
@@ -39,8 +39,11 @@
 | TAI-04 | Phase 29 | Complete |
 | TAI-05 | Phase 29 | Complete |
 | TAI-06 | Phase 29 | Complete |
-| TAI-07 | Phase 30 | Planned |
-| TAI-08 | Phase 30 | Planned |
+| TAI-07 | Phase 30 | Complete |
+| TAI-08 | Phase 30 | Complete |
 
 ---
-*Requirements defined: 2026-04-30 from `docs/superpowers/specs/2026-04-30-trusted-agent-ingest-experience-design.md`.*
+**Coverage:** 8/8 v0.3.0 requirements complete.
+
+---
+*Requirements defined: 2026-04-30 from `docs/superpowers/specs/2026-04-30-trusted-agent-ingest-experience-design.md`. Last updated after Phase 30 completion.*

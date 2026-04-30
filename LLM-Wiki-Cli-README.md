@@ -54,6 +54,17 @@ wikify ingest https://mp.weixin.qq.com/s/example
 
 人类消费的是整理好的 Markdown/static wiki 和 agent 的最终变更摘要；`wikify sync`、`wikify wikiize`、validation report、queue、trusted request、agent context 等是 agent、调试和维护接口。
 
+当 agent 需要在 ingest 后做更大范围的合并、重写或清理时，可以用 trusted operation snapshots 给直接文件编辑加恢复边界：
+
+```bash
+wikify trusted-op begin --path wiki/pages/example.md --reason "merge imported article into existing topic"
+# agent 编辑限定范围内的 wiki 文件
+wikify trusted-op complete --operation-path .wikify/trusted-operations/op_<id>.json
+wikify trusted-op rollback --operation-path .wikify/trusted-operations/op_<id>.json
+```
+
+这仍然是 agent 基础设施，不是人类主流程。它记录编辑前后的文件内容和 hash；只有当前文件仍匹配 completed operation 时，rollback 才会恢复旧内容或删除本次新建文件。
+
 `wikify sync still does not fetch URL sources`：URL source 在 sync 中仍然只做离线状态记录，不会隐藏抓取。
 
 ---

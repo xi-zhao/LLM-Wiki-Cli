@@ -321,6 +321,44 @@ class WikifyCliTests(unittest.TestCase):
         self.assertEqual(rollback_args.command, 'rollback')
         self.assertTrue(rollback_args.dry_run)
 
+    def test_build_parser_accepts_trusted_op_commands(self):
+        cli = importlib.import_module('wikify.cli')
+
+        parser = cli.build_parser()
+        begin_args = parser.parse_args([
+            'trusted-op',
+            'begin',
+            '--path',
+            'wiki/pages/a.md',
+            '--path',
+            'wiki/pages/b.md',
+            '--reason',
+            'merge duplicate pages',
+            '--dry-run',
+        ])
+        complete_args = parser.parse_args([
+            'trusted-op',
+            'complete',
+            '--operation-path',
+            '.wikify/trusted-operations/op.json',
+        ])
+        rollback_args = parser.parse_args([
+            'trusted-op',
+            'rollback',
+            '--operation-path',
+            '.wikify/trusted-operations/op.json',
+            '--dry-run',
+        ])
+
+        self.assertEqual(begin_args.command, 'trusted-op')
+        self.assertEqual(begin_args.trusted_op_action, 'begin')
+        self.assertEqual(begin_args.path, ['wiki/pages/a.md', 'wiki/pages/b.md'])
+        self.assertEqual(begin_args.reason, 'merge duplicate pages')
+        self.assertTrue(begin_args.dry_run)
+        self.assertEqual(complete_args.trusted_op_action, 'complete')
+        self.assertEqual(rollback_args.trusted_op_action, 'rollback')
+        self.assertTrue(rollback_args.dry_run)
+
     def test_build_parser_accepts_run_task_command(self):
         cli = importlib.import_module('wikify.cli')
 
@@ -2092,6 +2130,78 @@ class WikifyCliTests(unittest.TestCase):
             else:
                 os.environ['FOKB_BASE'] = original_fokb
 
+    def test_trusted_op_commands_record_complete_and_rollback(self):
+        cli = importlib.import_module('wikify.cli')
+        original_wikify = os.environ.get('WIKIFY_BASE')
+        original_fokb = os.environ.get('FOKB_BASE')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                kb = Path(tmpdir)
+                os.environ['WIKIFY_BASE'] = str(kb)
+                os.environ.pop('FOKB_BASE', None)
+                target = kb / 'wiki' / 'pages' / 'page.md'
+                target.parent.mkdir(parents=True)
+                target.write_text('before\n', encoding='utf-8')
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'trusted-op',
+                        'begin',
+                        '--path',
+                        'wiki/pages/page.md',
+                        '--reason',
+                        'rewrite page',
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                begin_payload = json.loads(stdout.getvalue())
+                operation_path = begin_payload['result']['artifacts']['operation']
+                self.assertTrue(Path(operation_path).exists())
+
+                target.write_text('after\n', encoding='utf-8')
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'trusted-op',
+                        'complete',
+                        '--operation-path',
+                        operation_path,
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                complete_payload = json.loads(stdout.getvalue())
+                self.assertEqual(complete_payload['result']['status'], 'completed')
+
+                stdout = io.StringIO()
+                with self.assertRaises(SystemExit) as raised, redirect_stdout(stdout):
+                    cli.main([
+                        '--output',
+                        'json',
+                        'trusted-op',
+                        'rollback',
+                        '--operation-path',
+                        operation_path,
+                    ])
+
+                self.assertEqual(raised.exception.code, 0)
+                rollback_payload = json.loads(stdout.getvalue())
+                self.assertEqual(rollback_payload['result']['status'], 'rolled_back')
+                self.assertEqual(target.read_text(encoding='utf-8'), 'before\n')
+        finally:
+            if original_wikify is None:
+                os.environ.pop('WIKIFY_BASE', None)
+            else:
+                os.environ['WIKIFY_BASE'] = original_wikify
+            if original_fokb is None:
+                os.environ.pop('FOKB_BASE', None)
+            else:
+                os.environ['FOKB_BASE'] = original_fokb
+
     def test_apply_command_patch_errors_are_structured(self):
         cli = importlib.import_module('wikify.cli')
         original_wikify = os.environ.get('WIKIFY_BASE')
@@ -2987,6 +3097,8 @@ class WikifyCliTests(unittest.TestCase):
         self.assertIn('wikify ingest <locator>', readme)
         self.assertIn('Humans should normally ask their agent to save or organize knowledge', readme)
         self.assertIn('trusted agent request', readme)
+        self.assertIn('wikify trusted-op begin', readme)
+        self.assertIn('trusted operation snapshots', readme)
         self.assertIn('wikify sync still does not fetch URL sources', readme)
         self.assertIn('mp.weixin.qq.com', readme)
         self.assertNotIn('wikify ingest <locator>\nwikify views', readme)
@@ -2995,6 +3107,8 @@ class WikifyCliTests(unittest.TestCase):
         self.assertIn('帮我保存这篇文章', chinese_readme)
         self.assertIn('wikify ingest <locator>', chinese_readme)
         self.assertIn('wikify ingest https://mp.weixin.qq.com/s/example', chinese_readme)
+        self.assertIn('wikify trusted-op begin', chinese_readme)
+        self.assertIn('trusted operation snapshots', chinese_readme)
         self.assertIn('wikify sync still does not fetch URL sources', chinese_readme)
         self.assertIn('不会隐藏抓取', chinese_readme)
 
@@ -3002,6 +3116,8 @@ class WikifyCliTests(unittest.TestCase):
         self.assertIn('wikify ingest <locator>', protocol)
         self.assertIn('Humans ask an agent to save or organize knowledge', protocol)
         self.assertIn('.wikify/ingest/requests/', protocol)
+        self.assertIn('Trusted operation snapshots', protocol)
+        self.assertIn('wikify trusted-op begin', protocol)
         self.assertIn('mp.weixin.qq.com', protocol)
         self.assertIn('wikify sync still does not fetch URL sources', protocol)
 
